@@ -1,21 +1,12 @@
-# ERP Futbol - Sistema de Gestion Integral
+# ERP Futbol
 
-Sistema web para la gestion integral de escuelas de futbol.
-Jugadores, pagos, asistencias, inventario, reportes y mas.
+Sistema web para gestionar escuelas de futbol. Jugadores, pagos, asistencias, inventario, reportes y mas.
 
-Modo demo con archivos JSON (sin base de datos).
-
----
-
-## Tecnologias
-
-- Frontend: HTML, TailwindCSS, JavaScript Vanilla
-- Backend: Node.js
-- Modo demo: archivos JSON en carpeta `data/`
+Funciona en modo demo con archivos JSON, sin necesidad de base de datos.
 
 ---
 
-## Inicio rapido
+## Como correr
 
 ```bash
 npm install
@@ -24,78 +15,71 @@ node api/index.js
 
 Abrir http://localhost:3000
 
-Usuario: admin / Contrasena: admin123
+Credenciales: admin / admin123
 
 ---
 
-## Estructura del proyecto
+## Estructura
 
 ```
 /
 ├── api/                    # Backend Node.js
-│   ├── index.js            # Servidor principal
-│   ├── jugadores.js        # API jugadores
-│   ├── pagos.js            # API pagos
-│   ├── asistencias.js      # API asistencias
-│   ├── alertas.js          # API alertas
-│   ├── categorias.js       # API categorias
-│   ├── profesores.js       # API profesores
-│   ├── inventario.js       # API inventario
-│   ├── gastos.js           # API gastos
-│   ├── reportes.js         # API reportes
-│   ├── notas.js            # API notas
-│   ├── caja.js             # API caja
-│   ├── bitacora.js         # API bitacora
-│   ├── torneos.js          # API torneos
-│   ├── whatsapp.js         # API whatsapp
-│   └── config.js           # API configuracion
+│   ├── index.js            # Servidor
+│   ├── jugadores.js        # CRUD jugadores
+│   ├── pagos.js            # Pagos e ingresos
+│   ├── asistencias.js      # Control de asistencia
+│   ├── alertas.js          # Alertas de pago
+│   ├── categorias.js       # Categorias
+│   ├── profesores.js       # Profesores
+│   ├── inventario.js       # Inventario
+│   ├── gastos.js           # Gastos
+│   ├── reportes.js         # Reportes
+│   ├── notas.js            # Notas
+│   ├── caja.js             # Caja
+│   ├── bitacora.js         # Bitacora
+│   ├── torneos.js          # Torneos
+│   ├── whatsapp.js         # Mensajes WhatsApp
+│   └── config.js           # Configuracion
 │
-├── public/                 # Frontend
+├── public/                 # Frontend (HTML + JS)
 │   ├── index.html          # Dashboard
-│   ├── jugadores.html      # Gestion de jugadores
-│   ├── pagos.html          # Registro de pagos/ingresos
-│   ├── asistencias.html    # Control de asistencias
-│   ├── alertas.html        # Alertas y notificaciones
-│   ├── categorias.html     # Gestion de categorias
-│   ├── profesores.html     # Gestion de profesores
-│   ├── inventario.html     # Control de inventario
-│   ├── gastos.html         # Control de gastos
-│   ├── reportes.html       # Reportes y graficas
-│   ├── notas.html          # Notas de jugadores
-│   ├── caja.html           # Control de caja
-│   ├── bitacora.html       # Bitacora de actividad
-│   ├── torneos.html        # Gestion de torneos
-│   ├── configuracion.html  # Configuracion del sistema
-│   ├── sw.js               # Service worker
+│   ├── jugadores.html      # Jugadores
+│   ├── pagos.html          # Pagos
+│   ├── asistencias.html    # Asistencias
+│   ├── alertas.html        # Alertas
+│   ├── categorias.html     # Categorias
+│   ├── profesores.html     # Profesores
+│   ├── inventario.html     # Inventario
+│   ├── gastos.html         # Gastos
+│   ├── reportes.html       # Reportes
+│   ├── notas.html          # Notas
+│   ├── caja.html           # Caja
+│   ├── bitacora.html       # Bitacora
+│   ├── torneos.html        # Torneos
+│   ├── configuracion.html  # Configuracion
 │   └── recursos/
-│       ├── js/             # JavaScript frontend
+│       ├── js/             # Logica frontend
 │       └── css/            # Estilos
 │
-├── data/                   # Archivos JSON (modo demo)
-├── sql/                    # Scripts SQL
+├── data/                   # JSONs (solo demo)
+├── sql/                    # Migraciones SQL
 ├── package.json
 └── vercel.json
 ```
 
 ---
 
-## Caracteristicas
+## Que incluye
 
-- CRUD completo de jugadores con categorias
-- Registro y control de pagos/ingresos
-- Alertas de pagos pendientes (manuales y automaticas)
-- Control de asistencias
+- CRUD de jugadores con busqueda y filtros por categoria
+- Registro de pagos con recibo automatico
+- Alertas manuales y automaticas de pagos pendientes
+- Control de asistencia
 - Gestion de categorias y profesores
-- Inventario y control de gastos
+- Inventario de uniformes/equipos
+- Control de gastos
 - Reportes con graficas
-- Sistema de bitacora
-- Gestion de torneos
-- WhatsApp integrado
-- Diseno responsive
-- Modo demo sin base de datos
-
----
-
-## Autor
-
-Proyecto desarrollado por guzmanmaceajavier-bit.
+- Bitacora de actividad
+- Torneos
+- Envio de mensajes por WhatsApp
+- Todo responsive
