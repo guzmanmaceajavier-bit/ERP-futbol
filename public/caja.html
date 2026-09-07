@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><title>Caja Diaria | EFUSA V7</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{brand:{600:'#16a34a'}}}}}</script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<style>body{font-family:Inter,sans-serif;background:#F1F5F9}</style>
+</head><body class="min-h-screen">
+<div id="nav-container"></div>
+<div class="bg-[#0F172A] text-white">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <div class="flex items-center gap-3 mb-2">
+      <a href="/index.html" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20"><i class="ph ph-arrow-left"></i></a>
+      <p class="text-[11px] font-black tracking-[0.18em] text-amber-300 uppercase">DINERO - CAJA BLOQUEABLE</p>
+      <button onclick="window.close()" class="ml-auto w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-black">Caja Diaria</h1>
+        <p class="text-white/60 text-sm">Control diario de caja</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-abrir" onclick="abrirCaja()" class="px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-black">Abrir hoy</button>
+        <button id="btn-cerrar" onclick="cerrarCaja()" class="px-5 py-3 bg-white text-slate-900 rounded-xl font-black">Cerrar hoy</button>
+      </div>
+    </div>
+    <div id="caja-hoy" class="mt-6 bg-white rounded-2xl p-5 text-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4"></div>
+  </div>
+</div>
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-4">
+  <div class="bg-white rounded-2xl border p-4 flex flex-col md:flex-row gap-3">
+    <input id="f-fecha" type="date" class="px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+    <select id="f-estado" class="px-4 py-2.5 bg-white border rounded-xl text-sm font-bold"><option value="">Todos estados</option><option value="abierta">Abierta</option><option value="cerrada">Cerrada</option></select>
+    <button onclick="filtrar()" class="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-black">Filtrar</button>
+    <div class="ml-auto flex gap-2">
+      <button onclick="descargarExcel()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black">Excel</button>
+      <button onclick="descargarPDF()" class="px-3 py-2 bg-white border rounded-xl text-xs font-black">PDF</button>
+      <button id="btn-desbloquear" onclick="desbloquearCaja()" class="hidden px-4 py-2 bg-amber-500 text-white rounded-xl text-sm font-black">Desbloquear</button>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl border overflow-hidden">
+    <div class="px-5 py-3 bg-slate-50 border-b flex justify-between items-center"><h3 class="font-black text-sm">Historial</h3><span class="text-xs bg-white border px-2 py-1 rounded-full font-bold" id="total-hist">0 dias</span></div>
+    <div id="historial-caja" class="divide-y max-h-[520px] overflow-auto"></div>
+    <div class="px-4 py-3 bg-slate-50 border-t flex justify-between items-center">
+      <span id="info-paginacion" class="text-xs font-bold text-slate-500">0 registros</span>
+      <div class="flex gap-2"><button id="btn-prev" onclick="cambiarPagina(-1)" class="px-4 py-2 bg-white border rounded-xl text-sm font-bold disabled:opacity-40">Anterior</button><button id="btn-next" onclick="cambiarPagina(1)" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40">Siguiente</button></div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { verificarSesion } from '/recursos/js/auth.js';
+import { injectNav } from '/recursos/js/nav.js';
+import { apiFetch } from '/recursos/js/configuracion.js';
+const u=await verificarSesion(); if(u) injectNav('caja');
+let lista=[], pagina=1, porPagina=5, filtrados=[];
+async function cargar(){
+  const hoy = await apiFetch('/caja?resumen=hoy');
+  const c=document.getElementById('caja-hoy');
+  const estadoColor = hoy.estado==='cerrada' ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white';
+  c.innerHTML=`
+    <div>
+      <p class="text-[11px] font-black text-slate-400 uppercase">Saldo hoy - ${hoy.fecha}</p>
+      <p class="text-3xl font-black">$${Number(hoy.saldo).toLocaleString()}</p>
+      <p class="text-sm text-slate-500 mt-1">Ingresos <b class="text-emerald-600">$${Number(hoy.ingresos.total).toLocaleString()}</b> (${hoy.ingresos.cnt}) - Gastos <b class="text-rose-600">$${Number(hoy.gastos.total).toLocaleString()}</b> (${hoy.gastos.cnt})</p>
+    </div>
+    <div class="text-right">
+      <span class="px-3 py-1.5 rounded-full text-xs font-black ${estadoColor}">${hoy.estado.toUpperCase()}</span>
+      <p class="text-xs text-slate-500 mt-2">Utilidad = Ing - Gas</p>
+    </div>
+  `;
+  document.getElementById('btn-desbloquear').classList.toggle('hidden', !(hoy.estado==='cerrada' && JSON.parse(localStorage.getItem('efusa_user')||'{}').role==='super_admin'));
+  lista = await apiFetch('/caja');
+  filtrados=[...lista];
+  render();
+}
+function render(){
+  const totalPages=Math.ceil(filtrados.length/porPagina)||1;
+  if(pagina>totalPages) pagina=totalPages;
+  if(pagina<1) pagina=1;
+  const page=filtrados.slice((pagina-1)*porPagina, pagina*porPagina);
+  document.getElementById('total-hist').textContent=filtrados.length+' dias';
+  document.getElementById('info-paginacion').textContent=`Mostrando ${page.length} de ${filtrados.length} registros`;
+  const h=document.getElementById('historial-caja'); h.innerHTML='';
+  if(!page.length) h.innerHTML='<p class="p-8 text-center text-slate-400">Sin movimientos</p>';
+  page.forEach(r=>{
+    const div=document.createElement('div');
+    div.className='px-5 py-4 flex justify-between items-center hover:bg-slate-50';
+    div.innerHTML=`<div><span class="font-black">${r.fecha}</span> <span class="ml-2 text-xs px-2 py-1 rounded-full font-bold ${r.estado==='cerrada'?'bg-slate-900 text-white':'bg-emerald-50 text-emerald-700 border'}">${r.estado}</span><p class="text-xs text-slate-500">Saldo: <b>$${Number(r.saldo_final||0).toLocaleString()}</b> - Ing $${Number(r.total_ingresos||0).toLocaleString()} - Gas $${Number(r.total_gastos||0).toLocaleString()}</p></div><span class="text-xs text-slate-400">${r.cerrada_por?'Cerrada #'+r.cerrada_por:''}</span>`;
+    h.appendChild(div);
+  });
+}
+window.cambiarPagina=(d)=>{ pagina+=d; render(); }
+window.filtrar=()=>{
+  const f=document.getElementById('f-fecha').value;
+  const e=document.getElementById('f-estado').value;
+  filtrados=lista.filter(x=> (!f || x.fecha===f) && (!e || x.estado===e));
+  pagina=1; render();
+}
+window.descargarExcel=()=>{
+  const rows=filtrados.map(r=> ({ Fecha:r.fecha, Estado:r.estado, Ingresos:r.total_ingresos||0, Gastos:r.total_gastos||0, Saldo:r.saldo_final||0 }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Caja');
+  XLSX.writeFile(wb, 'Caja_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+window.descargarPDF=()=>{
+  const {jsPDF}=window.jspdf; const doc=new jsPDF();
+  doc.text('Caja Diaria - '+new Date().toLocaleDateString(),14,14);
+  doc.autoTable({ head:[['Fecha','Estado','Saldo']], body: filtrados.map(r=>[r.fecha, r.estado, '$'+Number(r.saldo_final||0).toLocaleString()]), startY:18, headStyles:{fillColor:[15,23,42]} });
+  doc.save('Caja_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+window.abrirCaja=async()=>{ await apiFetch('/caja',{method:'POST', body:{accion:'abrir'}}); cargar();}
+window.cerrarCaja=async()=>{ if(!confirm('Estas seguro de cerrar la caja de hoy?'))return; await apiFetch('/caja',{method:'POST', body:{accion:'cerrar'}}); cargar();}
+window.desbloquearCaja=async()=>{ const m=prompt('Motivo:'); if(!m) return; await apiFetch('/caja',{method:'POST', body:{accion:'desbloquear', motivo:m}}); cargar();}
+cargar();
+</script></body></html>
+
+
+
+
+
+
+
+
+

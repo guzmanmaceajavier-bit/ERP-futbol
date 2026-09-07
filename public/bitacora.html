@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><title>Bitacora | EFUSA V7</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{brand:{600:'#16a34a'}}}}}</script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>body{font-family:Inter,sans-serif;background:#F1F5F9}</style>
+</head><body class="min-h-screen">
+<div id="nav-container"></div>
+<div class="bg-[#0F172A] text-white">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6"><div class="flex items-center gap-3">
+      <a href="/index.html" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i class="ph ph-arrow-left"></i></a>
+      <div>
+        
+        <h1 class="text-2xl font-black">Historial</h1>
+        <p class="text-white/60 text-sm">Auditoria completa del sistema</p>
+      </div></div>
+      <button onclick="window.close()" class="ml-auto w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x"></i></button>
+    </div>
+  </div>
+</div>
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-4">
+  <div class="bg-white rounded-2xl border p-4 flex flex-col md:flex-row gap-3">
+    <select id="f-modulo" class="px-4 py-2.5 bg-white border rounded-xl text-sm font-bold"><option value="">Todos modulos</option><option value="jugadores">Jugadores</option><option value="pagos">Pagos</option><option value="gastos">Gastos</option><option value="caja">Caja</option><option value="inventario">Inventario</option></select>
+    <input id="f-desde" type="date" class="px-4 py-2.5 bg-slate-50 border rounded-xl text-sm">
+    <button onclick="cargar()" class="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-black">Filtrar</button>
+    <button onclick="descargarExcel()" class="ml-auto px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black">Excel</button>
+  </div>
+  <div class="bg-white rounded-2xl border overflow-hidden">
+    <div class="px-5 py-3 bg-slate-50 border-b flex justify-between items-center"><h3 class="font-black text-sm">Historial</h3><span class="text-xs bg-white border px-2 py-1 rounded-full font-bold" id="total-logs">0 registros</span></div>
+    <div id="lista-bitacora" class="divide-y max-h-[520px] overflow-auto"></div>
+    <div class="px-4 py-3 bg-slate-50 border-t flex justify-between items-center">
+      <span id="info-paginacion" class="text-xs font-bold text-slate-500">0 registros</span>
+      <div class="flex gap-2"><button id="btn-prev" onclick="cambiarPagina(-1)" class="px-4 py-2 bg-white border rounded-xl text-sm font-bold disabled:opacity-40">Anterior</button><button id="btn-next" onclick="cambiarPagina(1)" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40">Siguiente</button></div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { verificarSesion } from '/recursos/js/auth.js';
+import { injectNav } from '/recursos/js/nav.js';
+import { apiFetch } from '/recursos/js/configuracion.js';
+const u=await verificarSesion(); if(u) injectNav('bitacora');
+let lista=[], pagina=1, porPagina=10;
+async function cargar(){
+  const mod=document.getElementById('f-modulo').value;
+  let url='/bitacora?limit=100';
+  if(mod) url+='&modulo='+mod;
+  lista=await apiFetch(url).catch(()=>[]);
+  // filtro fecha local
+  const desde=document.getElementById('f-desde').value;
+  if(desde) lista=lista.filter(l=> (l.fecha||l.created_at||'').slice(0,10) >= desde);
+  pagina=1; render();
+}
+function render(){
+  const totalPages=Math.ceil(lista.length/porPagina)||1;
+  if(pagina>totalPages) pagina=totalPages;
+  const page=lista.slice((pagina-1)*porPagina, pagina*porPagina);
+  document.getElementById('total-logs').textContent=lista.length+' registros';
+  document.getElementById('info-paginacion').textContent=`Mostrando ${page.length} de ${lista.length} registros`;
+  const cont=document.getElementById('lista-bitacora'); cont.innerHTML='';
+  if(!page.length) cont.innerHTML='<p class="p-8 text-center text-slate-400">Sin movimientos</p>';
+  page.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='px-5 py-4 flex gap-4 hover:bg-slate-50';
+    const fecha=new Date(r.fecha||r.created_at).toLocaleString('es-ES');
+    d.innerHTML=`<div class="text-xs text-slate-400 w-36">${fecha}<br><span class="font-bold text-slate-700">${r.usuario_nombre||r.usuario||'Sistema'}</span></div><div class="flex-1"><span class="text-xs px-2 py-1 rounded-full bg-slate-900 text-white font-bold">${r.modulo||'general'}</span> <span class="text-xs font-black text-emerald-600">${r.accion||''}</span><p class="text-sm mt-1 text-slate-700">${r.detalle||r.descripcion||''}</p></div>`;
+    cont.appendChild(d);
+  });
+}
+window.cambiarPagina=(d)=>{ pagina+=d; render(); }
+window.cargar=cargar;
+window.descargarExcel=()=>{
+  if(!lista.length) return alert('Sin datos');
+  const rows=lista.map(r=> ({ Fecha: new Date(r.fecha||r.created_at).toLocaleString(), Usuario: r.usuario_nombre||r.usuario, Modulo: r.modulo, Accion: r.accion, Detalle: r.detalle }));
+  const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Bitacora'); XLSX.writeFile(wb, 'Bitacora_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+cargar();
+</script></body></html>
+
+
+
+
+
+

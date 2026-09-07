@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><title>Alertas | EFUSA V7</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{brand:{600:'#16a34a'}}}}}</script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<style>body{font-family:Inter,sans-serif;background:#F1F5F9}</style>
+</head><body class="min-h-screen">
+<div id="nav-container"></div>
+
+<!-- HERO -->
+<div class="bg-[#0F172A] text-white">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <div class="flex items-center gap-3">
+      <a href="/index.html" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition"><i class="ph ph-arrow-left"></i></a>
+      <div>
+        <h1 class="text-2xl font-black">Alertas</h1>
+        <p class="text-white/60 text-sm">Controla morosos, vencidos y recordatorios</p>
+      </div>
+      <div class="ml-auto flex gap-2">
+        <button onclick="abrirModalAlertaManual()" class="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black flex items-center gap-1 transition"><i class="ph ph-plus-circle"></i> Nueva</button>
+        <button onclick="descargarExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition">Excel</button>
+        <button onclick="descargarPDF()" class="px-3 py-2 bg-white text-slate-900 rounded-xl text-xs font-black transition">PDF</button>
+        <button onclick="window.close()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"><i class="ph ph-x"></i></button>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="bg-white text-slate-900 rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Total alertas</p><p id="kpi-deudores" class="text-2xl font-black text-rose-600">0</p></div>
+      <div class="bg-white rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Deudas</p><p id="kpi-vencidos" class="text-2xl font-black text-amber-600">0</p></div>
+      <div class="bg-white rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Vencidos</p><p id="kpi-vencidos2" class="text-2xl font-black text-orange-600">0</p></div>
+      <div class="bg-white rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Por cobrar</p><p id="kpi-cobrar" class="text-2xl font-black">$0</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-4">
+  <div id="sin-alertas" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center">
+    <div class="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto"><i class="ph ph-check text-2xl"></i></div>
+    <h2 class="font-black text-emerald-900 mt-3">Todo al dia</h2>
+    <p class="text-sm text-emerald-700">No hay alertas pendientes.</p>
+  </div>
+
+  <div id="con-alertas" class="space-y-4">
+    <!-- Filtros -->
+    <div class="bg-white rounded-2xl border p-3 flex flex-col md:flex-row gap-3">
+      <div class="relative flex-1"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i><input id="buscador" placeholder="Buscar jugador..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-sm"></div>
+      <select id="f-categoria" class="px-3 py-2.5 bg-white border rounded-xl text-sm font-bold"><option value="">Todas Categorias</option></select>
+      <select id="f-tipo" class="px-3 py-2.5 bg-white border rounded-xl text-sm font-bold">
+        <option value="">Todos tipos</option>
+        <option value="deuda">Deudas</option>
+        <option value="vencido">Vencidos</option>
+        <option value="manual">Manuales</option>
+      </select>
+      <button onclick="enviarMasivoAlertas()" class="px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-black flex items-center gap-1 transition"><i class="ph ph-whatsapp-logo"></i> Masivo</button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-2xl border overflow-hidden">
+      <div class="overflow-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-[11px] font-black uppercase text-slate-500">
+            <tr><th class="px-4 py-3">Jugador</th><th class="px-4 py-3 text-center">Info</th><th class="px-4 py-3 text-center">Estado</th><th class="px-4 py-3 text-center">Deuda</th><th class="px-4 py-3 text-center">Accion</th></tr>
+          </thead>
+          <tbody id="tabla-alertas" class="divide-y"></tbody>
+        </table>
+      </div>
+      <div id="vista-movil-alertas" class="hidden md:hidden p-3 space-y-3"></div>
+      <div class="px-4 py-3 bg-slate-50 border-t flex justify-between items-center">
+        <span id="info-paginacion" class="text-xs font-bold text-slate-500">0 registros</span>
+        <div class="flex gap-2">
+          <button id="btn-prev" onclick="cambiarPagina(-1)" class="px-4 py-2 bg-white border rounded-xl text-sm font-bold disabled:opacity-40">Anterior</button>
+          <button id="btn-next" onclick="cambiarPagina(1)" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40">Siguiente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA ALERTA MANUAL -->
+<div id="modal-alerta-manual" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="cerrarModalAlertaManual()"></div>
+  <div class="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+      <h3 class="font-bold flex items-center gap-2"><i class="ph ph-bell-ringing"></i> Nueva alerta manual</h3>
+      <button onclick="cerrarModalAlertaManual()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x text-lg"></i></button>
+    </div>
+    <form id="formAlertaManual" onsubmit="submitAlertaManual(event)" class="p-6 space-y-4">
+      <label class="block text-sm font-bold text-slate-700">Jugador (opcional)
+        <select id="alerta-jugador-id" class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm">
+          <option value="">General (sin jugador)</option>
+        </select>
+      </label>
+      <label class="block text-sm font-bold text-slate-700">Titulo *
+        <input id="alerta-titulo" required placeholder="Ej: Recordatorio uniforme, Cuota extra..." class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm">
+      </label>
+      <label class="block text-sm font-bold text-slate-700">Mensaje
+        <textarea id="alerta-mensaje" rows="3" placeholder="Descripcion de la alerta..." class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm resize-none"></textarea>
+      </label>
+      <label class="block text-sm font-bold text-slate-700">Fecha vencimiento
+        <input id="alerta-vencimiento" type="date" class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm">
+      </label>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="cerrarModalAlertaManual()" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm">Cancelar</button>
+        <button type="submit" class="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-sm transition">Crear alerta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ALERTA -->
+<div id="modal-editar-alerta" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="cerrarModalEditarAlerta()"></div>
+  <div class="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+      <h3 class="font-bold flex items-center gap-2"><i class="ph ph-note-pencil"></i> Editar alerta</h3>
+      <button onclick="cerrarModalEditarAlerta()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x text-lg"></i></button>
+    </div>
+    <form id="formEditarAlerta" onsubmit="submitEditarAlerta(event)" class="p-6 space-y-4">
+      <input type="hidden" id="editar-alerta-id">
+      <label class="block text-sm font-bold text-slate-700">Titulo *
+        <input id="editar-alerta-titulo" required placeholder="Titulo de la alerta" class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm">
+      </label>
+      <label class="block text-sm font-bold text-slate-700">Mensaje
+        <textarea id="editar-alerta-mensaje" rows="3" placeholder="Descripcion..." class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm resize-none"></textarea>
+      </label>
+      <label class="block text-sm font-bold text-slate-700">Fecha vencimiento
+        <input id="editar-alerta-vencimiento" type="date" class="mt-1 w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm">
+      </label>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="cerrarModalEditarAlerta()" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm">Cancelar</button>
+        <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-sm transition">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { verificarSesion } from '/recursos/js/auth.js';
+import { injectNav } from '/recursos/js/nav.js';
+const u = await verificarSesion(); if (u) injectNav('alertas');
+</script>
+<script type="module" src="/recursos/js/alertas.js?v=14"></script>
+<script>
+  // Filtros
+  document.getElementById('buscador')?.addEventListener('input', () => { paginaActual = 1; renderizarAlertas(); });
+  document.getElementById('f-categoria')?.addEventListener('change', () => { paginaActual = 1; renderizarAlertas(); });
+  document.getElementById('f-tipo')?.addEventListener('change', () => { paginaActual = 1; renderizarAlertas(); });
+  // Paginacion
+  window.cambiarPagina = window.cambiarPaginaAlerta;
+  // Excel
+  window.descargarExcel = () => {
+    const rows = [...document.querySelectorAll('#tabla-alertas tr')].map(tr => ({
+      Jugador: tr.children[0]?.innerText, Info: tr.children[1]?.innerText,
+      Estado: tr.children[2]?.innerText, Deuda: tr.children[3]?.innerText
+    }));
+    if (!rows.length) return alert('Sin datos');
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Alertas');
+    XLSX.writeFile(wb, 'Alertas_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  };
+  // PDF
+  window.descargarPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text('Alertas EFUSA - ' + new Date().toLocaleDateString(), 14, 14);
+    const body = [...document.querySelectorAll('#tabla-alertas tr')].map(tr => [
+      tr.children[0]?.innerText, tr.children[1]?.innerText, tr.children[2]?.innerText, tr.children[3]?.innerText
+    ]);
+    doc.autoTable({ head: [['Jugador', 'Info', 'Estado', 'Deuda']], body, startY: 18, headStyles: { fillColor: [220, 38, 38] } });
+    doc.save('Alertas_' + new Date().toISOString().slice(0, 10) + '.pdf');
+  };
+  // Cargar categorias para filtro
+  (async () => {
+    try {
+      const { apiFetch } = await import('/recursos/js/configuracion.js');
+      const jugadores = await apiFetch('/jugadores');
+      const cats = [...new Set(jugadores.map(j => j.categoria).filter(Boolean))];
+      const sel = document.getElementById('f-categoria');
+      if (sel) cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    } catch (e) { console.error(e); }
+  })();
+</script>
+</body></html>

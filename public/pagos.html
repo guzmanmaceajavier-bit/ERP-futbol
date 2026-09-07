@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ingresos | EFUSA V7</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{600:'#16a34a'}}}}}</script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,sans-serif;background:#F1F5F9}</style>
+</head>
+<body class="min-h-screen">
+<div id="nav-container"></div>
+<div class="bg-[#0F172A] text-white">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-5">
+    <div class="flex items-center gap-3">
+      <a href="/index.html" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i class="ph ph-arrow-left"></i></a>
+      <div>
+        <h1 class="text-2xl font-black">Ingresos</h1>
+        <p class="text-white/60 text-sm">Registra y controla los pagos</p>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="bg-white rounded-xl px-4 py-2 text-slate-900 text-right">
+          <p class="text-[10px] font-black text-slate-400 uppercase">Total filtrado</p>
+          <p id="total-filtrado" class="text-lg font-black text-emerald-600">$0</p>
+        </div>
+        <button onclick="window.close()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-5">
+  <!-- Resumen cuentas - compacto, no amontonado, separado del historial -->
+  <div class="grid grid-cols-3 gap-3">
+    <div class="bg-white rounded-2xl border p-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center"><i class="ph ph-check"></i></div>
+      <div><p class="text-[11px] font-black text-slate-400 uppercase">Al dia</p><p id="resumen-al-dia" class="text-lg font-black text-emerald-600">0</p></div>
+    </div>
+    <div class="bg-white rounded-2xl border p-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center"><i class="ph ph-clock"></i></div>
+      <div><p class="text-[11px] font-black text-slate-400 uppercase">Deudores</p><p id="resumen-deudores" class="text-lg font-black text-rose-600">0</p></div>
+    </div>
+    <div class="bg-white rounded-2xl border p-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center"><i class="ph ph-users-three"></i></div>
+      <div><p class="text-[11px] font-black text-slate-400 uppercase">Total</p><p id="resumen-total" class="text-lg font-black">0</p></div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <section class="bg-white rounded-2xl border shadow-sm">
+    <div class="px-5 py-3 border-b bg-slate-50 flex items-center justify-between">
+      <h2 id="titulo-form-pago" class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center"><i class="ph ph-plus text-sm"></i></span> Registrar pago</h2>
+      <span class="text-xs bg-white border px-2 py-1 rounded-full font-bold">Recibo automatico</span>
+    </div>
+    <div class="p-5">
+      <form id="formPago" class="space-y-4">
+        <!-- Buscador inteligente por Categoria + nombre -->
+        <div class="bg-slate-50 border rounded-xl p-3 space-y-3">
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="text-sm font-bold">Categoria
+              <select id="filtro-cat-pago" class="mt-1 w-full px-3 py-2.5 bg-white border rounded-xl text-sm">
+                <option value="">Todas Categorias</option><option>Sub 17-18</option><option>Sub 16-15</option><option>Sub 14-13</option><option>Sub 12-11</option><option>Sub 10-9</option><option>Sub 8-7</option>
+              </select>
+            </label>
+            <div class="relative">
+              <label class="text-sm font-bold">Buscar jugador *</label>
+              <div class="relative mt-1">
+                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                <input id="buscador-jugador" placeholder="Escribe nombre..." autocomplete="off" class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm">
+                <input type="hidden" id="jugador_id" required>
+              </div>
+            </div>
+          </div>
+          <!-- Grilla de jugadores por categoria -->
+          <div id="grid-jugadores-cat" class="hidden">
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-2" id="grid-count">0 jugadores</p>
+            <div id="grid-jugadores-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[240px] overflow-auto"></div>
+          </div>
+        </div>
+        <!-- Ficha del jugador seleccionado -->
+        <div id="ficha-jugador" class="hidden bg-slate-900 text-white rounded-xl p-4 flex gap-4">
+          <div class="w-12 h-12 rounded-xl bg-white text-slate-900 flex items-center justify-center font-black" id="ficha-inicial">?</div>
+          <div class="flex-1">
+            <p class="font-black" id="ficha-nombre">-</p>
+            <p class="text-xs text-white/60" id="ficha-detalle">-</p>
+            <p class="text-xs mt-1"><span id="ficha-estado" class="px-2 py-1 rounded-full text-xs font-bold"></span> <span id="ficha-deuda" class="ml-2 text-xs"></span></p>
+          </div>
+          <button type="button" onclick="limpiarJugador()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="grid md:grid-cols-2 gap-3">
+          <label class="text-sm font-bold">Monto *<div class="relative mt-1"><span class="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">$</span><input id="monto" type="number" min="1" required placeholder="0" class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border rounded-xl text-sm"></div></label>
+          <label class="text-sm font-bold">Fecha *<input id="fecha" type="date" required class="mt-1 w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-sm"></label>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-2">
+          <label class="flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+            <input type="radio" name="pago_multiple" value="no" checked onchange="toggleMultiplePayment()" class="accent-slate-900">
+            <span class="text-sm font-bold">Mensual</span><span class="text-xs text-slate-500">Completo</span>
+          </label>
+          <label class="flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50">
+            <input type="radio" name="pago_multiple" value="abono" onchange="toggleMultiplePayment()" class="accent-amber-600">
+            <span class="text-sm font-bold">Abono</span><span class="text-xs text-slate-500">Parcial</span>
+          </label>
+          <label class="flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+            <input type="radio" name="pago_multiple" value="si" onchange="toggleMultiplePayment()" class="accent-emerald-600">
+            <span class="text-sm font-bold">Adelantado</span><span class="text-xs text-slate-500">Varios</span>
+          </label>
+        </div>
+        <div id="pago-multiple-wrapper" class="hidden bg-slate-50 border rounded-xl p-4">
+          <div class="grid md:grid-cols-3 gap-3">
+            <label class="text-xs font-bold">Cantidad<input id="cantidad_meses" type="number" value="2" min="2" oninput="calcularPeriodo()" class="mt-1 w-full px-3 py-2 bg-white border rounded-xl text-sm"></label>
+            <label class="text-xs font-bold">Mes inicial<select id="mes_inicio_select" onchange="calcularPeriodo()" class="mt-1 w-full px-3 py-2 bg-white border rounded-xl text-sm"></select></label>
+            <label class="text-xs font-bold">Fecha inicio<input id="periodo_inicio" type="date" onchange="calcularPeriodo()" class="mt-1 w-full px-3 py-2 bg-white border rounded-xl text-sm"></label>
+          </div>
+          <div class="mt-3 bg-white border rounded-xl p-3 flex justify-between items-center">
+            <div><p class="text-[10px] font-black text-slate-400 uppercase">Meses</p><p id="resumen-meses-texto" class="text-sm font-bold">-</p></div>
+            <div class="text-right"><p class="text-[10px] font-bold text-slate-400">Proximo</p><input id="next_payment_preview" readonly class="bg-transparent font-bold text-emerald-600 text-right text-sm w-36"></div>
+          </div>
+          <input id="periodo_fin" type="hidden"><input id="mes_pago" type="hidden">
+        </div>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="text-sm font-bold">Concepto<select id="tipo" onchange="if(this.value==='otro') document.getElementById('tipo-otro').classList.remove('hidden'); else document.getElementById('tipo-otro').classList.add('hidden')" class="mt-1 w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-sm"><option value="abono">Mensualidad</option><option value="inscripcion">Inscripcion</option><option value="uniforme">Uniforme</option><option value="otro">Otro</option></select></label>
+          <input id="tipo-otro" placeholder="Escribe concepto..." class="hidden mt-5 w-full px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+          <label class="text-sm font-bold">Medio de pago<select id="medio_pago" class="mt-1 w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-sm"><option>Efectivo</option><option>Nequi</option><option>Bancolombia</option><option>Transferencia</option><option>Otro</option></select></label>
+          <label class="text-sm font-bold">Obs<input id="observacion" placeholder="Opcional" class="mt-1 w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-sm"></label>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-sm">Guardar pago y generar recibo</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Historial - ahora ocupa todo el ancho, no amontonado -->
+  <section class="bg-white rounded-2xl border overflow-hidden">
+    <div class="px-4 py-3 border-b bg-slate-50 flex flex-col md:flex-row md:items-center gap-3">
+      <h3 class="font-bold text-sm">Historial de pagos</h3>
+      <div class="flex flex-1 gap-2 md:justify-end">
+        <div class="relative flex-1 md:max-w-xs"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i><input id="buscador" placeholder="Buscar jugador..." class="w-full pl-9 pr-3 py-2 bg-white border rounded-xl text-sm"></div>
+        <input id="filtro-inicio" type="date" class="px-3 py-2 bg-white border rounded-xl text-sm">
+        <input id="filtro-fin" type="date" class="px-3 py-2 bg-white border rounded-xl text-sm">
+        <button onclick="limpiarFiltros()" class="px-3 py-2 bg-white border rounded-xl text-xs font-bold">Limpiar</button>
+      </div>
+    </div>
+    <div class="overflow-auto max-h-[420px]">
+      <table class="w-full text-sm"><thead class="bg-slate-50 text-[11px] font-black uppercase text-slate-500 sticky top-0"><tr><th class="px-4 py-2">Jugador</th><th class="px-4 py-2">Fecha</th><th class="px-4 py-2">Concepto</th><th class="px-4 py-2 text-right">Monto</th><th class="px-4 py-2 text-center">Acciones</th></tr></thead><tbody id="tabla-pagos" class="divide-y"></tbody></table>
+    </div>
+    <div class="px-4 py-3 bg-slate-50 border-t flex justify-between items-center">
+      <span id="info-paginacion" class="text-xs font-bold text-slate-500">0 registros</span>
+      <div class="flex gap-2"><button id="btn-prev" onclick="cambiarPagina(-1)" class="px-4 py-2 bg-white border rounded-xl text-sm font-bold disabled:opacity-40">Anterior</button><button id="btn-next" onclick="cambiarPagina(1)" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40">Siguiente</button></div>
+    </div>
+  </section>
+
+  <!-- Tabla resumen colapsable (ya no amontona) -->
+  <details class="bg-white rounded-2xl border">
+    <summary class="px-5 py-3 font-bold text-sm cursor-pointer flex items-center gap-2"><i class="ph ph-users-three"></i> Ver estado de cuentas por jugador</summary>
+    <div class="p-4 border-t">
+      <div class="flex gap-2 mb-3">
+        <button onclick="renderizarResumen('todos')" class="px-3 py-1.5 bg-slate-900 text-white rounded-full text-xs font-bold">Todos</button>
+        <button onclick="renderizarResumen('deudores')" class="px-3 py-1.5 bg-white border rounded-full text-xs font-bold">Deudores</button>
+        <button onclick="renderizarResumen('pagados')" class="px-3 py-1.5 bg-white border rounded-full text-xs font-bold">Al dia</button>
+      </div>
+      <div class="overflow-auto max-h-[300px]"><table class="w-full text-sm"><tbody id="tabla-resumen" class="divide-y"></tbody></table></div>
+    </div>
+  </details>
+</main>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(s=>s.unregister()));}
+if('caches' in window){caches.keys().then(k=>k.forEach(c=>caches.delete(c)));}
+</script>
+<script type="module">
+  import { verificarSesion } from '/recursos/js/auth.js';
+  import { injectNav } from '/recursos/js/nav.js';
+  const u=await verificarSesion(); if(u) injectNav('pagos');
+</script>
+<script type="module" src="/recursos/js/pagos.js?v=14"></script>
+<script>
+  // Resumen para hero
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=>{
+      const tryUpdate=()=>{
+        if(window.jugadoresList){
+          const total=window.jugadoresList.length;
+          const alDia=window.jugadoresList.filter(j=> Number(j.mensualidad) >= (window.getMensualidadObjetivo? window.getMensualidadObjetivo(j.categoria):50000)).length;
+          document.getElementById('resumen-total').textContent=total;
+          document.getElementById('resumen-al-dia').textContent=alDia;
+          document.getElementById('resumen-deudores').textContent=total-alDia;
+        } else setTimeout(tryUpdate, 500);
+      };
+      tryUpdate();
+    }, 800);
+  });
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+

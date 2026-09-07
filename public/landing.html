@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EFUSA - Escuela de Futbol</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    .anim-fade-up { animation: fadeUp 0.8s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-white text-slate-800 antialiased">
+  <header class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-100 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><i class="ph ph-soccer-ball text-lg"></i></div>
+          <span class="font-bold text-xl text-emerald-700">EFUSA</span>
+        </div>
+        <nav class="hidden md:flex items-center gap-8">
+          <a href="#inicio" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">Inicio</a>
+          <a href="#Categorias" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">Categorias</a>
+          <a href="#contacto" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">Contacto</a>
+          <a href="/login.html" class="text-sm font-bold px-5 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20">Panel Admin</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section id="inicio" class="pt-32 pb-20 md:pt-40 md:pb-32 px-4">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30 mb-8">
+        <i class="ph ph-soccer-ball text-5xl text-white"></i>
+      </div>
+      <h1 class="text-4xl md:text-6xl font-black text-slate-900 leading-tight mb-6 anim-fade-up">
+        Formando <span class="text-emerald-600">Futuro</span>,<br>Un Gol a la Vez
+      </h1>
+      <p class="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 anim-fade-up" style="animation-delay:0.2s">
+        Escuela de futbol EFUSA. Desarrollo deportivo para Ninos y jovenes desde los 7 hasta los 18 anos.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center anim-fade-up" style="animation-delay:0.3s">
+        <a href="/login.html" class="px-8 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/25 text-lg">Ingresar al Panel</a>
+        <a href="#Categorias" class="px-8 py-4 border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-emerald-300 hover:text-emerald-600 transition-all text-lg">Ver Categorias</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="Categorias" class="py-20 px-4 bg-slate-50">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-3xl md:text-4xl font-black text-slate-900 text-center mb-4">Nuestras Categorias</h2>
+      <p class="text-slate-500 text-center mb-12 max-w-xl mx-auto">Entrenamiento especializado por edades para el desarrollo optimo de cada jugador.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all">
+          <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-5"><i class="ph ph-trophy text-2xl"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Sub 17-18</h3>
+          <p class="text-slate-500">Preparacion competitiva. Tactica avanzada, acondicionamiento fisico y preparacion para el futbol profesional.</p>
+        </div>
+        <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all">
+          <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-5"><i class="ph ph-lightning text-2xl"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Sub 14-16</h3>
+          <p class="text-slate-500">Desarrollo tecnico-tactico. Fundamentos, trabajo en equipo y formacion integral.</p>
+        </div>
+        <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all">
+          <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 mb-5"><i class="ph ph-heartbeat text-2xl"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Sub 7-13</h3>
+          <p class="text-slate-500">Iniciacion deportiva. Juego, diversion y primeros pasos en el futbol con metodologia ludica.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="py-20 px-4">
+    <div class="max-w-7xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-6">ContactAnos</h2>
+      <p class="text-slate-500 mb-8">Quieres mas informacion? Escribenos directamente.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a href="https://wa.me/57XXXXXXXXX" target="_blank" class="flex items-center gap-3 px-8 py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all shadow-lg">
+          <i class="ph ph-whatsapp-logo text-2xl"></i> WhatsApp
+        </a>
+        <a href="tel:+57XXXXXXXXX" class="flex items-center gap-3 px-8 py-4 border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-green-300 hover:text-green-600 transition-all">
+          <i class="ph ph-phone text-2xl"></i> Llamar
+        </a>
+      </div>
+      <div class="mt-12 p-8 bg-slate-50 rounded-2xl max-w-lg mx-auto">
+        <p class="text-sm text-slate-500">Sistema de Gestion administrativa para clubes deportivos.</p>
+        <a href="/login.html" class="inline-flex items-center gap-2 mt-4 text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
+          Acceder al Panel de Administracion <i class="ph ph-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="py-8 px-4 border-t border-slate-100">
+    <div class="max-w-7xl mx-auto text-center text-sm text-slate-400">
+      &copy; 2024 EFUSA - Escuela de Futbol. Todos los derechos reservados.
+    </div>
+  </footer>
+</body>
+</html>

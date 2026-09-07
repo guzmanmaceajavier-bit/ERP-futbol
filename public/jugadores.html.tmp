@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Jugadores | EFUSA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']}}}}</script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:Inter,sans-serif;background:#F1F5F9}
+    .custom-scroll::-webkit-scrollbar{width:6px;height:6px}
+    .custom-scroll::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:4px}
+  </style>
+</head>
+<body class="min-h-screen bg-[#F1F5F9] flex">
+<!-- SIDEBAR EXACTO IMAGEN -->
+<aside class="hidden md:flex w-[260px] bg-[#0B1D2A] flex-col fixed top-0 left-0 bottom-0 z-40">
+  <div class="px-5 pt-6 pb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-white flex items-center justify-center overflow-hidden">
+        <div class="w-9 h-9 rounded-lg bg-[#0B1D2A] border-2 border-emerald-500 flex items-center justify-center">
+          <i class="ph ph-soccer-ball text-white text-xl"></i>
+        </div>
+      </div>
+      <div>
+        <p class="text-white font-black text-[18px] leading-none tracking-tight">EFUSA</p>
+        <p class="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Escuela de Futbol</p>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 px-3 space-y-1 mt-4">
+    <a href="/index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white text-sm font-medium"><i class="ph ph-house text-lg"></i> Inicio</a>
+    <a href="/jugadores.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#0E4D2A] text-white text-sm font-bold"><i class="ph ph-users-three text-lg"></i> Jugadores</a>
+    <a href="/pagos.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white text-sm font-medium"><i class="ph ph-receipt text-lg"></i> Pagos</a>
+    <a href="/reportes.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white text-sm font-medium"><i class="ph ph-chart-bar text-lg"></i> Reportes</a>
+    <a href="/alertas.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white text-sm font-medium"><i class="ph ph-bell text-lg"></i> Alertas <span class="ml-auto bg-rose-500 text-white text-xs font-black w-5 h-5 flex items-center justify-center rounded-full">3</span></a>
+    <a href="/configuracion.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white text-sm font-medium"><i class="ph ph-gear text-lg"></i> Configuración</a>
+  </nav>
+  <div class="p-6 mt-auto relative overflow-hidden">
+    <div class="absolute inset-0 opacity-20" style="background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22 opacity=%220.3%22>⚽</text></svg>'); background-size:80px;"></div>
+    <p class="relative text-white/80 text-sm font-medium leading-tight">Formando<br>el futuro<br>del futbol</p>
+    <div class="relative w-12 h-1 bg-emerald-500 rounded-full mt-3"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="flex-1 md:ml-[260px] min-h-screen flex flex-col">
+  <!-- TOP BAR EXACTO IMAGEN -->
+  <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-2 text-sm">
+      <i class="ph ph-shield-check text-emerald-600 text-lg"></i>
+      <span class="font-semibold text-slate-700">Gestion Deportiva</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 text-sm text-slate-600">
+        <i class="ph ph-calendar-blank"></i>
+        <span id="fecha-top">5 de septiembre de 2026</span>
+        <span class="text-slate-300">|</span>
+        <span class="font-semibold">Temporada 2026 <i class="ph ph-caret-down ml-1"></i></span>
+      </div>
+      <div class="h-6 w-px bg-slate-200 hidden md:block"></div>
+      <div class="flex items-center gap-3">
+        <img id="avatar-top" src="https://i.pravatar.cc/100?img=12" class="w-9 h-9 rounded-full object-cover">
+        <div class="hidden md:block text-left">
+          <p class="text-sm font-bold text-slate-900 leading-none" id="nombre-top">Admin EFUSA</p>
+          <p class="text-xs text-slate-500" id="rol-top">Administrador</p>
+        </div>
+        <i class="ph ph-caret-down text-slate-400 hidden md:block"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO + BANNER IMAGEN -->
+  <div class="px-4 md:px-8 pt-6">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-black text-slate-900">Jugadores</h1>
+        <p class="text-slate-500 text-sm mt-1">Administra y da seguimiento a todos los jugadores de la escuela.</p>
+      </div>
+    </div>
+    <!-- Banner verde con jugador -->
+    <div class="mt-4 relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-slate-900 h-[110px] flex items-center justify-end">
+      <img src="https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=400&h=200&fit=crop&crop=top" class="absolute right-20 top-0 h-full w-auto object-cover opacity-60 mix-blend-overlay" style="clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%)">
+      <div class="relative z-10 pr-8 text-right">
+        <p class="text-white font-black text-lg leading-none italic">Disciplina</p>
+        <p class="text-white font-black text-lg leading-none italic">Trabajo</p>
+        <p class="text-white font-black text-lg leading-none italic">Resultados</p>
+      </div>
+      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black/40 to-transparent"></div>
+    </div>
+  </div>
+
+  <!-- KPIS EXACTO IMAGEN -->
+  <div class="px-4 md:px-8 mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center"><i class="ph ph-users-three text-xl"></i></div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Total Jugadores</p>
+          <p id="stat-total" class="text-2xl font-black text-slate-900">48</p>
+          <p class="text-xs font-bold text-emerald-600 flex items-center gap-1"><i class="ph ph-arrow-up"></i> +3 este mes</p>
+        </div>
+      </div>
+      <i class="ph ph-users-three text-3xl text-slate-100"></i>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center"><i class="ph ph-calendar-check text-xl"></i></div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Activos</p>
+          <p id="stat-activos" class="text-2xl font-black text-slate-900">42</p>
+          <p class="text-xs text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> 87.5% del total</p>
+        </div>
+      </div>
+      <i class="ph ph-calendar-check text-3xl text-slate-100"></i>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center"><i class="ph ph-stack text-xl"></i></div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Pagos Pendientes</p>
+          <p id="stat-pendientes-pagos" class="text-2xl font-black text-slate-900">12</p>
+          <p class="text-xs text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-amber-500 rounded-full"></span> 25% del total</p>
+        </div>
+      </div>
+      <i class="ph ph-stack text-3xl text-amber-100"></i>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-rose-500 text-white flex items-center justify-center"><i class="ph ph-warning text-xl"></i></div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Deudores</p>
+          <p id="stat-deudores" class="text-2xl font-black text-slate-900">8</p>
+          <p class="text-xs text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-rose-500 rounded-full"></span> 16.7% del total</p>
+        </div>
+      </div>
+      <i class="ph ph-warning text-3xl text-slate-100"></i>
+    </div>
+  </div>
+
+  <!-- FILTROS EXACTO IMAGEN -->
+  <div class="px-4 md:px-8 mt-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col lg:flex-row gap-3">
+      <div class="relative flex-1">
+        <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+        <input id="buscador" placeholder="Buscar por nombre, documento, categoria o telefono..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-emerald-500">
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <div class="relative">
+          <select id="f-categoria" class="appearance-none pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium min-w-[130px]">
+            <option value="">Categoria Todas</option>
+            <option>Sub 17-18</option><option>Sub 16-15</option><option>Sub 14-13</option><option>Sub 12-11</option><option>Sub 10-9</option><option>Sub 8-7</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+          <p class="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-slate-500">Categoria</p>
+        </div>
+        <div class="relative">
+          <select id="f-estado" class="appearance-none pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium min-w-[120px]">
+            <option value="">Estado Todos</option>
+            <option value="Activo">Activo</option><option value="Inactivo">Inactivo</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+          <p class="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-slate-500">Estado</p>
+        </div>
+        <div class="relative">
+          <select id="f-genero" class="appearance-none pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium min-w-[120px]">
+            <option value="">Genero Todos</option><option value="Masculino">Nino</option><option value="Femenino">Nina</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+          <p class="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-slate-500">Genero</p>
+        </div>
+        <button onclick="abrirModal()" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-bold flex items-center gap-2">
+          <i class="ph ph-plus"></i> Nuevo Jugador
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA EXACTO IMAGEN -->
+  <div class="px-4 md:px-8 mt-4 pb-8">
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div class="overflow-auto">
+        <table class="w-full text-left">
+          <thead class="bg-white border-b text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            <tr>
+              <th class="px-4 py-3 w-8"><input type="checkbox" class="rounded"></th>
+              <th class="px-4 py-3">Jugador</th>
+              <th class="px-4 py-3">Categoria</th>
+              <th class="px-4 py-3">Edad</th>
+              <th class="px-4 py-3">Documento</th>
+              <th class="px-4 py-3">Telefono</th>
+              <th class="px-4 py-3">Estado</th>
+              <th class="px-4 py-3">Pagos</th>
+              <th class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-jugadores" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div class="px-4 py-3 bg-white border-t flex flex-col sm:flex-row justify-between items-center gap-3">
+        <span id="info-paginacion" class="text-sm text-slate-500">Mostrando 1 - 5 de 48 jugadores</span>
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
+            <button onclick="cambiarPagina(-1)" class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50"><i class="ph ph-caret-left"></i></button>
+            <button class="w-8 h-8 bg-emerald-700 text-white rounded-lg font-bold">1</button>
+            <button onclick="cambiarPagina(1)" class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">2</button>
+            <button class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">3</button>
+            <button class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">4</button>
+            <button class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">5</button>
+            <button onclick="cambiarPagina(1)" class="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50"><i class="ph ph-caret-right"></i></button>
+          </div>
+          <select class="ml-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm"><option>10 por pagina</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MISMO ESTILO -->
+<div id="modal-jugador" class="fixed inset-0 z-50 hidden">
+  <div id="modal-backdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 overflow-y-auto p-4 flex items-center justify-center">
+    <div id="modal-panel" class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 class="font-bold flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center"><i id="modal-icon" class="ph ph-user-plus"></i></span> <span id="modal-title">Nuevo jugador</span></h3>
+        <button onclick="cerrarModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><i class="ph ph-x"></i></button>
+      </div>
+      <form id="formJugador" class="p-6 space-y-4 overflow-y-auto">
+        <input type="hidden" id="jugador-id">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="text-center">
+            <div class="w-24 h-24 mx-auto rounded-xl bg-slate-100 border-2 border-dashed flex items-center justify-center overflow-hidden" id="foto-preview"><i class="ph ph-user text-3xl text-slate-300"></i></div>
+            <label class="mt-2 block text-xs font-bold cursor-pointer text-emerald-700">Foto <input type="file" id="foto-input" accept="image/*" class="hidden" onchange="previewFoto(this)"></label>
+            <input type="hidden" id="foto_url">
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs font-bold text-slate-500">QR Carne</p>
+            <div class="mt-2 w-24 h-24 bg-white border rounded-xl flex items-center justify-center overflow-hidden" id="qr-preview"><span class="text-[10px] text-slate-400">Se genera al guardar</span></div>
+            <input type="hidden" id="qr_code">
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <label class="text-sm font-bold">Nombres *<input id="nombre" required placeholder="Javier" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"></label>
+          <label class="text-sm font-bold">Apellidos *<input id="apellidos" required placeholder="Guzman" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"></label>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <label class="text-sm font-bold">Fecha Nac.<input id="fecha_nacimiento" type="date" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"><span id="edad-display" class="text-xs font-bold text-emerald-600 mt-1 hidden"></span></label>
+          <label class="text-sm font-bold">Tipo ID<select id="tipo_identificacion" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"><option value="">Seleccione</option><option>Registro Civil</option><option>Tarjeta de Identidad</option><option>Cedula</option></select></label>
+          <label class="text-sm font-bold">Numero ID<input id="numero_identificacion" placeholder="1069462693" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"></label>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <label class="text-sm font-bold">Telefono *<input id="telefono" required placeholder="301..." class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"></label>
+          <label class="text-sm font-bold">Edad<input id="edad" readonly placeholder="--" class="mt-1 w-full px-4 py-2.5 bg-slate-100 border rounded-xl text-sm text-center font-bold"></label>
+          <label class="text-sm font-bold">Genero<select id="genero" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"><option value="Masculino">Nino</option><option value="Femenino">Nina</option></select></label>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <label class="text-sm font-bold">Categoria<select id="categoria" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"><option>Sub 17-18</option><option>Sub 15-16</option><option>Sub 13-14</option><option>Sub 11-12</option><option>Bub 09-10</option><option>Sub 8-7</option></select></label>
+          <label class="text-sm font-bold">Beca<select id="tipo_beca" class="mt-1 w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm"><option>Normal</option><option>Becado 50%</option><option>Becado 100%</option></select></label>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <label class="text-sm font-bold">Acudiente<input id="acudiente_nombre" placeholder="Sra. Ana" class="mt-1 w-full px-4 py-2.5 bg-white border rounded-xl text-sm"></label>
+          <label class="text-sm font-bold">WhatsApp<input id="acudiente_telefono" placeholder="301..." class="mt-1 w-full px-4 py-2.5 bg-white border rounded-xl text-sm"></label>
+        </div>
+        <div class="hidden"><input id="mensualidad"><input id="acudiente_parentesco"><input id="whatsapp_opt_out" type="checkbox"><input id="activo" type="checkbox" checked></div>
+        <div class="flex gap-3">
+          <button type="button" onclick="cerrarModal()" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="submit" class="flex-1 py-3 bg-emerald-700 text-white rounded-xl font-bold">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+<script type="module">
+  import { verificarSesion } from '/recursos/js/auth.js';
+  const u=await verificarSesion();
+  if(u){
+    document.getElementById('nombre-top').textContent=u.nombre||'Admin EFUSA';
+    document.getElementById('rol-top').textContent=u.role||'Administrador';
+  }
+  document.getElementById('fecha-top').textContent=new Date().toLocaleDateString('es-ES',{day:'numeric', month:'long', year:'numeric'});
+  const fn=document.getElementById('fecha_nacimiento');
+  const edadOut=document.getElementById('edad');
+  const edadDisp=document.getElementById('edad-display');
+  function calcEdad(){
+    const v=fn.value; if(!v){ if(edadOut) edadOut.value=''; if(edadDisp) edadDisp.classList.add('hidden'); return; }
+    const hoy=new Date(); const nac=new Date(v+'T00:00:00');
+    let edad=hoy.getFullYear()-nac.getFullYear();
+    const m=hoy.getMonth()-nac.getMonth();
+    if(m<0 || (m===0 && hoy.getDate()<nac.getDate())) edad--;
+    if(edadOut) edadOut.value=edad+' anos';
+    if(edadDisp){ edadDisp.textContent=edad+' anos'; edadDisp.classList.remove('hidden'); }
+  }
+  if(fn){ fn.addEventListener('change', calcEdad); fn.addEventListener('input', calcEdad); }
+  window.calcEdadJugador=calcEdad;
+  window.previewFoto=(input)=>{
+    if(input.files && input.files[0]){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        document.getElementById('foto-preview').innerHTML=`<img src="${e.target.result}" class="w-full h-full object-cover">`;
+        document.getElementById('foto_url').value=e.target.result;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  };
+  window.generarQR=(texto)=>{
+    const cont=document.getElementById('qr-preview');
+    if(!cont) return;
+    cont.innerHTML='';
+    new QRCode(cont, { text: texto, width: 96, height: 96 });
+    document.getElementById('qr_code').value=texto;
+  };
+</script>
+<script type="module" src="/recursos/js/jugadores.js"></script>
+</body>
+</html>

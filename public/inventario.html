@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><title>Cancha - Inventario | EFUSA V7</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{brand:{600:'#16a34a'}}}}}</script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<style>body{font-family:Inter,sans-serif;background:#F1F5F9}</style>
+</head><body class="min-h-screen">
+<div id="nav-container"></div>
+<div class="bg-[#0F172A] text-white">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <div class="flex items-center gap-3">
+      <a href="/index.html" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i class="ph ph-arrow-left"></i></a>
+      <div>
+        <p class="text-[11px] font-black tracking-[0.18em] text-sky-300 uppercase">CANCHA - STOCK</p>
+        <h1 class="text-2xl font-black">Inventario</h1>
+        <p class="text-white/60 text-sm">Controla tu stock e insumos</p>
+      </div>
+      <button onclick="abrirModal()" class="ml-auto px-5 py-3 bg-sky-500 hover:bg-sky-400 text-white rounded-xl font-black">+ Nuevo producto</button>
+      <button onclick="window.close()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mt-6">
+      <div class="bg-white text-slate-900 rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Total Productos</p><p id="kpi-total" class="text-xl font-black">0</p></div>
+      <div class="bg-rose-500 text-white rounded-2xl p-4"><p class="text-[10px] font-black text-white/70 uppercase">Stock bajo</p><p id="kpi-bajo" class="text-xl font-black">0</p></div>
+      <div class="bg-white text-slate-900 rounded-2xl p-4"><p class="text-[10px] font-black text-slate-400 uppercase">Valor total</p><p id="kpi-valor" class="text-xl font-black">$0</p></div>
+    </div>
+  </div>
+</div>
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-4">
+  <div class="bg-white rounded-2xl border p-3 flex flex-col md:flex-row gap-3">
+    <div class="relative flex-1"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i><input id="buscador" placeholder="Buscar Producto..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-sm"></div>
+    <select id="f-cat" class="px-3 py-2.5 bg-white border rounded-xl text-sm font-bold"><option value="">Todas Categorias</option></select>
+    <div class="flex gap-2">
+      <button onclick="descargarExcel()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black">Excel</button>
+      <button onclick="descargarPDF()" class="px-3 py-2 bg-white border rounded-xl text-xs font-black">PDF</button>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl border overflow-hidden">
+    <div class="overflow-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-[11px] font-black uppercase text-slate-500"><tr><th class="px-4 py-3">Producto</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3 text-center">Stock</th><th class="px-4 py-3 text-center">Minimo</th><th class="px-4 py-3 text-right">Costo</th><th class="px-4 py-3 text-center">Acciones</th></tr></thead>
+        <tbody id="tabla-inv" class="divide-y"></tbody>
+      </table>
+    </div>
+    <div class="px-4 py-3 bg-slate-50 border-t flex justify-between items-center">
+      <span id="info-paginacion" class="text-xs font-bold text-slate-500">0 registros</span>
+      <div class="flex gap-2"><button id="btn-prev" onclick="cambiarPagina(-1)" class="px-4 py-2 bg-white border rounded-xl text-sm font-bold disabled:opacity-40">Anterior</button><button id="btn-next" onclick="cambiarPagina(1)" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40">Siguiente</button></div>
+    </div>
+  </div>
+</div>
+<div id="modal-inv" class="fixed inset-0 z-40 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/60" onclick="cerrar()"></div>
+  <form id="formInv" class="relative bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+      <h2 class="font-bold flex items-center gap-2"><i class="ph ph-package"></i> Producto</h2>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="cerrar()" class="hidden md:flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs font-bold"><i class="ph ph-arrow-left"></i> Volver</button>
+        <button type="button" onclick="cerrar()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-x text-lg"></i></button>
+      </div>
+    </div>
+    <div class="p-6 space-y-3 overflow-y-auto flex-1">
+      <input type="hidden" id="inv-id">
+      <input id="inv-nombre" placeholder="Nombre del producto" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+      <div class="grid grid-cols-2 gap-3">
+        <input id="inv-stock" type="number" placeholder="Stock actual" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="inv-min" type="number" placeholder="Stock minimo" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+      </div>
+      <input id="inv-categoria" placeholder="Categoria (Balones, Conos...)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+      <input id="inv-costo" type="number" placeholder="Costo unitario" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+    </div>
+    <div class="p-4 border-t bg-slate-50 flex gap-3 shrink-0">
+      <button type="button" onclick="cerrar()" class="flex-1 py-3 bg-white border rounded-xl font-bold">Cancelar</button>
+      <button type="submit" class="flex-1 py-3 bg-slate-900 text-white rounded-xl font-black">Guardar</button>
+    </div>
+  </form>
+</div>
+<script type="module">
+import { verificarSesion } from '/recursos/js/auth.js';
+import { injectNav } from '/recursos/js/nav.js';
+import { apiFetch } from '/recursos/js/configuracion.js';
+const u=await verificarSesion(); if(u) injectNav('inventario');
+let lista=[], pagina=1, porPagina=8;
+async function cargar(){ lista=await apiFetch('/inventario'); render();}
+function getFiltrados(){
+  const q=(document.getElementById('buscador').value||'').toLowerCase();
+  const cat=document.getElementById('f-cat').value;
+  return lista.filter(i=> (!q || i.nombre.toLowerCase().includes(q)) && (!cat || i.categoria===cat));
+}
+function render(){
+  const filtrados=getFiltrados();
+  document.getElementById('kpi-total').textContent=lista.length;
+  document.getElementById('kpi-bajo').textContent=lista.filter(i=> Number(i.stock)<=Number(i.stock_minimo)).length;
+  document.getElementById('kpi-valor').textContent='$'+lista.reduce((a,b)=> a+ Number(b.stock)*Number(b.costo_unitario||0),0).toLocaleString();
+  const sel=document.getElementById('f-cat');
+  if(sel.options.length<=1){ [...new Set(lista.map(x=>x.categoria||'General'))].forEach(c=>{ const o=document.createElement('option'); o.textContent=c; sel.appendChild(o); }); }
+  const totalPages=Math.ceil(filtrados.length/porPagina)||1;
+  if(pagina>totalPages) pagina=totalPages; if(pagina<1) pagina=1;
+  const page=filtrados.slice((pagina-1)*porPagina, pagina*porPagina);
+  const tb=document.getElementById('tabla-inv'); tb.innerHTML='';
+  if(!page.length) tb.innerHTML='<tr><td colspan="6" class="text-center py-8 text-slate-400">Sin Productos</td></tr>';
+  page.forEach(i=>{
+    const bajo=Number(i.stock)<=Number(i.stock_minimo);
+    const tr=document.createElement('tr');
+    tr.className=bajo?'bg-rose-50/50':'hover:bg-slate-50';
+    tr.innerHTML=`<td class="px-4 py-3 font-bold">${i.nombre} ${bajo?'<span class="ml-2 text-xs bg-rose-500 text-white px-2 py-1 rounded-full">BAJO</span>':''}</td><td class="px-4 py-3"><span class="bg-slate-100 px-2 py-1 rounded-full text-xs font-bold">${i.categoria||'General'}</span></td><td class="px-4 py-3 text-center font-black ${bajo?'text-rose-600':'text-slate-900'}">${i.stock}</td><td class="px-4 py-3 text-center">${i.stock_minimo}</td><td class="px-4 py-3 text-right">$${Number(i.costo_unitario).toLocaleString()}</td><td class="px-4 py-3"><div class="flex justify-center gap-1"><button onclick="editar(${i.id})" class="w-7 h-7 rounded-lg bg-white border flex items-center justify-center"><i class="ph ph-pencil-simple"></i></button><button onclick="eliminar(${i.id})" class="w-7 h-7 rounded-lg bg-white border text-rose-600 flex items-center justify-center"><i class="ph ph-trash"></i></button></div></td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('info-paginacion').textContent=`Mostrando ${page.length} de ${filtrados.length} registros`;
+}
+window.cambiarPagina=(d)=>{ pagina+=d; render(); }
+window.abrirModal=()=>{document.getElementById('modal-inv').classList.remove('hidden');document.getElementById('modal-inv').classList.add('flex');}
+window.cerrar=()=>{document.getElementById('modal-inv').classList.add('hidden');}
+window.editar=(id)=>{const it=lista.find(x=>x.id===id); document.getElementById('inv-id').value=it.id; document.getElementById('inv-nombre').value=it.nombre; document.getElementById('inv-stock').value=it.stock; document.getElementById('inv-min').value=it.stock_minimo; document.getElementById('inv-categoria').value=it.categoria||''; document.getElementById('inv-costo').value=it.costo_unitario; abrirModal();}
+window.eliminar=async(id)=>{ if(!confirm('Estas seguro de eliminar este producto del inventario?'))return; await apiFetch('/inventario?id='+id,{method:'DELETE'}); cargar();}
+document.getElementById('formInv').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const id=document.getElementById('inv-id').value;
+  const payload={ nombre: document.getElementById('inv-nombre').value, stock: Number(document.getElementById('inv-stock').value)||0, stock_minimo: Number(document.getElementById('inv-min').value)||5, categoria: document.getElementById('inv-categoria').value, costo_unitario: Number(document.getElementById('inv-costo').value)||0 };
+  if(id){payload.id=Number(id); await apiFetch('/inventario',{method:'PUT', body:payload});} else await apiFetch('/inventario',{method:'POST', body:payload});
+  cerrar(); e.target.reset(); cargar();
+});
+document.getElementById('buscador').addEventListener('input', ()=>{ pagina=1; render(); });
+document.getElementById('f-cat').addEventListener('change', ()=>{ pagina=1; render(); });
+window.descargarExcel=()=>{
+  const rows=getFiltrados().map(i=> ({ Producto:i.nombre, Categoria:i.categoria||'General', Stock:i.stock, Minimo:i.stock_minimo, Costo:i.costo_unitario, Estado: Number(i.stock)<=Number(i.stock_minimo)?'BAJO':'OK' }));
+  const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Inventario'); XLSX.writeFile(wb, 'Inventario_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+window.descargarPDF=()=>{
+  const {jsPDF}=window.jspdf; const doc=new jsPDF(); doc.text('Inventario EFUSA - '+new Date().toLocaleDateString(),14,14);
+  doc.autoTable({ head:[['Producto','Categoria','Stock','Estado']], body: getFiltrados().map(i=>[i.nombre, i.categoria||'General', i.stock, Number(i.stock)<=Number(i.stock_minimo)?'BAJO':'OK']), startY:18, headStyles:{fillColor:[15,23,42]} }); doc.save('Inventario_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+cargar();
+</script></body></html>
+
+
+
+
+
+
+
+
+
+
