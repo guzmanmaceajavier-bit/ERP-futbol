@@ -1,165 +1,101 @@
-Perfecto 👍 aquí tienes el **`README.md` completo**, claro y alineado **100% con la estructura real de tu proyecto**, Vercel + Neon + HTML + JS vanilla.
+# ERP Futbol - Sistema de Gestion Integral
 
-Puedes copiarlo tal cual y pegarlo en la raíz del proyecto.
+Sistema web para la gestion integral de escuelas de futbol.
+Jugadores, pagos, asistencias, inventario, reportes y mas.
 
----
-
-```md
-# EFUSA – Gestión de Jugadores y Pagos
-
-Sistema web para la gestión de **jugadores, pagos y alertas** del club EFUSA.  
-Desarrollado con **HTML + JavaScript**, backend con **Node.js (Vercel Serverless Functions)** y base de datos **PostgreSQL (Neon)**.
+Modo demo con archivos JSON (sin base de datos).
 
 ---
 
-## 🚀 Tecnologías usadas
+## Tecnologias
 
 - Frontend: HTML, TailwindCSS, JavaScript Vanilla
-- Backend: Node.js (Serverless Functions)
-- Base de datos: PostgreSQL (Neon)
-- Hosting: Vercel
+- Backend: Node.js
+- Modo demo: archivos JSON en carpeta `data/`
 
 ---
 
-## 📁 Estructura del proyecto
-
-```
-
-/
-├── api/
-│   ├── jugadores.js
-│   ├── pagos.js
-│   └── alertas.js
-│
-├── public/
-│   ├── index.html
-│   ├── jugadores.html
-│   ├── pagos.html
-│   ├── alertas.html
-│   └── recursos/
-│       └── js/
-│           ├── api.js
-│           ├── configuracion.js
-│           ├── jugadores.js
-│           ├── pagos.js
-│           ├── alertas.js
-│           └── whatsapp.js
-│
-├── package.json
-├── vercel.json
-└── README.md
-
-```
-
----
-
-## 🌐 Rutas del sistema
-
-### Frontend
-- `/` → Inicio
-- `/jugadores.html` → Gestión de jugadores
-- `/pagos.html` → Registro y control de pagos
-- `/alertas.html` → Alertas y notificaciones
-
-### API (Backend)
-- `/api/jugadores`
-- `/api/pagos`
-- `/api/alertas`
-
----
-
-## ⚙️ Configuración de base de datos (Neon)
-
-### Variable de entorno en Vercel
-
-En **Vercel → Project → Settings → Environment Variables**:
-
-```
-
-DATABASE_URL=postgres://usuario:password@host.neon.tech/db?sslmode=require
-
-````
-
-⚠️ **Nunca** subas esta URL al código.
-
----
-
-## 🗄️ Base de datos
-
-Base de datos **PostgreSQL** alojada en Neon.
-
-Tablas principales:
-- `jugadores`
-- `pagos`
-- `alertas`
-
-(Los scripts SQL se crean directamente en Neon).
-
----
-
-## 🧪 Desarrollo local (opcional)
+## Inicio rapido
 
 ```bash
 npm install
-vercel dev
-````
-
-Luego abrir:
-
-```
-http://localhost:3000
+node api/index.js
 ```
 
----
+Abrir http://localhost:3000
 
-## 📦 Deploy en Vercel
-
-1. Subir el proyecto a GitHub
-2. Importar repositorio en Vercel
-3. Configurar `DATABASE_URL`
-4. Deploy 🚀
+Usuario: admin / Contrasena: admin123
 
 ---
 
-## ✅ Características
+## Estructura del proyecto
 
-* CRUD de jugadores
-* Registro de pagos
-* Filtros por fecha y jugador
-* Cálculo automático de totales
-* Alertas de pagos pendientes
-* Exportación a Excel
-* Diseño responsive con Tailwind
-
----
-
-## 👨‍💻 Autor
-
-Proyecto desarrollado para **EFUSA**
-Soporte y mejoras continuas.
-
----
-
-## 📝 Notas
-
-* El frontend se sirve desde `/public`
-* El backend funciona como funciones serverless
-* Compatible con Node >= 20
-
----
-
-💚 EFUSA – Control claro, simple y moderno
-
+```
+/
+├── api/                    # Backend Node.js
+│   ├── index.js            # Servidor principal
+│   ├── jugadores.js        # API jugadores
+│   ├── pagos.js            # API pagos
+│   ├── asistencias.js      # API asistencias
+│   ├── alertas.js          # API alertas
+│   ├── categorias.js       # API categorias
+│   ├── profesores.js       # API profesores
+│   ├── inventario.js       # API inventario
+│   ├── gastos.js           # API gastos
+│   ├── reportes.js         # API reportes
+│   ├── notas.js            # API notas
+│   ├── caja.js             # API caja
+│   ├── bitacora.js         # API bitacora
+│   ├── torneos.js          # API torneos
+│   ├── whatsapp.js         # API whatsapp
+│   └── config.js           # API configuracion
+│
+├── public/                 # Frontend
+│   ├── index.html          # Dashboard
+│   ├── jugadores.html      # Gestion de jugadores
+│   ├── pagos.html          # Registro de pagos/ingresos
+│   ├── asistencias.html    # Control de asistencias
+│   ├── alertas.html        # Alertas y notificaciones
+│   ├── categorias.html     # Gestion de categorias
+│   ├── profesores.html     # Gestion de profesores
+│   ├── inventario.html     # Control de inventario
+│   ├── gastos.html         # Control de gastos
+│   ├── reportes.html       # Reportes y graficas
+│   ├── notas.html          # Notas de jugadores
+│   ├── caja.html           # Control de caja
+│   ├── bitacora.html       # Bitacora de actividad
+│   ├── torneos.html        # Gestion de torneos
+│   ├── configuracion.html  # Configuracion del sistema
+│   ├── sw.js               # Service worker
+│   └── recursos/
+│       ├── js/             # JavaScript frontend
+│       └── css/            # Estilos
+│
+├── data/                   # Archivos JSON (modo demo)
+├── sql/                    # Scripts SQL
+├── package.json
+└── vercel.json
 ```
 
 ---
 
-Si quieres, el siguiente paso puede ser:
-- 📄 **README más corto (modo producción)**
-- 🧾 **SQL completo documentado**
-- 🧪 **Guía de pruebas paso a paso**
-- 🔐 **Sistema de login futuro**
+## Caracteristicas
 
-Tú decides 🔥
-::contentReference[oaicite:0]{index=0}
-```
+- CRUD completo de jugadores con categorias
+- Registro y control de pagos/ingresos
+- Alertas de pagos pendientes (manuales y automaticas)
+- Control de asistencias
+- Gestion de categorias y profesores
+- Inventario y control de gastos
+- Reportes con graficas
+- Sistema de bitacora
+- Gestion de torneos
+- WhatsApp integrado
+- Diseno responsive
+- Modo demo sin base de datos
+
+---
+
+## Autor
+
+Proyecto desarrollado por guzmanmaceajavier-bit.
