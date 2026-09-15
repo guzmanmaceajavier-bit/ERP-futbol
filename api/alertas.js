@@ -5,41 +5,56 @@ import { authMiddleware } from './_auth.js';
 async function handler(req, res) {
   if (isDemoMode()) {
     const jugadores = load('jugadores');
-    const pagos = load('pagos');
+    const periodos = load('periodos');
     const descartadas = load('alertas_descartadas', []);
     const manuales = load('alertas_manuales', []);
 
-    // GET - Calcular alertas automaticas + manuales
     if (req.method === 'GET') {
       const hoy = new Date();
-      const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+      const anioActual = hoy.getFullYear();
+      const mesActual = hoy.getMonth() + 1;
 
-      // Alertas automaticas (deudas计算)
-      const autoRows = jugadores.filter(j => j.activo !== false).map(j => {
-        const ultimo = pagos.filter(p => p.jugador_id === j.id).sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
-        const base = Number(j.mensualidad_objetivo) || 50000;
-        const desc = Number(j.descuento_beca) || 0;
-        const meta = Math.round(base * (1 - desc / 100));
-        const pagado = Number(j.mensualidad) || 0;
-        const esVencido = ultimo && new Date(ultimo.fecha) < primerDia;
-        let tipo = 'DEUDA';
-        let deuda = meta - pagado;
-        if (esVencido && pagado >= meta) { tipo = 'VENCIMIENTO'; deuda = meta; }
-        return {
-          id: j.id, nombre: j.nombre + ' ' + (j.apellidos || ''), categoria: j.categoria,
-          telefono: j.acudiente_telefono || j.telefono, mensualidad: pagado, mensualidad_objetivo: meta,
-          mes_abono: ultimo?.mes_pago || '', fecha_ultimo_pago: ultimo?.fecha || null,
-          _tipo: tipo, _deuda: deuda, tipo: 'automatica', jugador_id: j.id
-        };
-      }).filter(x => x._deuda > 0 || x._tipo === 'VENCIMIENTO')
-        .map(j => ({
-          id: 'auto-' + j.id, jugador_id: j.jugador_id, nombre: j.nombre, categoria: j.categoria,
-          telefono: j.telefono, pagado: j.mensualidad, deuda: Math.max(0, j._deuda),
-          mes_abono: j.mes_abono, tipo_alerta: j._tipo, mensualidad_objetivo: j.mensualidad_objetivo,
-          tipo: 'automatica', descartada: descartadas.includes('auto-' + j.id)
-        }));
+      const autoRows = [];
+      for (const j of jugadores.filter(j => j.activo !== false)) {
+        const periodosJugador = periodos.filter(p => p.jugador_id === j.id && p.anio === anioActual);
+        for (const pm of periodosJugador) {
+          if (pm.estado === 'beca') continue;
+          if (pm.mes > mesActual) continue;
 
-      // Alertas manuales
+          if (pm.estado === 'pendiente') {
+            autoRows.push({
+              id: 'auto-' + j.id + '-' + pm.anio + '-' + pm.mes,
+              jugador_id: j.id, nombre: j.nombre + ' ' + (j.apellidos || ''),
+              categoria: j.categoria, telefono: j.acudiente_telefono || j.telefono,
+              pagado: Number(pm.pagado), deuda: Number(pm.objetivo),
+              mensualidad_objetivo: Number(pm.objetivo),
+              mes_abono: '', tipo_alerta: 'DEUDA', tipo: 'automatica',
+              periodo: `${pm.anio}-${String(pm.mes).padStart(2, '0')}`
+            });
+          } else if (pm.estado === 'abono') {
+            autoRows.push({
+              id: 'auto-' + j.id + '-' + pm.anio + '-' + pm.mes,
+              jugador_id: j.id, nombre: j.nombre + ' ' + (j.apellidos || ''),
+              categoria: j.categoria, telefono: j.acudiente_telefono || j.telefono,
+              pagado: Number(pm.pagado), deuda: Number(pm.objetivo) - Number(pm.pagado),
+              mensualidad_objetivo: Number(pm.objetivo),
+              mes_abono: '', tipo_alerta: 'ABONO', tipo: 'automatica',
+              periodo: `${pm.anio}-${String(pm.mes).padStart(2, '0')}`
+            });
+          } else if (pm.estado === 'pendiente' && pm.mes < mesActual) {
+            autoRows.push({
+              id: 'auto-' + j.id + '-' + pm.anio + '-' + pm.mes,
+              jugador_id: j.id, nombre: j.nombre + ' ' + (j.apellidos || ''),
+              categoria: j.categoria, telefono: j.acudiente_telefono || j.telefono,
+              pagado: 0, deuda: Number(pm.objetivo),
+              mensualidad_objetivo: Number(pm.objetivo),
+              mes_abono: '', tipo_alerta: 'VENCIMIENTO', tipo: 'automatica',
+              periodo: `${pm.anio}-${String(pm.mes).padStart(2, '0')}`
+            });
+          }
+        }
+      }
+
       const manualRows = manuales.map(m => ({
         ...m, tipo: 'manual', descartada: descartadas.includes('manual-' + m.id)
       }));
@@ -48,11 +63,9 @@ async function handler(req, res) {
       return res.status(200).json(todas);
     }
 
-    // POST - Crear alerta manual
     if (req.method === 'POST') {
       const { accion } = req.body;
 
-      // Crear alerta manual
       if (accion === 'crear') {
         const { jugador_id, titulo, mensaje, fecha_vencimiento } = req.body;
         if (!titulo) return res.status(400).json({ error: 'Titulo requerido' });
@@ -69,7 +82,6 @@ async function handler(req, res) {
         return res.status(201).json(alerta);
       }
 
-      // Descartar alerta
       if (accion === 'descartar') {
         const { alerta_id } = req.body;
         if (!alerta_id) return res.status(400).json({ error: 'alerta_id requerido' });
@@ -78,7 +90,6 @@ async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      // Restaurar alerta descartada
       if (accion === 'restaurar') {
         const { alerta_id } = req.body;
         const idx = descartadas.indexOf(alerta_id);
@@ -87,7 +98,6 @@ async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      // WhatsApp masivo
       if (accion === 'whatsapp_masivo') {
         const { alertas_ids, mensaje } = req.body;
         let encolados = 0;
@@ -96,7 +106,8 @@ async function handler(req, res) {
         for (const aid of (alertas_ids || [])) {
           let telefono, nombre, jugador_id;
           if (String(aid).startsWith('auto-')) {
-            const jid = Number(String(aid).replace('auto-', ''));
+            const parts = String(aid).replace('auto-', '').split('-');
+            const jid = Number(parts[0]);
             const j = jugadores.find(x => x.id === jid);
             if (!j) continue;
             telefono = j.acudiente_telefono || j.telefono;
@@ -110,7 +121,7 @@ async function handler(req, res) {
             jugador_id = m.jugador_id;
           }
           if (!telefono) continue;
-          const msg = mensaje || `Hola ${nombre}, le escribimos de EFUSA sobre su saldo pendiente.`;
+          const msg = mensaje || `Hola ${nombre}, le escribimos de la escuela sobre su saldo pendiente.`;
           cola.push({ id: nextId(cola), jugador_id, telefono, mensaje: msg, estado: 'pendiente', programado_para: new Date().toISOString() });
           hist.push({ id: nextId(hist), jugador_id, telefono, mensaje: msg, tipo: 'masivo', estado: 'en_cola', created_at: new Date().toISOString() });
           encolados++;
@@ -123,7 +134,6 @@ async function handler(req, res) {
       return res.status(400).json({ error: 'accion requerida' });
     }
 
-    // DELETE - Eliminar alerta manual
     if (req.method === 'DELETE') {
       const id = Number(req.query.id);
       const idx = manuales.findIndex(x => x.id === id);
@@ -133,7 +143,6 @@ async function handler(req, res) {
       return res.status(200).json({ mensaje: 'Eliminada' });
     }
 
-    // PUT - Editar alerta manual
     if (req.method === 'PUT') {
       const id = Number(req.body.id);
       const idx = manuales.findIndex(x => x.id === id);
@@ -161,34 +170,25 @@ async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const { rows: deudoresData } = await query(`
-        SELECT j.id, j.nombre, j.categoria, j.telefono, j.mensualidad, j.mensualidad_objetivo,
-               p.mes_pago AS mes_abono, p.fecha AS fecha_ultimo_pago
-        FROM jugadores j
-        LEFT JOIN (
-          SELECT DISTINCT ON (jugador_id) jugador_id, mes_pago, fecha
-          FROM pagos ORDER BY jugador_id, fecha DESC
-        ) p ON j.id = p.jugador_id
+        SELECT j.id, j.nombre, j.categoria, j.telefono,
+               pm.anio, pm.mes, pm.objetivo, pm.pagado, pm.estado
+        FROM periodos_mensuales pm
+        JOIN jugadores j ON j.id = pm.jugador_id
         WHERE j.activo = true
-          AND (j.mensualidad < j.mensualidad_objetivo OR p.fecha < date_trunc('month', CURRENT_DATE))
-        ORDER BY CASE WHEN p.fecha < date_trunc('month', CURRENT_DATE) THEN 0 ELSE 1 END, p.fecha ASC
+          AND pm.estado IN ('pendiente', 'abono')
+          AND (pm.anio < EXTRACT(YEAR FROM CURRENT_DATE)
+               OR (pm.anio = EXTRACT(YEAR FROM CURRENT_DATE) AND pm.mes <= EXTRACT(MONTH FROM CURRENT_DATE)))
+        ORDER BY pm.anio, pm.mes
       `);
-      const hoy = new Date();
-      const primerDiaMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-      const deudores = deudoresData.map(j => {
-        const meta = Number(j.mensualidad_objetivo) || 50000;
-        const esPagoVencido = j.fecha_ultimo_pago && new Date(j.fecha_ultimo_pago) < primerDiaMesActual;
-        let tipoAlerta = 'DEUDA';
-        let deudaCalculada = meta - Number(j.mensualidad);
-        if (esPagoVencido && Number(j.mensualidad) >= meta) {
-          tipoAlerta = 'VENCIMIENTO';
-          deudaCalculada = meta;
-        }
-        return {
-          id: j.id, jugador_id: j.id, nombre: j.nombre, categoria: j.categoria, telefono: j.telefono,
-          pagado: Number(j.mensualidad), deuda: Math.max(0, deudaCalculada),
-          mes_abono: j.mes_abono, tipo_alerta: tipoAlerta, mensualidad_objetivo: meta, tipo: 'automatica'
-        };
-      });
+      const deudores = deudoresData.map(r => ({
+        id: r.id + '-' + r.anio + '-' + r.mes,
+        jugador_id: r.id, nombre: r.nombre, categoria: r.categoria, telefono: r.telefono,
+        pagado: Number(r.pagado), deuda: Number(r.objetivo) - Number(r.pagado),
+        mensualidad_objetivo: Number(r.objetivo),
+        tipo_alerta: r.estado === 'pendiente' && r.mes < new Date().getMonth() + 1 ? 'VENCIMIENTO' : r.estado === 'abono' ? 'ABONO' : 'DEUDA',
+        tipo: 'automatica',
+        periodo: `${r.anio}-${String(r.mes).padStart(2, '0')}`
+      }));
       return res.status(200).json(deudores);
     }
 
@@ -198,7 +198,35 @@ async function handler(req, res) {
         const { alertas_ids, mensaje } = req.body;
         return res.status(200).json({ ok: true, encolados: alertas_ids?.length || 0, delay_segundos: 15 });
       }
+      if (accion === 'crear') {
+        const { jugador_id, titulo, mensaje, fecha_vencimiento } = req.body;
+        if (!titulo) return res.status(400).json({ error: 'Titulo requerido' });
+        const { rows } = await query(
+          `INSERT INTO alertas_manuales (jugador_id, titulo, mensaje, fecha_vencimiento) VALUES ($1,$2,$3,$4) RETURNING *`,
+          [jugador_id || null, titulo, mensaje || null, fecha_vencimiento || null]
+        );
+        return res.status(201).json(rows[0]);
+      }
       return res.status(400).json({ error: 'accion requerida' });
+    }
+
+    if (req.method === 'PUT') {
+      const id = req.body.id;
+      if (!id) return res.status(400).json({ error: 'Falta id' });
+      const { titulo, mensaje, fecha_vencimiento } = req.body;
+      const { rows } = await query(
+        `UPDATE alertas_manuales SET titulo=$1, mensaje=$2, fecha_vencimiento=$3, updated_at=NOW() WHERE id=$4 RETURNING *`,
+        [titulo, mensaje, fecha_vencimiento, id]
+      );
+      if (rows.length === 0) return res.status(404).json({ error: 'No encontrada' });
+      return res.status(200).json(rows[0]);
+    }
+
+    if (req.method === 'DELETE') {
+      const id = req.query.id;
+      if (!id) return res.status(400).json({ error: 'Falta id' });
+      await query('DELETE FROM alertas_manuales WHERE id=$1', [id]);
+      return res.status(200).json({ mensaje: 'Eliminada' });
     }
 
     return res.status(405).json({ error: 'Metodo no permitido' });

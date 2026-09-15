@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.join(__dirname, '..');
-const publicDir = path.join(root, 'public');
 
 // Cargar .env si existe
 try {
@@ -41,12 +40,12 @@ const apiFiles = {
   '/api/config': './config.js',
   '/api/bitacora': './bitacora.js',
   '/api/categorias': './categorias.js',
+  '/api/periodos': './periodos.js',
+  '/api/entrenamientos': './entrenamientos.js',
+  '/api/partidos': './partidos.js',
+  '/api/convocatorias': './convocatorias.js',
 };
 
-const mime = {
-  '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
-  '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml'
-};
 
 async function handleApi(req, res) {
   const parsed = url.parse(req.url, true);
@@ -95,45 +94,15 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
   if (pathname.startsWith('/api/')) {
-    // mock res helpers como Vercel
-    const origEnd = res.end.bind(res);
-    res.status = (code) => { res.statusCode = code; return res; };
-    res.json = (obj) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(obj)); };
-    // hack: res.status().json() chaining
-    const origStatus = res.status;
-    res.status = (code) => { res.statusCode = code; return { json: res.json, end: res.end, send: res.end }; };
-    // restaurar json fallará, mejor simple:
     res.status = (code) => { res.statusCode = code; return res; };
     res.json = (obj) => { res.setHeader('Content-Type','application/json'); return res.end(JSON.stringify(obj)); };
     try { await handleApi(req, res); } catch(e){ console.error(e); res.statusCode=500; res.end(JSON.stringify({error:e.message})); }
     return;
   }
 
-  // Static
-  if (pathname === '/') pathname = '/index.html';
-  if (pathname.startsWith('/recursos/')) {
-    const filePath = path.join(publicDir, pathname);
-    if (fs.existsSync(filePath)) {
-      const ext = path.extname(filePath);
-      const ct = (mime[ext] || 'application/octet-stream') + (ext==='.js'||ext==='.html'||ext==='.css' ? '; charset=utf-8' : '');
-      res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' });
-      return fs.createReadStream(filePath).pipe(res);
-    }
-  }
-  let filePath = path.join(publicDir, pathname);
-  if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) filePath += '.html';
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    const ext = path.extname(filePath);
-    const ct = (mime[ext] || 'text/html') + '; charset=utf-8';
-    res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'no-store, no-cache, must-revalidate' });
-    return fs.createReadStream(filePath).pipe(res);
-  }
-  // fallback index
-  if (fs.existsSync(path.join(publicDir, 'index.html'))) {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    return fs.createReadStream(path.join(publicDir, 'index.html')).pipe(res);
-  }
-  res.writeHead(404); res.end('Not found');
+  // No servir archivos estaticos - el frontend React corre por separado
+  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'No encontrado' }));
 });
 
 server.listen(PORT, () => {

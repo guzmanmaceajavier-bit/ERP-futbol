@@ -1,0 +1,88 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { MainLayout } from './layouts/MainLayout';
+import { AuthLayout } from './layouts/AuthLayout';
+import { Login } from './pages/Login';
+import { Dashboard } from './pages/Dashboard';
+import { Jugadores } from './pages/Jugadores';
+import { Pagos } from './pages/Pagos';
+import { Categorias } from './pages/Categorias';
+import { Asistencias } from './pages/Asistencias';
+import { Profesores } from './pages/Profesores';
+import { Caja } from './pages/Caja';
+import { Gastos } from './pages/Gastos';
+import { Inventario } from './pages/Inventario';
+import { Torneos } from './pages/Torneos';
+import { Alertas } from './pages/Alertas';
+import { WhatsApp } from './pages/WhatsApp';
+import { Notas } from './pages/Notas';
+import { Bitacora } from './pages/Bitacora';
+import { Reportes } from './pages/Reportes';
+import { Configuracion } from './pages/Configuracion';
+import { Entrenamientos } from './pages/Entrenamientos';
+import { Partidos } from './pages/Partidos';
+import { Convocatorias } from './pages/Convocatorias';
+import type { UserRole } from './types';
+import { LoadingOverlay } from './components/feedback/LoadingOverlay';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingOverlay />;
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function RoleGuard({ roles, children }: { roles: UserRole[]; children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user || !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+
+      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+
+        <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe', 'auxiliar']}><Jugadores /></RoleGuard>} />
+        <Route path="categorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Categorias /></RoleGuard>} />
+        <Route path="profesores" element={<RoleGuard roles={['super_admin', 'admin']}><Profesores /></RoleGuard>} />
+        <Route path="asistencias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe', 'auxiliar']}><Asistencias /></RoleGuard>} />
+        <Route path="torneos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Torneos /></RoleGuard>} />
+
+        <Route path="entrenamientos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Entrenamientos /></RoleGuard>} />
+        <Route path="partidos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Partidos /></RoleGuard>} />
+        <Route path="convocatorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Convocatorias /></RoleGuard>} />
+
+        <Route path="pagos" element={<RoleGuard roles={['super_admin', 'admin']}><Pagos /></RoleGuard>} />
+        <Route path="caja" element={<RoleGuard roles={['super_admin', 'admin']}><Caja /></RoleGuard>} />
+        <Route path="gastos" element={<RoleGuard roles={['super_admin', 'admin']}><Gastos /></RoleGuard>} />
+        <Route path="reportes" element={<RoleGuard roles={['super_admin', 'admin']}><Reportes /></RoleGuard>} />
+
+        <Route path="inventario" element={<RoleGuard roles={['super_admin', 'admin', 'auxiliar']}><Inventario /></RoleGuard>} />
+        <Route path="notas" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Notas /></RoleGuard>} />
+
+        <Route path="alertas" element={<RoleGuard roles={['super_admin', 'admin']}><Alertas /></RoleGuard>} />
+        <Route path="whatsapp" element={<RoleGuard roles={['super_admin', 'admin']}><WhatsApp /></RoleGuard>} />
+        <Route path="bitacora" element={<RoleGuard roles={['super_admin']}><Bitacora /></RoleGuard>} />
+        <Route path="configuracion" element={<RoleGuard roles={['super_admin']}><Configuracion /></RoleGuard>} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

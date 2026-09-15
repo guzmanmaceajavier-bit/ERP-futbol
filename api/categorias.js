@@ -5,30 +5,34 @@ import { load, save, nextId } from './_store.js';
 async function handler(req, res) {
   if (isDemoMode()) {
     let cats = load('categorias', []);
-    // Seed si esta vacio
     if (!cats.length) {
       cats = [
-        { id: 1, nombre: 'Sub 17-18', tipo_genero: 'Mixto', mensualidad_base: 50000, activo: true, created_at: new Date().toISOString() },
-        { id: 2, nombre: 'Sub 16-15', tipo_genero: 'Mixto', mensualidad_base: 50000, activo: true, created_at: new Date().toISOString() },
-        { id: 3, nombre: 'Sub 14-13', tipo_genero: 'Mixto', mensualidad_base: 40000, activo: true, created_at: new Date().toISOString() },
-        { id: 4, nombre: 'Sub 12-11', tipo_genero: 'Mixto', mensualidad_base: 40000, activo: true, created_at: new Date().toISOString() },
-        { id: 5, nombre: 'Sub 10-9', tipo_genero: 'Mixto', mensualidad_base: 30000, activo: true, created_at: new Date().toISOString() },
-        { id: 6, nombre: 'Sub 8-7', tipo_genero: 'Mixto', mensualidad_base: 30000, activo: true, created_at: new Date().toISOString() },
+        { id: 1, nombre: 'Sub 17-18', tipo_genero: 'Mixto', mensualidad_base: 50000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
+        { id: 2, nombre: 'Sub 16-15', tipo_genero: 'Mixto', mensualidad_base: 50000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
+        { id: 3, nombre: 'Sub 14-13', tipo_genero: 'Mixto', mensualidad_base: 40000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
+        { id: 4, nombre: 'Sub 12-11', tipo_genero: 'Mixto', mensualidad_base: 40000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
+        { id: 5, nombre: 'Sub 10-9', tipo_genero: 'Mixto', mensualidad_base: 30000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
+        { id: 6, nombre: 'Sub 8-7', tipo_genero: 'Mixto', mensualidad_base: 30000, profesor_id: null, activo: true, created_at: new Date().toISOString() },
       ];
       save('categorias', cats);
     }
+    let migrated = false;
+    cats.forEach(c => { if (c.profesor_id === undefined) { c.profesor_id = null; migrated = true; } });
+    if (migrated) save('categorias', cats);
 
     if (req.method === 'GET') {
       const jugadores = load('jugadores');
+      const profesores = load('profesores');
       const out = cats.map(c => ({
         ...c,
+        profesor_nombre: c.profesor_id ? (profesores.find(p => p.id === c.profesor_id)?.nombre || null) : null,
         total_jugadores: jugadores.filter(j => j.categoria === c.nombre && j.activo !== false).length
       }));
       return res.status(200).json(out);
     }
 
     if (req.method === 'POST') {
-      const { nombre, tipo_genero, mensualidad_base } = req.body;
+      const { nombre, tipo_genero, mensualidad_base, profesor_id } = req.body;
       if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'Nombre requerido' });
       if (cats.find(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
         return res.status(409).json({ error: 'Ya existe una categoria con ese nombre' });
@@ -38,6 +42,7 @@ async function handler(req, res) {
         nombre: nombre.trim(),
         tipo_genero: tipo_genero || 'Mixto',
         mensualidad_base: Number(mensualidad_base) || 50000,
+        profesor_id: profesor_id != null ? Number(profesor_id) : null,
         activo: true,
         created_at: new Date().toISOString()
       };
@@ -57,8 +62,14 @@ async function handler(req, res) {
         }
       }
       const oldName = cats[idx].nombre;
-      cats[idx] = { ...cats[idx], nombre: b.nombre?.trim() || cats[idx].nombre, tipo_genero: b.tipo_genero || cats[idx].tipo_genero, mensualidad_base: Number(b.mensualidad_base) ?? cats[idx].mensualidad_base, activo: b.activo !== undefined ? b.activo : cats[idx].activo };
-      // Renombrar en jugadores si cambio el nombre
+      cats[idx] = {
+        ...cats[idx],
+        nombre: b.nombre?.trim() || cats[idx].nombre,
+        tipo_genero: b.tipo_genero || cats[idx].tipo_genero,
+        mensualidad_base: Number(b.mensualidad_base) ?? cats[idx].mensualidad_base,
+        profesor_id: b.profesor_id !== undefined ? (b.profesor_id != null && b.profesor_id !== '' ? Number(b.profesor_id) : null) : cats[idx].profesor_id,
+        activo: b.activo !== undefined ? b.activo : cats[idx].activo,
+      };
       if (b.nombre && b.nombre.trim() !== oldName) {
         let jugadores = load('jugadores');
         jugadores.forEach(j => { if (j.categoria === oldName) j.categoria = cats[idx].nombre; });
@@ -95,21 +106,21 @@ async function handler(req, res) {
   // MODO NEON
   try {
     if (req.method === 'GET') {
-      const { rows } = await query('SELECT c.*, COUNT(j.id) FILTER (WHERE j.activo=true) AS total_jugadores FROM categorias c LEFT JOIN jugadores j ON j.categoria=c.nombre GROUP BY c.id ORDER BY c.nombre');
+      const { rows } = await query('SELECT c.*, COALESCE(p.nombre, NULL) AS profesor_nombre FROM categorias c LEFT JOIN profesores p ON p.id = c.profesor_id ORDER BY c.nombre');
       return res.status(200).json(rows);
     }
     if (req.method === 'POST') {
       if (req.usuario.role !== 'super_admin') return res.status(403).json({ error: 'Solo Super Admin' });
-      const { nombre, tipo_genero, mensualidad_base } = req.body;
+      const { nombre, tipo_genero, mensualidad_base, profesor_id } = req.body;
       if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-      const { rows } = await query(`INSERT INTO categorias (nombre, tipo_genero, mensualidad_base) VALUES ($1,$2,$3) ON CONFLICT (nombre) DO UPDATE SET tipo_genero=$2, mensualidad_base=$3 RETURNING *`, [nombre, tipo_genero || 'Mixto', mensualidad_base || 50000]);
+      const { rows } = await query(`INSERT INTO categorias (nombre, tipo_genero, mensualidad_base, profesor_id) VALUES ($1,$2,$3,$4) ON CONFLICT (nombre) DO UPDATE SET tipo_genero=$2, mensualidad_base=$3, profesor_id=$4 RETURNING *`, [nombre, tipo_genero || 'Mixto', mensualidad_base || 50000, profesor_id || null]);
       return res.status(201).json(rows[0]);
     }
     if (req.method === 'PUT') {
       if (req.usuario.role !== 'super_admin') return res.status(403).json({ error: 'Solo Super Admin' });
       const id = Number(req.body.id);
-      const { nombre, tipo_genero, mensualidad_base, activo } = req.body;
-      const { rows } = await query(`UPDATE categorias SET nombre=COALESCE($1,nombre), tipo_genero=COALESCE($2,tipo_genero), mensualidad_base=COALESCE($3,mensualidad_base), activo=COALESCE($4,activo) WHERE id=$5 RETURNING *`, [nombre, tipo_genero, mensualidad_base, activo, id]);
+      const { nombre, tipo_genero, mensualidad_base, activo, profesor_id } = req.body;
+      const { rows } = await query(`UPDATE categorias SET nombre=COALESCE($1,nombre), tipo_genero=COALESCE($2,tipo_genero), mensualidad_base=COALESCE($3,mensualidad_base), activo=COALESCE($4,activo), profesor_id=$5 WHERE id=$6 RETURNING *`, [nombre, tipo_genero, mensualidad_base, activo, profesor_id || null, id]);
       if (!rows.length) return res.status(404).json({ error: 'No encontrada' });
       return res.status(200).json(rows[0]);
     }

@@ -1,0 +1,27 @@
+export type ConfigKey =
+  | 'escuela_nombre'
+  | 'escuela_telefono'
+  | 'escuela_whatsapp'
+  | 'escuela_email'
+  | 'escuela_direccion'
+  | 'escuela_ciudad'
+  | 'escuela_nit'
+  | 'escuela_logo'
+  | 'regla_dia_pago'
+  | 'regla_dias_recordatorio'
+  | 'regla_dia_mora'
+  | 'regla_meses_gracia'
+  | 'regla_activar_vencimiento'
+  | 'regla_saldo_favor'
+  | 'regla_aplicar_saldo_favor'
+  | 'beca_descuento_50'
+  | 'beca_descuento_100'
+  | 'whatsapp_delay_segundos'
+  | 'whatsapp_telefono'
+  | 'whatsapp_activo'
+  | 'whatsapp_limite_lote'
+  | 'sesion_duracion'
+  | 'sesion_max_intentos'
+  | string;
+
+export type ConfigMap = Record<ConfigKey, string>;

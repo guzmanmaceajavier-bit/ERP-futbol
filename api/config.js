@@ -7,7 +7,15 @@ async function handler(req, res) {
     let cfg=load('config', {});
     // convertir array a objeto si hace falta
     if(Array.isArray(cfg)) cfg={};
-    if(Object.keys(cfg).length===0) cfg={escuela_nombre:'EFUSA',escuela_telefono:'3000000000',regla_dias_recordatorio:'3',regla_dia_mora:'6',whatsapp_delay_segundos:'15'};
+    if(Object.keys(cfg).length===0) cfg={
+      escuela_nombre:'Mi Escuela', escuela_telefono:'', escuela_whatsapp:'', escuela_email:'',
+      escuela_direccion:'', escuela_ciudad:'', escuela_nit:'', escuela_logo:'',
+      regla_dia_pago:'5', regla_dias_recordatorio:'3', regla_dia_mora:'10', regla_meses_gracia:'0',
+      regla_activar_vencimiento:'true', regla_saldo_favor:'true', regla_aplicar_saldo_favor:'true',
+      beca_descuento_50:'50', beca_descuento_100:'100',
+      whatsapp_delay_segundos:'5', whatsapp_telefono:'', whatsapp_activo:'true', whatsapp_limite_lote:'10',
+      sesion_duracion:'24', sesion_max_intentos:'5'
+    };
     if(req.method==='GET') return res.status(200).json(cfg);
     if(req.method==='PUT'){ if(req.usuario.role!=='super_admin') return res.status(403).json({error:'Solo Super Admin'}); Object.assign(cfg, req.body); save('config', cfg); return res.status(200).json({ok:true}); }
     return res.status(405).json({error:'Metodo no permitido'});
