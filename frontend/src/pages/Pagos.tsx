@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
 import { usePagination } from '../hooks/usePagination';
 import { useToast } from '../hooks/useToast';
@@ -6,7 +6,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { pagoService } from '../services/pagoService';
 import { jugadorService } from '../services/jugadorService';
 import type { Pago, PagoForm, Jugador } from '../types';
-import { CATEGORIAS } from '../utils/constants';
+import { CATEGORIAS, MESES } from '../utils/constants';
 import { formatCurrency, formatDate, todayISO } from '../utils/formatters';
 import { Pagination } from '../components/data/Pagination';
 import { ToastList } from '../components/feedback/ToastList';
@@ -15,7 +15,6 @@ import { ErrorState } from '../components/feedback/ErrorState';
 import { ConfirmDialog } from '../components/forms/ConfirmDialog';
 import { PeriodoGrid } from '../components/ui/PeriodoGrid';
 
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
 
 export function Pagos() {

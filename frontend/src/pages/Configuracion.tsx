@@ -9,8 +9,7 @@ import { ToastList } from '../components/feedback/ToastList';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
-
-const CATEGORIAS = ['Sub 17-18', 'Sub 16-15', 'Sub 14-13', 'Sub 12-11', 'Sub 10-9', 'Sub 8-7'];
+import { CATEGORIAS } from '../utils/constants';
 
 const PLANTILLAS = [
   { key: 'whatsapp_confirmacion', label: 'Confirmacion de pago', desc: 'Al registrar un pago exitoso' },
@@ -29,7 +28,7 @@ const PLANTILLAS_TEXTO: Record<string, string> = {
 export function Configuracion() {
   const { data: config, loading, error, refetch } = useApi(() => configService.getAll());
   const { toasts, showSuccess, showError, dismiss } = useToast();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [confirmText, setConfirmText] = useState('');

@@ -1,9 +1,10 @@
-export type TipoAlerta = 'DEUDA' | 'VENCIMIENTO' | 'MANUAL';
+export type TipoAlerta = 'DEUDA' | 'ABONO' | 'VENCIMIENTO' | 'MANUAL';
 export type TipoOrigen = 'automatica' | 'manual';
 
 export interface Alerta {
   id: string | number;
   jugador_id: number | null;
+  jugador_nombre?: string;
   nombre: string;
   categoria: string;
   telefono: string;

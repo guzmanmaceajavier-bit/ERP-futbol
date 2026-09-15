@@ -128,7 +128,7 @@ async function handler(req, res) {
       if (tel && !j.whatsapp_opt_out) {
         let hist = load('whatsapp_historial');
         const msg = estadoPago === 'abono'
-          ? `Hola ${j.acudiente_nombre || j.nombre}, ${j.nombre} abono $${Number(monto).toLocaleString()}, le faltan $${(obj - totalAsignado).toLocaleString()}. Vence ${vencStr}.`
+          ? `Hola ${j.acudiente_nombre || j.nombre}, ${j.nombre} abono $${Number(monto).toLocaleString()}, le faltan $${(objetivoMes * mesesAcubir.length - totalAsignado).toLocaleString()}. Vence ${vencStr}.`
           : `Gracias ${j.acudiente_nombre || j.nombre}, recibimos $${Number(monto).toLocaleString()} de ${j.nombre}. Recibo ${recibo}.`;
         hist.push({ id: nextId(hist), jugador_id: j.id, telefono: tel, plantilla_codigo: estadoPago === 'abono' ? 'abono_incompleto' : 'confirmacion_pago', mensaje: msg, tipo: 'automatico', estado: 'enviado', created_at: new Date().toISOString() });
         save('whatsapp_historial', hist);
