@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Sistema EFUSA - gestión de jugadores, pagos y alertas",
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
     "start": "node api/index.js",
     "dev": "node api/index.js",
