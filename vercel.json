@@ -2,7 +2,7 @@
   "version": 2,
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/frontend/dist/assets/$1" },
-    { "source": "/((?!assets/).*)", "destination": "/frontend/dist/index.html" }
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
