@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node api/index.js",
     "dev": "node api/index.js",
+    "build": "cd frontend && npm install && npm run build",
     "vercel": "vercel dev",
     "setup": "node setup.js",
     "migrate:v7": "node -e \"import('pg').then(async m=>{const {Pool}=m; const fs=await import('fs'); const p=new Pool({connectionString:process.env.DATABASE_URL, ssl:{rejectUnauthorized:false}}); const sql=fs.readFileSync('./sql/migracion_002_v7.sql','utf8'); await p.query(sql); console.log('V7 OK'); await p.end()})\""

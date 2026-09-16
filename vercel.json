@@ -1,9 +1,8 @@
 {
   "version": 2,
+  "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/recursos/(.*)", "destination": "/public/recursos/$1" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*).html", "destination": "/public/$1.html" },
-    { "source": "/(.*)", "destination": "/public/$1" }
+    { "source": "/assets/(.*)", "destination": "/frontend/dist/assets/$1" },
+    { "source": "/(.*)", "destination": "/frontend/dist/$1" }
   ]
 }
