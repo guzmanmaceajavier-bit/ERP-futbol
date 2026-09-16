@@ -100,8 +100,8 @@ export function Jugadores() {
       key: 'saldo_pendiente',
       label: 'Saldo',
       render: (j) => (
-        <span className={`font-mono font-bold ${j.saldo_pendiente > 0 ? 'text-red-400' : 'text-green-400'}`}>
-          {formatCurrency(j.saldo_pendiente)}
+        <span className={`font-mono font-bold ${(j.saldo_pendiente || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+          {formatCurrency(j.saldo_pendiente || 0)}
         </span>
       ),
     },

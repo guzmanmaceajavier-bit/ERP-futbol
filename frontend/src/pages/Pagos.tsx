@@ -146,7 +146,7 @@ export function Pagos() {
     setTipoPago(p.tipo === 'adelantado' ? 'si' : p.tipo === 'abono' ? 'abono' : 'no');
     if (p.mes_pago && p.cantidad_meses) {
       const parts = p.mes_pago.split(' ');
-      const mesIdx = MESES.indexOf(parts[0]);
+      const mesIdx = (MESES as readonly string[]).indexOf(parts[0]);
       const anio = parseInt(parts[1]) || new Date().getFullYear();
       if (mesIdx >= 0) {
         const meses: { anio: number; mes: number }[] = [];
@@ -265,7 +265,7 @@ export function Pagos() {
                 <p className="text-xs text-slate-400">{jugadorSeleccionado.categoria} | {jugadorSeleccionado.telefono || 'S/T'}{jugadorSeleccionado.acudiente_nombre ? ' | Acud: ' + jugadorSeleccionado.acudiente_nombre : ''}</p>
                 <p className="text-xs mt-1">
                   {(jugadorSeleccionado.saldo_pendiente || 0) > 0 ? (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400">Debe {formatCurrency(jugadorSeleccionado.saldo_pendiente)}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400">Debe {formatCurrency(jugadorSeleccionado.saldo_pendiente || 0)}</span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#22C55E]/20 text-[#22C55E]">Al dia</span>
                   )}
