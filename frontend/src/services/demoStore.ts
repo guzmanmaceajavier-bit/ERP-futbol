@@ -26,6 +26,13 @@ function now() {
   return new Date().toISOString();
 }
 
+function parseIdFromUrl(url: string, body?: any): number {
+  if (body?.id) return Number(body.id);
+  const match = url.match(/[?&]id=(\d+)/);
+  if (match) return Number(match[1]);
+  return NaN;
+}
+
 export function isDemoMode(): boolean {
   return localStorage.getItem(DEMO_KEY) === 'true';
 }
@@ -81,7 +88,7 @@ export function initDemoData() {
     { id: 1, nombre: 'Balon size 5', categoria: 'Balones', stock: 15, stock_minimo: 8, costo_unitario: 25000, proveedor: 'Deportes SA' },
     { id: 2, nombre: 'Canesita deportiva', categoria: 'Uniformes', stock: 40, stock_minimo: 20, costo_unitario: 35000, proveedor: 'TextilFutbol' },
     { id: 3, nombre: 'Canilleras', categoria: 'Proteccion', stock: 30, stock_minimo: 15, costo_unitario: 15000, proveedor: 'Deportes SA' },
-    { id: 4, nombre: 'Conos训练', categoria: 'Entrenamiento', stock: 25, stock_minimo: 10, costo_unitario: 5000, proveedor: 'SportsTech' },
+    { id: 4, nombre: 'Conos', categoria: 'Entrenamiento', stock: 25, stock_minimo: 10, costo_unitario: 5000, proveedor: 'SportsTech' },
   ];
 
   const alertas = [
@@ -98,6 +105,26 @@ export function initDemoData() {
   const bitacora = [
     { id: 1, fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'login', modulo: 'auth', detalle: 'Sesion iniciada' },
     { id: 2, fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'crear', modulo: 'jugadores', detalle: 'Jugador Santiago Garcia creado' },
+  ];
+
+  const periodos = [
+    { id: 1, jugador_id: 1, jugador_nombre: 'Santiago Garcia', categoria: 'Sub 17-18', anio: 2025, mes: 9, objetivo: 50000, pagado: 50000, estado: 'pagado', notas: '', created_at: now() },
+    { id: 2, jugador_id: 3, jugador_nombre: 'Mateo Lopez', categoria: 'Sub 14-13', anio: 2025, mes: 9, objetivo: 40000, pagado: 20000, estado: 'abono', notas: '', created_at: now() },
+    { id: 3, jugador_id: 7, jugador_nombre: 'Daniel Gutierrez', categoria: 'Sub 14-13', anio: 2025, mes: 9, objetivo: 40000, pagado: 0, estado: 'pendiente', notas: '', created_at: now() },
+    { id: 4, jugador_id: 9, jugador_nombre: 'Nicolas Morales', categoria: 'Sub 8-7', anio: 2025, mes: 9, objetivo: 30000, pagado: 0, estado: 'pendiente', notas: '', created_at: now() },
+  ];
+
+  const whatsapp_plantillas = [
+    { codigo: 'pago_pendiente', nombre: 'Pago pendiente', mensaje: 'Hola {nombre}, tu mensualidad de {mes} esta pendiente. Debes {deuda}.', aprobada_meta: true },
+    { codigo: 'recordatorio', nombre: 'Recordatorio de pago', mensaje: 'Hola {nombre}, te recordamos que tu pago vence el dia {vencimiento}.', aprobada_meta: true },
+    { codigo: 'bienvenida', nombre: 'Bienvenida', mensaje: 'Bienvenido a {escuela} {nombre}! Tu categoria es {categoria}.', aprobada_meta: false },
+    { codigo: 'descuento', nombre: 'Promocion', mensaje: 'Hola {nombre}, tenemos una promocion especial para ti!', aprobada_meta: false },
+  ];
+
+  const whatsapp_historial = [
+    { id: 1, jugador_id: 1, jugador_nombre: 'Santiago Garcia', telefono: '3105551111', tipo: 'pago_pendiente', mensaje: 'Hola Santiago, tu mensualidad de Septiembre esta pendiente. Debes $50.000.', estado: 'enviado', fecha: '2025-09-05T10:00:00Z' },
+    { id: 2, jugador_id: 7, jugador_nombre: 'Daniel Gutierrez', telefono: '3165557777', tipo: 'pago_pendiente', mensaje: 'Hola Daniel, tu mensualidad de Septiembre esta pendiente. Debes $40.000.', estado: 'enviado', fecha: '2025-09-08T14:00:00Z' },
+    { id: 3, jugador_id: 9, jugador_nombre: 'Nicolas Morales', telefono: '3185559999', tipo: 'recordatorio', mensaje: 'Hola Nicolas, te recordamos que tu pago vence el dia 10.', estado: 'error', fecha: '2025-09-09T09:00:00Z' },
   ];
 
   const config: Record<string, string> = {
@@ -128,15 +155,18 @@ export function initDemoData() {
   setCollection('alertas', alertas);
   setCollection('notas', notas);
   setCollection('bitacora', bitacora);
+  setCollection('periodos', periodos);
+  setCollection('entrenamientos', []);
+  setCollection('partidos', []);
+  setCollection('convocatorias', []);
+  setCollection('asistencias', []);
+  setCollection('torneos', []);
+  setCollection('saldos_favor', []);
+  setCollection('pago_periodos', []);
   setCollection('config', Object.entries(config).map(([k, v]) => ({ key: k, value: v })));
   setCollection('caja', [
     { fecha: new Date().toISOString().slice(0, 10), saldo_inicial: 200000, total_ingresos: 170000, total_gastos: 2050000, saldo_final: 120000, estado: 'cerrada', abierta_por: 1, cerrada_por: 1 }
   ]);
-}
-
-function matchRoute(method: string, url: string, method2: string, pattern: RegExp): RegExpMatchArray | null {
-  if (method !== method2) return null;
-  return url.match(pattern);
 }
 
 export function demoHandle(method: string, url: string, body?: any): any {
@@ -147,7 +177,7 @@ export function demoHandle(method: string, url: string, body?: any): any {
       const user = { id: 1, username: 'admin', nombre: 'Administrador', role: 'super_admin' as const };
       return { token: 'demo-token-123', usuario: user };
     }
-    return { error: 'Credenciales incorrectas' };
+    throw new Error('Credenciales incorrectas');
   }
 
   if (method === 'GET' && url === '/auth/verify') {
@@ -155,15 +185,18 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return { valido: true, usuario: user };
   }
 
-  const segments = url.split('?')[0].split('/').filter(Boolean);
+  const urlPath = url.split('?')[0].split('/').filter(Boolean);
+  const qs = url.includes('?') ? url.split('?')[1] : '';
 
-  if (segments[0] === 'config' && method === 'GET') {
+  const seg0 = urlPath[0];
+
+  if (seg0 === 'config' && method === 'GET') {
     const items = getCollection<{key: string; value: string}>('config');
     const map: Record<string, string> = {};
     items.forEach(i => { map[i.key] = i.value; });
     return map;
   }
-  if (segments[0] === 'config' && method === 'PUT') {
+  if (seg0 === 'config' && method === 'PUT') {
     const items = getCollection<{key: string; value: string}>('config');
     Object.entries(body || {}).forEach(([k, v]) => {
       const idx = items.findIndex(i => i.key === k);
@@ -171,190 +204,198 @@ export function demoHandle(method: string, url: string, body?: any): any {
       else items.push({ key: k, value: String(v) });
     });
     setCollection('config', items);
-    return items;
+    const map: Record<string, string> = {};
+    items.forEach(i => { map[i.key] = i.value; });
+    return map;
   }
 
-  if (segments[0] === 'bitacora' && method === 'GET') {
-    return getCollection('bitacora');
-  }
+  if (seg0 === 'bitacora' && method === 'GET') return getCollection('bitacora');
 
-  if (segments[0] === 'alertas' && method === 'GET') {
-    return getCollection('alertas');
-  }
-  if (segments[0] === 'alertas' && method === 'POST') {
-    const items = getCollection('alertas');
-    items.push({ ...body, id: nextId('alertas'), created_at: now() });
-    setCollection('alertas', items);
-    return items[items.length - 1];
-  }
-  if (segments[0] === 'alertas' && method === 'PUT') {
+  if (seg0 === 'alertas' && method === 'GET') return getCollection('alertas');
+  if (seg0 === 'alertas' && method === 'POST') {
     const items = getCollection<any>('alertas');
-    const idx = items.findIndex((i: any) => i.id === body.id);
+    const newItem = { ...body, id: nextId('alertas'), created_at: now() };
+    items.push(newItem);
+    setCollection('alertas', items);
+    return newItem;
+  }
+  if (seg0 === 'alertas' && method === 'PUT') {
+    const items = getCollection<any>('alertas');
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('alertas', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'alertas' && method === 'DELETE') {
-    const id = Number(segments[1]);
+  if (seg0 === 'alertas' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('alertas');
     items = items.filter((i: any) => i.id !== id);
     setCollection('alertas', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'jugadores' && method === 'GET') {
+  if (seg0 === 'jugadores' && method === 'GET') return getCollection('jugadores');
+  if (seg0 === 'jugadores' && method === 'POST') {
     const items = getCollection<any>('jugadores');
-    return items;
-  }
-  if (segments[0] === 'jugadores' && method === 'POST') {
-    const items = getCollection<any>('jugadores');
-    const newItem = { ...body, id: nextId('jugadores'), activo: true, created_at: now(), saldo_pendiente: 0, mensualidad: body.mensualidad || 0, mensualidad_objetivo: body.mensualidad_objetivo || 0, descuento_beca: body.descuento_beca || 0 };
+    const newItem = { ...body, id: nextId('jugadores'), activo: true, created_at: now(), saldo_pendiente: body.saldo_pendiente || 0, mensualidad: body.mensualidad || 0, mensualidad_objetivo: body.mensualidad_objetivo || 0, descuento_beca: body.descuento_beca || 0 };
     items.push(newItem);
     setCollection('jugadores', items);
     return newItem;
   }
-  if (segments[0] === 'jugadores' && method === 'PUT') {
+  if (seg0 === 'jugadores' && method === 'PUT') {
     const items = getCollection<any>('jugadores');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('jugadores', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'jugadores' && method === 'DELETE') {
+  if (seg0 === 'jugadores' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('jugadores');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('jugadores', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'pagos' && method === 'GET') {
-    return getCollection('pagos');
-  }
-  if (segments[0] === 'pagos' && method === 'POST') {
+  if (seg0 === 'pagos' && method === 'GET') return getCollection('pagos');
+  if (seg0 === 'pagos' && method === 'POST') {
     const items = getCollection<any>('pagos');
-    const newItem = { ...body, id: nextId('pagos'), created_at: now(), recibo_numero: 'REC-' + String(nextId('pagos')).padStart(3, '0') };
+    const newItem = { ...body, id: nextId('pagos'), created_at: now(), recibo_numero: body.recibo_numero || 'REC-' + String(nextId('pagos')).padStart(3, '0') };
     items.push(newItem);
     setCollection('pagos', items);
     return newItem;
   }
-  if (segments[0] === 'pagos' && method === 'PUT') {
+  if (seg0 === 'pagos' && method === 'PUT') {
     const items = getCollection<any>('pagos');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('pagos', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'pagos' && method === 'DELETE') {
+  if (seg0 === 'pagos' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('pagos');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('pagos', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'categorias' && method === 'GET') return getCollection('categorias');
-  if (segments[0] === 'categorias' && method === 'POST') {
+  if (seg0 === 'categorias' && method === 'GET') return getCollection('categorias');
+  if (seg0 === 'categorias' && method === 'POST') {
     const items = getCollection<any>('categorias');
     const newItem = { ...body, id: nextId('categorias'), activo: true, created_at: now(), total_jugadores: 0 };
     items.push(newItem);
     setCollection('categorias', items);
     return newItem;
   }
-  if (segments[0] === 'categorias' && method === 'PUT') {
+  if (seg0 === 'categorias' && method === 'PUT') {
     const items = getCollection<any>('categorias');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('categorias', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'categorias' && method === 'DELETE') {
+  if (seg0 === 'categorias' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('categorias');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('categorias', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'profesores' && method === 'GET') return getCollection('profesores');
-  if (segments[0] === 'profesores' && method === 'POST') {
+  if (seg0 === 'profesores' && method === 'GET') return getCollection('profesores');
+  if (seg0 === 'profesores' && method === 'POST') {
     const items = getCollection<any>('profesores');
     const newItem = { ...body, id: nextId('profesores'), activo: true };
     items.push(newItem);
     setCollection('profesores', items);
     return newItem;
   }
-  if (segments[0] === 'profesores' && method === 'PUT') {
+  if (seg0 === 'profesores' && method === 'PUT') {
     const items = getCollection<any>('profesores');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('profesores', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'profesores' && method === 'DELETE') {
+  if (seg0 === 'profesores' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('profesores');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('profesores', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'gastos' && method === 'GET') return getCollection('gastos');
-  if (segments[0] === 'gastos' && method === 'POST') {
+  if (seg0 === 'gastos' && method === 'GET') return getCollection('gastos');
+  if (seg0 === 'gastos' && method === 'POST') {
     const items = getCollection<any>('gastos');
     const newItem = { ...body, id: nextId('gastos'), created_at: now(), creado_por: 1, creado_por_nombre: 'Admin' };
     items.push(newItem);
     setCollection('gastos', items);
     return newItem;
   }
-  if (segments[0] === 'gastos' && method === 'PUT') {
+  if (seg0 === 'gastos' && method === 'PUT') {
     const items = getCollection<any>('gastos');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('gastos', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'gastos' && method === 'DELETE') {
+  if (seg0 === 'gastos' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('gastos');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('gastos', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'inventario' && method === 'GET') return getCollection('inventario');
-  if (segments[0] === 'inventario' && method === 'POST') {
+  if (seg0 === 'inventario' && method === 'GET') return getCollection('inventario');
+  if (seg0 === 'inventario' && method === 'POST') {
     const items = getCollection<any>('inventario');
     const newItem = { ...body, id: nextId('inventario') };
     items.push(newItem);
     setCollection('inventario', items);
     return newItem;
   }
-  if (segments[0] === 'inventario' && method === 'PUT') {
+  if (seg0 === 'inventario' && method === 'PUT') {
     const items = getCollection<any>('inventario');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('inventario', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'inventario' && method === 'DELETE') {
+  if (seg0 === 'inventario' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('inventario');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('inventario', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'notas' && method === 'GET') return getCollection('notas');
-  if (segments[0] === 'notas' && method === 'POST') {
+  if (seg0 === 'notas' && method === 'GET') return getCollection('notas');
+  if (seg0 === 'notas' && method === 'POST') {
     const items = getCollection<any>('notas');
     const newItem = { ...body, id: nextId('notas'), created_at: now(), creado_por: 1, creador_nombre: 'Admin' };
     items.push(newItem);
     setCollection('notas', items);
     return newItem;
   }
-  if (segments[0] === 'notas' && method === 'DELETE') {
+  if (seg0 === 'notas' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('notas');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('notas', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'caja' && method === 'GET') {
+  if (seg0 === 'caja' && method === 'GET') {
     const cajas = getCollection<any>('caja');
     const today = new Date().toISOString().slice(0, 10);
     const cajaHoy = cajas.find((c: any) => c.fecha === today);
@@ -367,7 +408,7 @@ export function demoHandle(method: string, url: string, body?: any): any {
       estado: cajaHoy?.estado || 'cerrada'
     };
   }
-  if (segments[0] === 'caja' && method === 'POST') {
+  if (seg0 === 'caja' && method === 'POST') {
     const items = getCollection<any>('caja');
     const today = new Date().toISOString().slice(0, 10);
     const idx = items.findIndex((c: any) => c.fecha === today);
@@ -380,80 +421,127 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return items[idx >= 0 ? idx : items.length - 1];
   }
 
-  if (segments[0] === 'reportes' && method === 'GET') {
-    const pagos = getCollection<any>('pagos');
-    const gastos = getCollection<any>('gastos');
-    return { pagos, gastos, total_ingresos: pagos.reduce((s: number, p: any) => s + (p.monto || 0), 0), total_gastos: gastos.reduce((s: number, g: any) => s + (g.monto || 0), 0) };
+  if (seg0 === 'reportes' && method === 'GET') {
+    const params = new URLSearchParams(qs);
+    const tipo = params.get('tipo');
+    const allPagos = getCollection<any>('pagos');
+    const allGastos = getCollection<any>('gastos');
+    const allJugadores = getCollection<any>('jugadores');
+
+    if (tipo === 'recaudado-por-mes') {
+      const meses: Record<string, { total: number; cantidad: number }> = {};
+      allPagos.forEach((p: any) => {
+        const key = p.mes_pago || 'Sin mes';
+        if (!meses[key]) meses[key] = { total: 0, cantidad: 0 };
+        meses[key].total += p.monto || 0;
+        meses[key].cantidad += 1;
+      });
+      return Object.entries(meses).map(([mes, data]) => ({ mes, ...data }));
+    }
+
+    if (tipo === 'recaudado-por-categoria') {
+      const cats: Record<string, { total: number; al_dia: number }> = {};
+      allPagos.forEach((p: any) => {
+        const cat = p.jugador_categoria || 'Sin categoria';
+        if (!cats[cat]) cats[cat] = { total: 0, al_dia: 0 };
+        cats[cat].total += p.monto || 0;
+      });
+      allJugadores.forEach((j: any) => {
+        const cat = j.categoria || 'Sin categoria';
+        if (!cats[cat]) cats[cat] = { total: 0, al_dia: 0 };
+        if (!j.saldo_pendiente || j.saldo_pendiente === 0) cats[cat].al_dia += 1;
+      });
+      return Object.entries(cats).map(([categoria, data]) => ({ categoria, ...data }));
+    }
+
+    if (tipo === 'estado-cuenta') {
+      const cats: Record<string, { total: number; al_dia: number }> = {};
+      allJugadores.forEach((j: any) => {
+        const cat = j.categoria || 'Sin categoria';
+        if (!cats[cat]) cats[cat] = { total: 0, al_dia: 0 };
+        cats[cat].total += j.saldo_pendiente || 0;
+        if (!j.saldo_pendiente || j.saldo_pendiente === 0) cats[cat].al_dia += 1;
+      });
+      return Object.entries(cats).map(([categoria, data]) => ({ categoria, ...data }));
+    }
+
+    return { pagos: allPagos, gastos: allGastos, total_ingresos: allPagos.reduce((s: number, p: any) => s + (p.monto || 0), 0), total_gastos: allGastos.reduce((s: number, g: any) => s + (g.monto || 0), 0) };
   }
 
-  if (segments[0] === 'entrenamientos' && method === 'GET') return getCollection('entrenamientos');
-  if (segments[0] === 'entrenamientos' && method === 'POST') {
+  if (seg0 === 'entrenamientos' && method === 'GET') return getCollection('entrenamientos');
+  if (seg0 === 'entrenamientos' && method === 'POST') {
     const items = getCollection<any>('entrenamientos');
     const newItem = { ...body, id: nextId('entrenamientos'), created_at: now() };
     items.push(newItem);
     setCollection('entrenamientos', items);
     return newItem;
   }
-  if (segments[0] === 'entrenamientos' && method === 'PUT') {
+  if (seg0 === 'entrenamientos' && method === 'PUT') {
     const items = getCollection<any>('entrenamientos');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('entrenamientos', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'entrenamientos' && method === 'DELETE') {
+  if (seg0 === 'entrenamientos' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('entrenamientos');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('entrenamientos', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'partidos' && method === 'GET') return getCollection('partidos');
-  if (segments[0] === 'partidos' && method === 'POST') {
+  if (seg0 === 'partidos' && method === 'GET') return getCollection('partidos');
+  if (seg0 === 'partidos' && method === 'POST') {
     const items = getCollection<any>('partidos');
     const newItem = { ...body, id: nextId('partidos'), created_at: now() };
     items.push(newItem);
     setCollection('partidos', items);
     return newItem;
   }
-  if (segments[0] === 'partidos' && method === 'PUT') {
+  if (seg0 === 'partidos' && method === 'PUT') {
     const items = getCollection<any>('partidos');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('partidos', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'partidos' && method === 'DELETE') {
+  if (seg0 === 'partidos' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('partidos');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('partidos', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'convocatorias' && method === 'GET') return getCollection('convocatorias');
-  if (segments[0] === 'convocatorias' && method === 'POST') {
+  if (seg0 === 'convocatorias' && method === 'GET') return getCollection('convocatorias');
+  if (seg0 === 'convocatorias' && method === 'POST') {
     const items = getCollection<any>('convocatorias');
     const newItem = { ...body, id: nextId('convocatorias'), created_at: now() };
     items.push(newItem);
     setCollection('convocatorias', items);
     return newItem;
   }
-  if (segments[0] === 'convocatorias' && method === 'PUT') {
+  if (seg0 === 'convocatorias' && method === 'PUT') {
     const items = getCollection<any>('convocatorias');
-    const idx = items.findIndex((i: any) => i.id === Number(segments[1]));
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
     if (idx >= 0) items[idx] = { ...items[idx], ...body };
     setCollection('convocatorias', items);
-    return items[idx];
+    return items[idx] || { ok: true };
   }
-  if (segments[0] === 'convocatorias' && method === 'DELETE') {
+  if (seg0 === 'convocatorias' && method === 'DELETE') {
+    const id = parseIdFromUrl(url, body);
     let items = getCollection<any>('convocatorias');
-    items = items.filter((i: any) => i.id !== Number(segments[1]));
+    items = items.filter((i: any) => i.id !== id);
     setCollection('convocatorias', items);
     return { ok: true };
   }
 
-  if (segments[0] === 'asistencias' && method === 'GET') return getCollection('asistencias');
-  if (segments[0] === 'asistencias' && method === 'POST') {
+  if (seg0 === 'asistencias' && method === 'GET') return getCollection('asistencias');
+  if (seg0 === 'asistencias' && method === 'POST') {
     const items = getCollection<any>('asistencias');
     const newItem = { ...body, id: nextId('asistencias'), created_at: now() };
     items.push(newItem);
@@ -461,8 +549,8 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return newItem;
   }
 
-  if (segments[0] === 'torneos' && method === 'GET') return getCollection('torneos');
-  if (segments[0] === 'torneos' && method === 'POST') {
+  if (seg0 === 'torneos' && method === 'GET') return getCollection('torneos');
+  if (seg0 === 'torneos' && method === 'POST') {
     const items = getCollection<any>('torneos');
     const newItem = { ...body, id: nextId('torneos'), created_at: now() };
     items.push(newItem);
@@ -470,16 +558,117 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return newItem;
   }
 
-  if (segments[0] === 'periodos' && method === 'GET') return getCollection('periodos');
-  if (segments[0] === 'periodos' && method === 'POST') {
+  if (seg0 === 'periodos' && method === 'GET') {
+    const params = new URLSearchParams(qs);
+    if (params.get('resumen') === 'true') {
+      const periodos = getCollection<any>('periodos');
+      const jugadores = getCollection<any>('jugadores');
+      const anio = params.get('anio') ? Number(params.get('anio')) : undefined;
+      const jugadoresMap: Record<number, any> = {};
+      jugadores.forEach((j: any) => { jugadoresMap[j.id] = j; });
+      const resumen: Record<number, any> = {};
+      periodos.forEach((p: any) => {
+        if (anio && p.anio !== anio) return;
+        if (!resumen[p.jugador_id]) {
+          const j = jugadoresMap[p.jugador_id];
+          resumen[p.jugador_id] = {
+            jugador_id: p.jugador_id,
+            jugador_nombre: p.jugador_nombre || (j ? `${j.nombre} ${j.apellidos}` : `Jugador #${p.jugador_id}`),
+            categoria: p.categoria || j?.categoria || '',
+            periodos: []
+          };
+        }
+        resumen[p.jugador_id].periodos.push(p);
+      });
+      return Object.values(resumen);
+    }
+    return getCollection('periodos');
+  }
+  if (seg0 === 'periodos' && method === 'POST') {
     const items = getCollection<any>('periodos');
+    if (body?.accion === 'generar') {
+      const jugadores = getCollection<any>('jugadores');
+      const j = jugadores.find((j: any) => j.id === body.jugador_id);
+      if (!j) throw new Error('Jugador no encontrado');
+      const nuevo = {
+        id: nextId('periodos'),
+        jugador_id: body.jugador_id,
+        jugador_nombre: `${j.nombre} ${j.apellidos}`,
+        categoria: j.categoria,
+        anio: body.anio,
+        mes: body.mes || new Date().getMonth() + 1,
+        objetivo: j.mensualidad_objetivo || j.mensualidad || 0,
+        pagado: 0,
+        estado: 'pendiente',
+        notas: '',
+        created_at: now()
+      };
+      items.push(nuevo);
+      setCollection('periodos', items);
+      return nuevo;
+    }
+    if (body?.accion === 'upsert') {
+      const idx = items.findIndex((p: any) => p.jugador_id === body.jugador_id && p.anio === body.anio && p.mes === body.mes);
+      const jugadores = getCollection<any>('jugadores');
+      const j = jugadores.find((j: any) => j.id === body.jugador_id);
+      if (idx >= 0) {
+        items[idx] = { ...items[idx], ...body };
+      } else {
+        items.push({
+          id: nextId('periodos'),
+          jugador_id: body.jugador_id,
+          jugador_nombre: j ? `${j.nombre} ${j.apellidos}` : `Jugador #${body.jugador_id}`,
+          categoria: j?.categoria || '',
+          anio: body.anio,
+          mes: body.mes,
+          objetivo: body.objetivo || j?.mensualidad_objetivo || j?.mensualidad || 0,
+          pagado: body.pagado || 0,
+          estado: body.estado || 'pendiente',
+          notas: body.notas || '',
+          created_at: now()
+        });
+      }
+      setCollection('periodos', items);
+      return items[idx >= 0 ? idx : items.length - 1];
+    }
     const newItem = { ...body, id: nextId('periodos'), created_at: now() };
     items.push(newItem);
     setCollection('periodos', items);
     return newItem;
   }
+  if (seg0 === 'periodos' && (method === 'PUT' || method === 'PATCH')) {
+    const items = getCollection<any>('periodos');
+    const id = body?.id;
+    const idx = items.findIndex((p: any) => p.id === id);
+    if (idx >= 0) items[idx] = { ...items[idx], ...body };
+    setCollection('periodos', items);
+    return items[idx] || { ok: true };
+  }
 
-  if (segments[0] === 'whatsapp' && method === 'POST') {
+  if (seg0 === 'whatsapp' && method === 'GET') {
+    const params = new URLSearchParams(qs);
+    const tipo = params.get('tipo');
+    if (tipo === 'plantillas') return getCollection('whatsapp_plantillas');
+    if (tipo === 'historial') return getCollection('whatsapp_historial');
+    return { plantillas: getCollection('whatsapp_plantillas'), historial: getCollection('whatsapp_historial') };
+  }
+  if (seg0 === 'whatsapp' && method === 'POST') {
+    if (body?.accion === 'enviar') {
+      const hist = getCollection<any>('whatsapp_historial');
+      const newEntry = {
+        id: nextId('whatsapp_historial'),
+        jugador_id: body.jugador_id,
+        jugador_nombre: body.jugador_nombre || `Jugador #${body.jugador_id}`,
+        telefono: body.telefono || '',
+        tipo: body.plantilla_codigo || 'custom',
+        mensaje: body.mensaje_custom || '',
+        estado: 'enviado',
+        fecha: now()
+      };
+      hist.push(newEntry);
+      setCollection('whatsapp_historial', hist);
+      return { ok: true, mensaje: 'Mensaje enviado (demo)' };
+    }
     return { ok: true, mensaje: 'Mensaje enviado (demo)' };
   }
 

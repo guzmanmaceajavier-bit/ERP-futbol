@@ -82,8 +82,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
+    if (window.confirm('Seguro que deseas cerrar sesion?')) {
+      logout();
+      window.location.href = '/login';
+    }
   };
 
   const renderIcon = (d: string, isActive: boolean) => (

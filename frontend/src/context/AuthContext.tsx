@@ -22,8 +22,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('erp_token');
     const storedUser = localStorage.getItem('erp_user');
     if (stored && storedUser) {
-      setToken(stored);
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed.id && parsed.role) {
+          setToken(stored);
+          setUser(parsed);
+        } else {
+          localStorage.removeItem('erp_token');
+          localStorage.removeItem('erp_user');
+        }
+      } catch {
+        localStorage.removeItem('erp_token');
+        localStorage.removeItem('erp_user');
+      }
     }
     setLoading(false);
   }, []);

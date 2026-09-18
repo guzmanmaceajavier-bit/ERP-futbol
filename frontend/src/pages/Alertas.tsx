@@ -73,7 +73,9 @@ export function Alertas() {
                   <div>
                     <p className="text-white font-medium">{a.titulo || a.nombre || `Alerta #${a.id}`}</p>
                     <p className="text-sm text-slate-400">
-                      {a.categoria} | Deuda: {formatCurrency(a.deuda)} | {a.tipo}
+                      {a.jugador_nombre && <span className="text-blue-400 font-medium">{a.jugador_nombre}</span>}
+                      {a.jugador_nombre && ' \u00B7 '}
+                      {a.categoria} | Deuda: {formatCurrency(a.deuda)} | {a.tipo_alerta || a.tipo}
                     </p>
                     {a.mensaje && <p className="text-xs text-slate-500 mt-1">{a.mensaje}</p>}
                   </div>
