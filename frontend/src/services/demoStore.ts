@@ -283,7 +283,16 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return { ok: true };
   }
 
-  if (seg0 === 'categorias' && method === 'GET') return getCollection('categorias');
+  if (seg0 === 'categorias' && method === 'GET') {
+    const cats = getCollection<any>('categorias');
+    const profs = getCollection<any>('profesores');
+    const profMap: Record<number, string> = {};
+    profs.forEach((p: any) => { profMap[p.id] = p.nombre; });
+    return cats.map((c: any) => ({
+      ...c,
+      profesor_nombre: c.profesor_id ? (profMap[c.profesor_id] || null) : null,
+    }));
+  }
   if (seg0 === 'categorias' && method === 'POST') {
     const items = getCollection<any>('categorias');
     const newItem = { ...body, id: nextId('categorias'), activo: true, created_at: now(), total_jugadores: 0 };
@@ -399,12 +408,18 @@ export function demoHandle(method: string, url: string, body?: any): any {
     const cajas = getCollection<any>('caja');
     const today = new Date().toISOString().slice(0, 10);
     const cajaHoy = cajas.find((c: any) => c.fecha === today);
+    const allPagos = getCollection<any>('pagos');
+    const allGastos = getCollection<any>('gastos');
+    const todayPagos = allPagos.filter((p: any) => p.fecha === today);
+    const todayGastos = allGastos.filter((g: any) => g.fecha === today);
+    const totalIngresos = todayPagos.reduce((s: number, p: any) => s + (p.monto || 0), 0);
+    const totalGastos = todayGastos.reduce((s: number, g: any) => s + (g.monto || 0), 0);
     return {
       fecha: today,
       caja: cajaHoy || null,
-      ingresos: { total: cajaHoy?.total_ingresos || 0, cnt: 0 },
-      gastos: { total: cajaHoy?.total_gastos || 0, cnt: 0 },
-      saldo: cajaHoy?.saldo_final || 0,
+      ingresos: { total: totalIngresos || cajaHoy?.total_ingresos || 0, cnt: todayPagos.length },
+      gastos: { total: totalGastos || cajaHoy?.total_gastos || 0, cnt: todayGastos.length },
+      saldo: cajaHoy?.saldo_final || (cajaHoy?.saldo_inicial || 0) + totalIngresos - totalGastos,
       estado: cajaHoy?.estado || 'cerrada'
     };
   }
@@ -412,6 +427,47 @@ export function demoHandle(method: string, url: string, body?: any): any {
     const items = getCollection<any>('caja');
     const today = new Date().toISOString().slice(0, 10);
     const idx = items.findIndex((c: any) => c.fecha === today);
+    const accion = body?.accion;
+
+    if (accion === 'abrir') {
+      const entry = {
+        fecha: today,
+        saldo_inicial: body.saldo_inicial || 0,
+        total_ingresos: 0,
+        total_gastos: 0,
+        saldo_final: body.saldo_inicial || 0,
+        estado: 'abierta',
+        abierta_por: 1,
+      };
+      if (idx >= 0) items[idx] = { ...items[idx], ...entry };
+      else items.push(entry);
+      setCollection('caja', items);
+      return entry;
+    }
+
+    if (accion === 'cerrar') {
+      if (idx >= 0) {
+        const caja = items[idx];
+        caja.estado = 'cerrada';
+        caja.cerrada_por = 1;
+        caja.saldo_final = (caja.saldo_inicial || 0) + (caja.total_ingresos || 0) - (caja.total_gastos || 0);
+        setCollection('caja', items);
+        return caja;
+      }
+      setCollection('caja', items);
+      return { fecha: today, estado: 'cerrada', saldo_final: 0 };
+    }
+
+    if (accion === 'desbloquear') {
+      if (idx >= 0) {
+        items[idx].estado = 'abierta';
+        setCollection('caja', items);
+        return items[idx];
+      }
+      setCollection('caja', items);
+      return { fecha: today, estado: 'abierta' };
+    }
+
     if (idx >= 0) {
       items[idx] = { ...items[idx], ...body };
     } else {
