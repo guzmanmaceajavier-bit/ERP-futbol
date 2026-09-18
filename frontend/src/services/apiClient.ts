@@ -4,15 +4,18 @@ const API_BASE = '/api';
 
 let _backendAvailable: boolean | null = null;
 
+function isLocalhost(): boolean {
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+
 async function checkBackend(): Promise<boolean> {
+  if (!isLocalhost()) return false;
   try {
     const res = await fetch(`${API_BASE}/auth/verify`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(3000),
     });
-    if (res.status === 404) return false;
-    if (res.status === 405) return false;
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) return false;
     return res.ok || res.status === 401;
