@@ -11,6 +11,10 @@ async function checkBackend(): Promise<boolean> {
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(3000),
     });
+    if (res.status === 404) return false;
+    if (res.status === 405) return false;
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return false;
     return res.ok || res.status === 401;
   } catch {
     return false;
