@@ -1,7 +1,6 @@
 {
-  "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
-  ]
+  "framework": "vite",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install"
 }
