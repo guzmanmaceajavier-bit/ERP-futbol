@@ -6,9 +6,10 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { jugadorService } from '../../services/jugadorService';
-import type { Jugador, JugadorForm } from '../../types';
-import { CATEGORIAS, GENEROS, TIPOS_BECA } from '../../utils/constants';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import type { Jugador, JugadorForm as JugadorFormType } from '../../types';
+import { CATEGORIAS, GENEROS } from '../../utils/constants';
+import { validateJugador } from '../../utils/validators';
+import { formatCurrency } from '../../utils/formatters';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
 import { FilterSelect } from '../../components/data/FilterSelect';
@@ -17,15 +18,14 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { ActionsCell, WhatsAppButton, ToggleButton } from '../../components/ui/ActionsCell';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
+import { JugadorForm } from './JugadorForm';
 
-const EMPTY_FORM: JugadorForm = {
+const EMPTY_FORM: JugadorFormType = {
   nombre: '',
   apellidos: '',
   fecha_nacimiento: '',
@@ -45,7 +45,8 @@ export function Jugadores() {
   const { isOpen, editing, openNew, openEdit, close } = useModal<Jugador>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
 
-  const [form, setForm] = useState<JugadorForm>(EMPTY_FORM);
+  const [form, setForm] = useState<JugadorFormType>(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroGenero, setFiltroGenero] = useState('');
@@ -165,9 +166,17 @@ export function Jugadores() {
       setForm(EMPTY_FORM);
       openNew();
     }
+    setFormErrors({});
   };
 
   const handleSave = async () => {
+    const errors = validateJugador(form);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      showError('Corrige los campos marcados');
+      return;
+    }
+    setFormErrors({});
     setSaving(true);
     try {
       if (editing) {
@@ -205,16 +214,8 @@ export function Jugadores() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Jugadores</h1>
-          <p className="text-slate-400 text-sm">{total} registros</p>
-        </div>
-        <Button onClick={() => openForm()}>+ Nuevo Jugador</Button>
-      </div>
+      <PageHeader title="Jugadores" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Jugador</Button>} />
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar jugador..." className="flex-1" />
         <FilterSelect
@@ -229,43 +230,23 @@ export function Jugadores() {
         />
       </div>
 
-      {/* Table */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={paginados} onRowClick={(j) => openForm(j)} />
         <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
           onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
 
-      {/* Form Modal */}
-      <FormModal
+      <JugadorForm
         isOpen={isOpen}
+        editing={!!editing}
+        form={form}
+        setForm={setForm}
+        errors={formErrors}
         onClose={close}
-        title={editing ? 'Editar Jugador' : 'Nuevo Jugador'}
-        wide
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
-          <Input label="Apellidos" value={form.apellidos} onChange={(e) => setForm({ ...form, apellidos: e.target.value })} required />
-          <Input label="Telefono" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} required />
-          <Input label="Fecha de nacimiento" type="date" value={form.fecha_nacimiento} onChange={(e) => setForm({ ...form, fecha_nacimiento: e.target.value })} />
-          <Select label="Categoria" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-            options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Seleccionar..." required />
-          <Select label="Genero" value={form.genero} onChange={(e) => setForm({ ...form, genero: e.target.value as any })}
-            options={GENEROS.map((g) => ({ value: g, label: g }))} />
-          <Select label="Tipo de beca" value={form.tipo_beca} onChange={(e) => setForm({ ...form, tipo_beca: e.target.value as any })}
-            options={TIPOS_BECA.map((b) => ({ value: b, label: b }))} />
-          <Input label="Acudiente (nombre)" value={form.acudiente_nombre} onChange={(e) => setForm({ ...form, acudiente_nombre: e.target.value })} />
-          <Input label="Acudiente (telefono)" value={form.acudiente_telefono} onChange={(e) => setForm({ ...form, acudiente_telefono: e.target.value })} />
-        </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
-          <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave} loading={saving}>
-            {editing ? 'Actualizar' : 'Crear Jugador'}
-          </Button>
-        </div>
-      </FormModal>
+        onSave={handleSave}
+        saving={saving}
+      />
 
-      {/* Confirm Delete */}
       <ConfirmDialog
         isOpen={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}

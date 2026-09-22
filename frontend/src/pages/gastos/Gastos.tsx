@@ -19,7 +19,9 @@ import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
+import { validateGasto } from '../../utils/validators';
 import { ActionsCell } from '../../components/ui/ActionsCell';
+import { PageHeader } from '../../components/layout/PageHeader';
 
 export function Gastos() {
   const { data: gastos, loading, error, refetch } = useApi(() => gastoService.getAll());
@@ -60,6 +62,8 @@ export function Gastos() {
   };
 
   const handleSave = async () => {
+    const errors = validateGasto(form);
+    if (Object.keys(errors).length > 0) { showError(errors.concepto || errors.monto || errors.categoria || 'Corrige los campos'); return; }
     setSaving(true);
     try {
       if (editing) { await gastoService.update(editing.id, form); showSuccess('Gasto actualizado'); }
@@ -80,10 +84,7 @@ export function Gastos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex items-center justify-between">
-        <h1 className="font-sport text-2xl font-bold text-white">Gastos</h1>
-        <Button onClick={() => openForm()}>+ Nuevo Gasto</Button>
-      </div>
+      <PageHeader title="Gastos" actions={<Button onClick={() => openForm()}>+ Nuevo Gasto</Button>} />
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar gasto..." />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={paginados} onRowClick={(g) => openForm(g)} />

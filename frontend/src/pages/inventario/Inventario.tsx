@@ -20,6 +20,7 @@ import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { formatCurrency } from '../../utils/formatters';
 import { ActionsCell } from '../../components/ui/ActionsCell';
+import { PageHeader } from '../../components/layout/PageHeader';
 
 const CATEGORIAS_INV = [
   'Balones',
@@ -99,13 +100,7 @@ export function Inventario() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Inventario</h1>
-          <p className="text-slate-400 text-sm">{total} registros</p>
-        </div>
-        <Button onClick={() => openForm()}>+ Agregar Material</Button>
-      </div>
+      <PageHeader title="Inventario" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Agregar Material</Button>} />
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar item..." />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={paginados} onRowClick={(i) => openForm(i)} />

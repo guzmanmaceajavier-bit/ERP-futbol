@@ -13,6 +13,7 @@ import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { PeriodoGrid } from '../../components/ui/PeriodoGrid';
 
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
@@ -177,17 +178,16 @@ export function Pagos() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Ingresos</h1>
-          <p className="text-slate-400 text-sm">Registra y controla los pagos</p>
-        </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-right">
-          <p className="text-[10px] font-black text-slate-500 uppercase">Total filtrado</p>
-          <p className="text-lg text-[#22C55E] font-mono font-bold">{formatCurrency(totalFiltrado)}</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Ingresos"
+        subtitle="Registra y controla los pagos"
+        actions={
+          <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-right">
+            <p className="text-[10px] font-black text-slate-500 uppercase">Total filtrado</p>
+            <p className="text-lg text-[#22C55E] font-mono font-bold">{formatCurrency(totalFiltrado)}</p>
+          </div>
+        }
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">

@@ -16,7 +16,9 @@ import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { formatCurrency } from '../../utils/formatters';
+import { validateCategoria } from '../../utils/validators';
 import { ActionsCell } from '../../components/ui/ActionsCell';
+import { PageHeader } from '../../components/layout/PageHeader';
 
 interface FormState {
   nombre: string;
@@ -78,7 +80,8 @@ export function Categorias() {
   };
 
   const handleSave = async () => {
-    if (!form.nombre.trim()) { showError('El nombre es requerido'); return; }
+    const errors = validateCategoria({ nombre: form.nombre, mensualidad_base: form.mensualidad_base });
+    if (Object.keys(errors).length > 0) { showError(errors.nombre || errors.mensualidad_base || 'Corrige los campos'); return; }
     setSaving(true);
     try {
       const payload = {
@@ -111,10 +114,7 @@ export function Categorias() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="font-sport text-2xl font-bold text-white">Categorias</h1>
-        <Button onClick={() => openForm()}>+ Nueva Categoria</Button>
-      </div>
+      <PageHeader title="Categorias" actions={<Button onClick={() => openForm()}>+ Nueva Categoria</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={(categorias || []) as any} onRowClick={(c) => openForm(c)} />
       </div>

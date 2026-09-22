@@ -17,6 +17,7 @@ import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ActionsCell, WhatsAppButton } from '../../components/ui/ActionsCell';
+import { PageHeader } from '../../components/layout/PageHeader';
 
 const ESPECIALIDADES = [
   ...CATEGORIAS,
@@ -96,10 +97,7 @@ export function Profesores() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex items-center justify-between">
-        <h1 className="font-sport text-2xl font-bold text-white">Profesores</h1>
-        <Button onClick={() => openForm()}>+ Nuevo Profesor</Button>
-      </div>
+      <PageHeader title="Profesores" actions={<Button onClick={() => openForm()}>+ Nuevo Profesor</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={profesores || []} onRowClick={(p) => openForm(p)} />
       </div>
