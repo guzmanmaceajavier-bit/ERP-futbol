@@ -8,13 +8,16 @@ import { jugadorService } from '../../services/jugadorService';
 import type { Pago, PagoForm, Jugador } from '../../types';
 import { CATEGORIAS, MESES } from '../../utils/constants';
 import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
+import { validateAnulacion } from '../../utils/validators';
 import { Pagination } from '../../components/data/Pagination';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
+import { FormModal } from '../../components/forms/FormModal';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PeriodoGrid } from '../../components/ui/PeriodoGrid';
+import { Textarea } from '../../components/ui/Textarea';
 
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
 
@@ -26,6 +29,8 @@ export function Pagos() {
   const [saving, setSaving] = useState(false);
   const [editingPago, setEditingPago] = useState<Pago | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Pago | null>(null);
+  const [anularPago, setAnularPago] = useState<Pago | null>(null);
+  const [motivoAnular, setMotivoAnular] = useState('');
 
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState<Jugador | null>(null);
   const [busquedaJugador, setBusquedaJugador] = useState('');
@@ -165,6 +170,22 @@ export function Pagos() {
     if (!confirmDelete) return;
     try { await pagoService.remove(confirmDelete.id); showSuccess('Pago eliminado'); setConfirmDelete(null); refetch(); refetchJugadores(); }
     catch (err: any) { showError(err.message); }
+  };
+
+  const handleAnular = async () => {
+    if (!anularPago) return;
+    const errors = validateAnulacion(motivoAnular);
+    if (Object.keys(errors).length > 0) { showError(errors.motivo || 'Motivo invalido'); return; }
+    setSaving(true);
+    try {
+      await pagoService.anular({ pago_id: anularPago.id, motivo: motivoAnular });
+      showSuccess('Pago anulado correctamente');
+      setAnularPago(null);
+      setMotivoAnular('');
+      refetch();
+      refetchJugadores();
+    } catch (err: any) { showError(err.message || 'Error al anular pago'); }
+    finally { setSaving(false); }
   };
 
   const inputCls = 'w-full px-3 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#22C55E] focus:border-transparent placeholder-slate-500';
@@ -413,10 +434,11 @@ export function Pagos() {
               {paginados.length === 0 ? (
                 <tr><td colSpan={5} className="text-center py-8 text-slate-500">No hay pagos registrados</td></tr>
               ) : paginados.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-800/50 transition-colors">
+                <tr key={p.id} className={`hover:bg-slate-800/50 transition-colors ${p.anulado ? 'opacity-60' : ''}`}>
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{p.jugador || `Jugador #${p.jugador_id}`}</p>
                     <p className="text-[11px] text-slate-500">{p.jugador_categoria || ''} | {p.recibo_numero || ''}</p>
+                    {p.anulado && p.anulado_motivo && <p className="text-[10px] text-amber-400 mt-0.5">Motivo: {p.anulado_motivo}</p>}
                   </td>
                   <td className="px-4 py-3 text-slate-400">{formatDate(p.fecha)}</td>
                   <td className="px-4 py-3">
@@ -425,22 +447,26 @@ export function Pagos() {
                       p.estado_pago === 'abono' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
                     }`}>{p.tipo}</span>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-[#22C55E]">{formatCurrency(p.monto)}</td>
+                  <td className={`px-4 py-3 text-right font-mono font-bold ${p.anulado ? 'text-slate-500 line-through' : 'text-[#22C55E]'}`}>{formatCurrency(p.monto)}</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => handleEdit(p)} className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all" title="Editar">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                      </button>
-                      <button onClick={() => setConfirmDelete(p)} className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all" title="Eliminar">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
-                      {p.jugador_telefono && (
-                        <button onClick={() => window.open(`https://wa.me/${p.jugador_telefono}`, '_blank')}
-                          className="p-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all" title="WhatsApp">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    {p.anulado ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-600 text-slate-300 border border-slate-500">Anulado</span>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => handleEdit(p)} className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all" title="Editar">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </button>
-                      )}
-                    </div>
+                        <button onClick={() => { setAnularPago(p); setMotivoAnular(''); }} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all" title="Anular">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                        </button>
+                        {p.jugador_telefono && (
+                          <button onClick={() => window.open(`https://wa.me/${p.jugador_telefono}`, '_blank')}
+                            className="p-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all" title="WhatsApp">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -496,6 +522,29 @@ export function Pagos() {
 
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}
         title="Eliminar pago" message={`¿Eliminar el pago de ${confirmDelete?.jugador || ''} por ${formatCurrency(confirmDelete?.monto || 0)}?`} />
+
+      <FormModal isOpen={!!anularPago} onClose={() => { setAnularPago(null); setMotivoAnular(''); }} title="Anular pago">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            ¿Anular el pago de <span className="text-white font-bold">{anularPago?.jugador || `Jugador #${anularPago?.jugador_id}`}</span> por <span className="text-[#22C55E] font-mono">{formatCurrency(anularPago?.monto || 0)}</span>?
+          </p>
+          <Textarea
+            label="Motivo de anulacion *"
+            placeholder="Minimo 10 caracteres..."
+            value={motivoAnular}
+            onChange={(e) => setMotivoAnular(e.target.value)}
+            rows={3}
+            required
+          />
+          <p className="text-[11px] text-slate-500">Esta accion no se puede deshacer.</p>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+          <button onClick={() => { setAnularPago(null); setMotivoAnular(''); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm transition-colors">Cancelar</button>
+          <button onClick={handleAnular} disabled={saving} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-colors">
+            {saving ? 'Anulando...' : 'Anular pago'}
+          </button>
+        </div>
+      </FormModal>
     </div>
   );
 }

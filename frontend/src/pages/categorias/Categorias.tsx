@@ -25,9 +25,15 @@ interface FormState {
   tipo_genero: string;
   mensualidad_base: number;
   profesor_id: string;
+  edad_min: number | '';
+  edad_max: number | '';
+  horario: string;
+  dias_entrenamiento: string;
+  cancha: string;
+  cupo_maximo: number | '';
 }
 
-const EMPTY_FORM: FormState = { nombre: '', tipo_genero: 'Masculino', mensualidad_base: 0, profesor_id: '' };
+const EMPTY_FORM: FormState = { nombre: '', tipo_genero: 'Masculino', mensualidad_base: 0, profesor_id: '', edad_min: '', edad_max: '', horario: '', dias_entrenamiento: '', cancha: '', cupo_maximo: '' };
 
 export function Categorias() {
   const { data: categorias, loading, error, refetch } = useApi(() => categoriaService.getAll());
@@ -71,6 +77,12 @@ export function Categorias() {
         tipo_genero: cat.tipo_genero || 'Masculino',
         mensualidad_base: cat.mensualidad_base,
         profesor_id: profId != null ? String(profId) : '',
+        edad_min: (cat as any).edad_min ?? '',
+        edad_max: (cat as any).edad_max ?? '',
+        horario: (cat as any).horario ?? '',
+        dias_entrenamiento: (cat as any).dias_entrenamiento ?? '',
+        cancha: (cat as any).cancha ?? '',
+        cupo_maximo: (cat as any).cupo_maximo ?? '',
       });
       openEdit(cat);
     } else {
@@ -89,6 +101,12 @@ export function Categorias() {
         tipo_genero: form.tipo_genero,
         mensualidad_base: form.mensualidad_base,
         profesor_id: form.profesor_id !== '' ? Number(form.profesor_id) : null,
+        edad_min: form.edad_min !== '' ? Number(form.edad_min) : null,
+        edad_max: form.edad_max !== '' ? Number(form.edad_max) : null,
+        horario: form.horario.trim() || null,
+        dias_entrenamiento: form.dias_entrenamiento.trim() || null,
+        cancha: form.cancha.trim() || null,
+        cupo_maximo: form.cupo_maximo !== '' ? Number(form.cupo_maximo) : null,
       };
       if (editing) {
         await categoriaService.update(editing.id, payload as any);
@@ -132,6 +150,18 @@ export function Categorias() {
             ]}
           />
           <Input label="Mensualidad base" type="number" value={form.mensualidad_base} onChange={(e) => setForm({ ...form, mensualidad_base: Number(e.target.value) })} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Edad minima" type="number" value={form.edad_min} onChange={(e) => setForm({ ...form, edad_min: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 12" />
+            <Input label="Edad maxima" type="number" value={form.edad_max} onChange={(e) => setForm({ ...form, edad_max: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 14" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Horario" value={form.horario} onChange={(e) => setForm({ ...form, horario: e.target.value })} placeholder="Ej: 16:00 - 18:00" />
+            <Input label="Cancha" value={form.cancha} onChange={(e) => setForm({ ...form, cancha: e.target.value })} placeholder="Ej: Cancha 1" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Dias de entrenamiento" value={form.dias_entrenamiento} onChange={(e) => setForm({ ...form, dias_entrenamiento: e.target.value })} placeholder="Ej: Lun/Mie/Vie" />
+            <Input label="Cupo maximo" type="number" value={form.cupo_maximo} onChange={(e) => setForm({ ...form, cupo_maximo: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 25" />
+          </div>
           <Select
             label="Profesor encargado"
             value={form.profesor_id}

@@ -18,4 +18,7 @@ export const gastoService = {
 
   remove: (id: number) =>
     apiClient.delete(`/gastos?id=${id}`),
+
+  anular: (payload: { gasto_id: number; motivo: string }) =>
+    apiClient.post<Gasto>('/gastos', { accion: 'anular', ...payload }),
 };

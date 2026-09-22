@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { entrenamientoService } from '../../services/entrenamientoService';
 import { profesorService } from '../../services/profesorService';
@@ -96,7 +97,14 @@ export function Entrenamientos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Entrenamientos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Entrenamiento</Button>} />
+      <PageHeader title="Entrenamientos" subtitle={`${total} registros`} actions={
+        <div className="flex gap-2">
+          <Link to="/asistencias">
+            <Button variant="ghost">Ver asistencia</Button>
+          </Link>
+          <Button onClick={() => openForm()}>+ Nuevo Entrenamiento</Button>
+        </div>
+      } />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por tema, entrenador o categoria..." />
 

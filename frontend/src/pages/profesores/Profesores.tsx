@@ -4,12 +4,13 @@ import { useModal } from '../../hooks/useModal';
 import { useToast } from '../../hooks/useToast';
 import { profesorService } from '../../services/profesorService';
 import type { Profesor, ProfesorForm } from '../../types';
-import { CATEGORIAS } from '../../utils/constants';
+import { CATEGORIAS, TIPOS_CONTRATO } from '../../utils/constants';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -27,13 +28,24 @@ const ESPECIALIDADES = [
   'Otros',
 ];
 
+type ExtendedForm = ProfesorForm & { especialidad_custom?: string };
+
+const EMPTY_FORM: ExtendedForm = {
+  nombre: '',
+  telefono: '',
+  especialidad: '',
+  salario: 0,
+  fecha_ingreso: '',
+  especialidad_custom: '',
+  tipo_contrato: '',
+  categorias_asignadas: [],
+};
+
 export function Profesores() {
   const { data: profesores, loading, error, refetch } = useApi(() => profesorService.getAll());
   const { isOpen, editing, openNew, openEdit, close } = useModal<Profesor>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
-  const [form, setForm] = useState<ProfesorForm & { especialidad_custom?: string }>({
-    nombre: '', telefono: '', especialidad: '', salario: 0, fecha_ingreso: '', especialidad_custom: '',
-  });
+  const [form, setForm] = useState<ExtendedForm>({ ...EMPTY_FORM });
   const [confirmDelete, setConfirmDelete] = useState<Profesor | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -66,10 +78,12 @@ export function Profesores() {
         salario: prof.salario,
         fecha_ingreso: prof.fecha_ingreso || '',
         especialidad_custom: isCustom ? prof.especialidad || '' : '',
+        tipo_contrato: (prof.tipo_contrato as ExtendedForm['tipo_contrato']) || '',
+        categorias_asignadas: prof.categorias_asignadas || [],
       });
       openEdit(prof);
     } else {
-      setForm({ nombre: '', telefono: '', especialidad: '', salario: 0, fecha_ingreso: '', especialidad_custom: '' });
+      setForm({ ...EMPTY_FORM });
       openNew();
     }
   };
@@ -78,7 +92,15 @@ export function Profesores() {
     const finalEspecialidad = form.especialidad === 'Otros' && form.especialidad_custom ? form.especialidad_custom : form.especialidad;
     setSaving(true);
     try {
-      const payload = { nombre: form.nombre, telefono: form.telefono, especialidad: finalEspecialidad, salario: form.salario, fecha_ingreso: form.fecha_ingreso };
+      const payload: ProfesorForm = {
+        nombre: form.nombre,
+        telefono: form.telefono,
+        especialidad: finalEspecialidad,
+        salario: form.salario,
+        fecha_ingreso: form.fecha_ingreso,
+        tipo_contrato: (form.tipo_contrato as ProfesorForm['tipo_contrato']) || undefined,
+        categorias_asignadas: form.categorias_asignadas || [],
+      };
       if (editing) { await profesorService.update(editing.id, payload); showSuccess('Profesor actualizado'); }
       else { await profesorService.create(payload); showSuccess('Profesor creado'); }
       close(); refetch();
@@ -116,7 +138,34 @@ export function Profesores() {
             <Input label="Escribe la especialidad" value={form.especialidad_custom || ''} onChange={(e) => setForm({ ...form, especialidad_custom: e.target.value })} placeholder="Ej: Scouting, Psicologia..." required />
           )}
           <Input label="Salario mensual" type="number" value={form.salario} onChange={(e) => setForm({ ...form, salario: Number(e.target.value) })} />
-          <Input label="Fecha de ingreso" type="date" value={form.fecha_ingreso} onChange={(e) => setForm({ ...form, fecha_ingreso: e.target.value })} />
+          <Select
+            label="Tipo de contrato"
+            value={form.tipo_contrato || ''}
+            onChange={(e) => setForm({ ...form, tipo_contrato: e.target.value as ExtendedForm['tipo_contrato'] })}
+            options={TIPOS_CONTRATO.map((t) => ({ value: t, label: t }))}
+            placeholder="Seleccionar..."
+          />
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Categorias asignadas</label>
+            <div className="grid grid-cols-2 gap-2">
+              {CATEGORIAS.map((cat) => (
+                <label key={cat} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={(form.categorias_asignadas || []).includes(cat)}
+                    onChange={(e) => {
+                      const current = form.categorias_asignadas || [];
+                      const next = e.target.checked ? [...current, cat] : current.filter((c) => c !== cat);
+                      setForm({ ...form, categorias_asignadas: next });
+                    }}
+                    className="rounded border-slate-600 bg-slate-800 text-[#22C55E] focus:ring-[#22C55E]"
+                  />
+                  {cat}
+                </label>
+              ))}
+            </div>
+          </div>
+          <DatePicker label="Fecha de ingreso" value={form.fecha_ingreso} onChange={(e) => setForm({ ...form, fecha_ingreso: e.target.value })} />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>

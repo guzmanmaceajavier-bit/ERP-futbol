@@ -16,11 +16,6 @@ export function isValidFecha(value: string): boolean {
   return !isNaN(d.getTime());
 }
 
-export function isFechaFutura(value: string): boolean {
-  const d = new Date(value + 'T00:00:00');
-  return d > new Date();
-}
-
 export type FieldErrors = Record<string, string>;
 
 export function validateJugador(form: {
@@ -70,5 +65,12 @@ export function validateGasto(form: {
   if (!isRequired(form.concepto)) errors.concepto = 'El concepto es requerido';
   if (!isValidMonto(form.monto) || form.monto <= 0) errors.monto = 'Monto debe ser mayor a 0';
   if (!isRequired(form.categoria)) errors.categoria = 'La categoria es requerida';
+  return errors;
+}
+
+export function validateAnulacion(motivo: string): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!isRequired(motivo)) errors.motivo = 'El motivo es requerido';
+  else if (motivo.trim().length < 10) errors.motivo = 'El motivo debe tener al menos 10 caracteres';
   return errors;
 }

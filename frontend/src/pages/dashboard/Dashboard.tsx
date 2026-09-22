@@ -79,6 +79,32 @@ export function Dashboard() {
     );
   }, [periodosResumen, anioActual, mesActual]);
 
+  // Cobranza pendiente aggregates (periodos del anio actual hasta mes actual)
+  const cobranza = useMemo(() => {
+    if (!periodosResumen) return { deudaTotal: 0, abonosPendientes: 0, pendientes: 0, totalPendiente: 0, morosidad: 0, jugadoresAlDia: 0, conDeuda: 0 };
+    let deudaTotal = 0;
+    let abonosPendientes = 0;
+    let pendientes = 0;
+    for (const j of periodosResumen) {
+      for (const p of (j.periodos || []) as any[]) {
+        if (p.anio !== anioActual || p.mes > mesActual) continue;
+        if (p.estado === 'pendiente' || p.estado === 'abono') {
+          const objetivo = Number(p.objetivo) || 0;
+          const pagado = Number(p.pagado) || 0;
+          deudaTotal += Math.max(0, objetivo - pagado);
+          if (p.estado === 'abono') abonosPendientes += 1;
+          else pendientes += 1;
+        }
+      }
+    }
+    const totalPendiente = abonosPendientes + pendientes;
+    const conDeuda = jugadoresConDeuda.length;
+    const totalActivos = jugadoresActivos.length || 1;
+    const morosidad = Math.round((conDeuda / totalActivos) * 100);
+    const jugadoresAlDia = Math.max(0, jugadoresActivos.length - conDeuda);
+    return { deudaTotal, abonosPendientes, pendientes, totalPendiente, morosidad, jugadoresAlDia, conDeuda };
+  }, [periodosResumen, anioActual, mesActual, jugadoresConDeuda.length, jugadoresActivos.length]);
+
   const pagosHoy = useMemo(() => pagos?.filter(p => p.fecha === today) || [], [pagos, today]);
   const pagosHoyValor = pagosHoy.reduce((s, p) => s + (p.monto || 0), 0);
 
@@ -140,6 +166,41 @@ export function Dashboard() {
           icon={<svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           color="bg-indigo-600"
         />
+      </div>
+
+      {/* 2b. Cobranza pendiente (financial focus) */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-sport font-bold text-white text-sm">Cobranza pendiente</h3>
+          <span className="text-xs text-slate-400">{MESES[mesActual - 1]} {anioActual} · acumulado anio</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
+            <p className="text-xs text-slate-400">Deuda total</p>
+            <p className="font-mono text-sm font-bold text-red-400">{formatCurrency(cobranza.deudaTotal)}</p>
+            <p className="text-[11px] text-slate-500 mt-1">{cobranza.totalPendiente} periodos por cobrar</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
+            <p className="text-xs text-slate-400">Abonos pendientes</p>
+            <p className="font-mono text-lg font-bold text-yellow-400">{cobranza.abonosPendientes}</p>
+            <p className="text-[11px] text-slate-500 mt-1">{cobranza.pendientes} pendientes sin abono</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
+            <p className="text-xs text-slate-400">Morosidad</p>
+            <p className={`font-mono text-lg font-bold ${cobranza.morosidad > 30 ? 'text-red-400' : cobranza.morosidad > 15 ? 'text-yellow-400' : 'text-green-400'}`}>{cobranza.morosidad}%</p>
+            <p className="text-[11px] text-slate-500 mt-1">{cobranza.conDeuda} / {jugadoresActivos.length} jugadores</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
+            <p className="text-xs text-slate-400">Jugadores</p>
+            <p className="text-sm font-bold"><span className="text-green-400">{cobranza.jugadoresAlDia} al dia</span> <span className="text-slate-500 font-normal"> / </span> <span className="text-red-400">{cobranza.conDeuda} con deuda</span></p>
+            <p className="text-[11px] text-slate-500 mt-1">Activos: {jugadoresActivos.length}</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3 col-span-2 md:col-span-1">
+            <p className="text-xs text-slate-400">Ingresos vs Gastos (mes)</p>
+            <p className={`font-mono text-sm font-bold ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(balance)}</p>
+            <p className="text-[11px] text-slate-500 mt-1">Ing {formatCurrency(totalIngresos)} · Gas {formatCurrency(totalGastos)}</p>
+          </div>
+        </div>
       </div>
 
       {/* 3. Resumen financiero */}

@@ -18,8 +18,13 @@ export function Caja() {
   const { isOpen, openNew, close } = useModal();
   const { toasts, showSuccess, showError, dismiss } = useToast();
   const [saldoInicial, setSaldoInicial] = useState(0);
+  const [saldoContado, setSaldoContado] = useState(0);
+  const [showCerrar, setShowCerrar] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const saldoSistema = resumen?.saldo_sistema ?? resumen?.saldo ?? 0;
+  const diferencia = saldoContado - saldoSistema;
 
   const handleAccion = async (accion: string) => {
     setSaving(true);
@@ -27,10 +32,12 @@ export function Caja() {
       await cajaService.accion({
         accion: accion as any,
         saldo_inicial: accion === 'abrir' ? saldoInicial : undefined,
+        saldo_contado: accion === 'cerrar' ? saldoContado : undefined,
         motivo: accion === 'desbloquear' ? motivo : undefined,
       });
       showSuccess(`Caja ${accion} correctamente`);
       close();
+      setShowCerrar(false);
       refetch();
     } catch (err: any) {
       showError(err.message);
@@ -45,7 +52,7 @@ export function Caja() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Caja" />
+      <PageHeader title="Caja" subtitle={resumen?.fecha ? `Resumen del dia ${formatDate(resumen.fecha)}` : 'Control diario de ingresos y egresos'} />
 
       {/* Resumen del dia */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
@@ -70,17 +77,42 @@ export function Caja() {
             <p className="font-mono text-lg text-red-400">{formatCurrency(resumen?.gastos?.total || 0)}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Saldo final</p>
-            <p className="font-mono text-lg text-[#22C55E] font-bold">{formatCurrency(resumen?.saldo || 0)}</p>
+            <p className="text-xs text-slate-400">Saldo sistema</p>
+            <p className="font-mono text-lg text-[#22C55E] font-bold">{formatCurrency(saldoSistema)}</p>
           </div>
         </div>
+
+        {/* Caja state with more info */}
+        {resumen?.caja && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/50 border border-slate-700 rounded-xl p-3">
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Estado</p>
+              <p className="text-sm font-bold text-white capitalize">{resumen.caja.estado || resumen.estado}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Hora apertura</p>
+              <p className="text-sm font-mono text-slate-300">{resumen.caja.hora_apertura || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Hora cierre</p>
+              <p className="text-sm font-mono text-slate-300">{resumen.caja.hora_cierre || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Saldo contado</p>
+              <p className="text-sm font-mono text-slate-300">{resumen.caja.saldo_contado != null ? formatCurrency(resumen.caja.saldo_contado) : '-'}</p>
+              {resumen.caja.diferencia != null && (
+                <p className={`text-xs font-bold ${resumen.caja.diferencia === 0 ? 'text-[#22C55E]' : 'text-amber-400'}`}>Diferencia: {formatCurrency(resumen.caja.diferencia)}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3 mt-6">
           {resumen?.estado !== 'abierta' ? (
             <Button onClick={() => { setSaldoInicial(0); openNew(); }}>Abrir Caja</Button>
           ) : (
             <>
-              <Button variant="danger" onClick={() => handleAccion('cerrar')} loading={saving}>Cerrar Caja</Button>
+              <Button variant="danger" onClick={() => { setSaldoContado(saldoSistema); setShowCerrar(true); }} loading={saving}>Cerrar Caja</Button>
               <Button variant="ghost" onClick={() => { setMotivo(''); handleAccion('desbloquear'); }}>Desbloquear</Button>
             </>
           )}
@@ -95,6 +127,34 @@ export function Caja() {
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
           <Button onClick={() => handleAccion('abrir')} loading={saving}>Abrir</Button>
+        </div>
+      </FormModal>
+
+      {/* Cerrar caja modal */}
+      <FormModal isOpen={showCerrar} onClose={() => setShowCerrar(false)} title="Cerrar Caja">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 bg-slate-900/50 border border-slate-700 rounded-xl p-3">
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Saldo sistema</p>
+              <p className="font-mono text-lg text-[#22C55E] font-bold">{formatCurrency(saldoSistema)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-500 uppercase">Saldo contado</p>
+              <p className="font-mono text-lg text-white font-bold">{formatCurrency(saldoContado)}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-[11px] font-black text-slate-500 uppercase">Diferencia</p>
+              <p className={`font-mono text-sm font-bold ${diferencia === 0 ? 'text-[#22C55E]' : diferencia > 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                {formatCurrency(diferencia)} {diferencia === 0 ? '(cuadrado)' : diferencia > 0 ? '(sobrante)' : '(faltante)'}
+              </p>
+            </div>
+          </div>
+          <Input label="Saldo contado *" type="number" value={saldoContado} onChange={(e) => setSaldoContado(Number(e.target.value))} />
+          <p className="text-[11px] text-slate-500">Ingresa el efectivo contado fisicamente para comparar con el saldo del sistema.</p>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+          <Button variant="ghost" onClick={() => setShowCerrar(false)}>Cancelar</Button>
+          <Button variant="danger" onClick={() => handleAccion('cerrar')} loading={saving}>Cerrar Caja</Button>
         </div>
       </FormModal>
     </div>

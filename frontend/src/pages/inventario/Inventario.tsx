@@ -13,6 +13,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { Textarea } from '../../components/ui/Textarea';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -46,6 +47,11 @@ export function Inventario() {
   const [busqueda, setBusqueda] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<InventarioItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [movItem, setMovItem] = useState<InventarioItem | null>(null);
+  const [movTipo, setMovTipo] = useState<'entrada' | 'salida' | 'ajuste'>('entrada');
+  const [movCantidad, setMovCantidad] = useState(0);
+  const [movMotivo, setMovMotivo] = useState('');
+  const [movSaving, setMovSaving] = useState(false);
 
   const busquedaDebounced = useDebounce(busqueda);
   const itemsFiltrados = (items || []).filter((i) => !busquedaDebounced || i.nombre.toLowerCase().includes(busquedaDebounced.toLowerCase()));
@@ -59,8 +65,27 @@ export function Inventario() {
     { key: 'costo_unitario', label: 'Costo', render: (i) => <span className="font-mono">{formatCurrency(i.costo_unitario)}</span> },
     { key: 'alerta_bajo', label: 'Alerta', render: (i) => i.alerta_bajo ? <Badge variant="danger">Bajo</Badge> : null },
     {
-      key: 'acciones', label: '', className: 'w-24',
-      render: (i) => <ActionsCell onEdit={() => openForm(i)} onDelete={() => setConfirmDelete(i)} />,
+      key: 'acciones', label: '', className: 'w-32',
+      render: (i) => (
+        <ActionsCell
+          onEdit={() => openForm(i)}
+          onDelete={() => setConfirmDelete(i)}
+          extra={
+            <button
+              onClick={() => {
+                setMovItem(i);
+                setMovTipo('entrada');
+                setMovCantidad(0);
+                setMovMotivo('');
+              }}
+              className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
+              title="Movimiento"
+            >
+              Mov
+            </button>
+          }
+        />
+      ),
     },
   ];
 
@@ -92,6 +117,20 @@ export function Inventario() {
     if (!confirmDelete) return;
     try { await inventarioService.remove(confirmDelete.id); showSuccess('Item eliminado'); setConfirmDelete(null); refetch(); }
     catch (err: any) { showError(err.message); }
+  };
+
+  const handleMovimiento = async () => {
+    if (!movItem) return;
+    if (movCantidad <= 0) { showError('Cantidad debe ser mayor a 0'); return; }
+    setMovSaving(true);
+    try {
+      await inventarioService.movimiento({ item_id: movItem.id, tipo: movTipo, cantidad: movCantidad, motivo: movMotivo });
+      showSuccess(`Movimiento ${movTipo} registrado`);
+      setMovItem(null);
+      setMovCantidad(0);
+      setMovMotivo('');
+      refetch();
+    } catch (err: any) { showError(err.message || 'Error al registrar movimiento'); } finally { setMovSaving(false); }
   };
 
   if (loading) return <LoadingOverlay />;
@@ -129,6 +168,32 @@ export function Inventario() {
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
           <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Crear'}</Button>
+        </div>
+      </FormModal>
+      <FormModal isOpen={!!movItem} onClose={() => setMovItem(null)} title={`Movimiento - ${movItem?.nombre ?? ''}`}>
+        <div className="space-y-4">
+          {movItem && (
+            <div className="bg-slate-800 rounded-lg px-3 py-2 flex justify-between items-center border border-slate-700">
+              <span className="text-sm text-slate-400">Stock actual</span>
+              <span className="font-mono text-white font-bold">{movItem.stock}</span>
+            </div>
+          )}
+          <Select
+            label="Tipo"
+            value={movTipo}
+            onChange={(e) => setMovTipo(e.target.value as 'entrada' | 'salida' | 'ajuste')}
+            options={[
+              { value: 'entrada', label: 'Entrada' },
+              { value: 'salida', label: 'Salida' },
+              { value: 'ajuste', label: 'Ajuste' },
+            ]}
+          />
+          <Input label="Cantidad" type="number" value={movCantidad} onChange={(e) => setMovCantidad(Number(e.target.value))} placeholder="0" />
+          <Textarea label="Motivo" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} placeholder="Motivo del movimiento..." rows={3} />
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+          <Button variant="ghost" onClick={() => setMovItem(null)}>Cancelar</Button>
+          <Button onClick={handleMovimiento} loading={movSaving}>Registrar</Button>
         </div>
       </FormModal>
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}

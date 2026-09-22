@@ -5,7 +5,9 @@ export interface PeriodoMensual {
   mes: number;
   objetivo: number;
   pagado: number;
+  saldo: number;
   estado: 'pendiente' | 'abono' | 'completo' | 'beca';
+  vencimiento?: string | null;
   notas: string | null;
   created_at?: string;
   updated_at?: string;

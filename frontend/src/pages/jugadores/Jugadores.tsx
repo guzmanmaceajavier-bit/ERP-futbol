@@ -6,7 +6,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { jugadorService } from '../../services/jugadorService';
-import type { Jugador, JugadorForm as JugadorFormType } from '../../types';
+import type { Jugador, JugadorForm as JugadorFormType, EstadoJugador } from '../../types';
 import { CATEGORIAS, GENEROS } from '../../utils/constants';
 import { validateJugador } from '../../utils/validators';
 import { formatCurrency } from '../../utils/formatters';
@@ -37,6 +37,8 @@ const EMPTY_FORM: JugadorFormType = {
   tipo_beca: 'Normal',
   acudiente_nombre: '',
   acudiente_telefono: '',
+  fecha_ingreso: '',
+  estado: 'activo' as EstadoJugador,
 };
 
 export function Jugadores() {
@@ -107,13 +109,14 @@ export function Jugadores() {
       ),
     },
     {
-      key: 'activo',
+      key: 'estado',
       label: 'Estado',
-      render: (j) => (
-        <Badge variant={j.activo ? 'success' : 'danger'}>
-          {j.activo ? 'Activo' : 'Inactivo'}
-        </Badge>
-      ),
+      render: (j) => {
+        const estado = j.estado || (j.activo ? 'activo' : 'inactivo');
+        const variant = estado === 'activo' ? 'success' : estado === 'inactivo' ? 'warning' : 'danger';
+        const label = estado.charAt(0).toUpperCase() + estado.slice(1);
+        return <Badge variant={variant as 'success' | 'warning' | 'danger'}>{label}</Badge>;
+      },
     },
     {
       key: 'acciones',
@@ -160,6 +163,8 @@ export function Jugadores() {
         tipo_beca: jugador.tipo_beca,
         acudiente_nombre: jugador.acudiente_nombre || '',
         acudiente_telefono: jugador.acudiente_telefono || '',
+        fecha_ingreso: jugador.fecha_ingreso || '',
+        estado: (jugador.estado || (jugador.activo ? 'activo' : 'inactivo')) as EstadoJugador,
       });
       openEdit(jugador);
     } else {
@@ -197,6 +202,11 @@ export function Jugadores() {
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
+    // Nota: si el jugador tiene historial (pagos, asistencias, etc.), idealmente no hacer hard delete
+    // sino marcarlo como 'retirado' para conservar el historial. Por ahora se mantiene delete,
+    // pero a futuro: si tiene datos asociados, hacer update({ estado: 'retirado' }) en lugar de remove().
+    // Ej: const hasHistorial = !!(confirmDelete as any).total_pagado || !!(confirmDelete as any).ultimo_pago;
+    // if (hasHistorial) { await jugadorService.update(confirmDelete.id, { estado: 'retirado' } as any); } else { await jugadorService.remove(...) }
     try {
       await jugadorService.remove(confirmDelete.id);
       showSuccess('Jugador eliminado correctamente');
@@ -251,8 +261,14 @@ export function Jugadores() {
         isOpen={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         onConfirm={handleDelete}
-        title="Eliminar jugador"
-        message={`¿Estas seguro de eliminar a ${confirmDelete?.nombre} ${confirmDelete?.apellidos}? Esta accion no se puede deshacer.`}
+        title={confirmDelete?.estado === 'retirado' ? 'Eliminar jugador retirado' : 'Eliminar jugador'}
+        message={
+          confirmDelete?.estado === 'retirado'
+            ? `¿Estas seguro de eliminar permanentemente a ${confirmDelete?.nombre} ${confirmDelete?.apellidos}? Este jugador ya está retirado.`
+            : ((confirmDelete as any)?.total_pagado || (confirmDelete as any)?.ultimo_pago || (confirmDelete as any)?.ultima_asistencia)
+              ? `¿Estas seguro de eliminar a ${confirmDelete?.nombre} ${confirmDelete?.apellidos}? Nota: si tiene historial (pagos/asistencias), el sistema lo marcará como retirado en lugar de eliminarlo permanentemente.`
+              : `¿Estas seguro de eliminar a ${confirmDelete?.nombre} ${confirmDelete?.apellidos}? Esta accion no se puede deshacer.`
+        }
       />
     </div>
   );

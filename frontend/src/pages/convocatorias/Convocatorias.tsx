@@ -3,13 +3,15 @@ import { convocatoriaService } from '../../services/convocatoriaService';
 import { partidoService } from '../../services/partidoService';
 import { jugadorService } from '../../services/jugadorService';
 import { useToast } from '../../hooks/useToast';
-import type { Convocado, Partido, Jugador, Convocatoria } from '../../types';
+import type { Convocado, Partido, Jugador, Convocatoria, EstadoConvocado } from '../../types';
+import { ESTADOS_CONVOCADO } from '../../utils/constants';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ToastList } from '../../components/feedback/ToastList';
 import { Avatar } from '../../components/ui/Avatar';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
+import { Select } from '../../components/ui/Select';
 
 export function Convocatorias() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
@@ -42,7 +44,7 @@ export function Convocatorias() {
     try {
       const existentes = await convocatoriaService.getAll({ partido_id: partidoId });
       if (existentes.length > 0) {
-        setConvocados(existentes[0].convocados || []);
+        setConvocados((existentes[0].convocados || []).map((c: Convocado) => ({ ...c, estado: c.estado || 'convocado' as EstadoConvocado })));
       } else {
         const partido = partidos.find((p) => p.id === partidoId);
         const cats = partido?.categoria ? [partido.categoria] : [];
@@ -54,6 +56,7 @@ export function Convocatorias() {
               jugador_nombre: `${j.nombre} ${j.apellidos}`,
               categoria: j.categoria,
               seleccionado: false,
+              estado: 'convocado' as EstadoConvocado,
             }))
         );
       }
@@ -62,6 +65,10 @@ export function Convocatorias() {
 
   const toggleConvocado = (idx: number) => {
     setConvocados((prev) => prev.map((c, i) => i === idx ? { ...c, seleccionado: !c.seleccionado } : c));
+  };
+
+  const updateConvocadoEstado = (idx: number, estado: EstadoConvocado) => {
+    setConvocados((prev) => prev.map((c, i) => i === idx ? { ...c, estado } : c));
   };
 
   const saveConvocatoria = async () => {
@@ -138,19 +145,23 @@ export function Convocatorias() {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {convocados.map((c, idx) => (
                 <div key={c.jugador_id}
-                  className={`flex items-center justify-between py-3 px-4 rounded-lg cursor-pointer transition-all
+                  className={`flex items-center justify-between py-3 px-4 rounded-lg cursor-pointer transition-all gap-2
                     ${c.seleccionado ? 'bg-[#22C55E]/10 border border-[#22C55E]/30' : 'bg-slate-700/30 border border-transparent hover:bg-slate-700/50'}`}
                   onClick={() => toggleConvocado(idx)}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Avatar nombre={c.jugador_nombre} size="sm" />
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-white text-sm">{c.jugador_nombre}</p>
                       <p className="text-xs text-slate-400">{c.categoria}</p>
                     </div>
                   </div>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm
-                    ${c.seleccionado ? 'bg-[#22C55E] text-white' : 'bg-slate-600 text-slate-400'}`}>
-                    {c.seleccionado ? '\u2713' : ''}
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Select value={c.estado || 'convocado'} onChange={(e) => updateConvocadoEstado(idx, e.target.value as EstadoConvocado)}
+                      options={ESTADOS_CONVOCADO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ') }))} />
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm flex-shrink-0
+                      ${c.seleccionado ? 'bg-[#22C55E] text-white' : 'bg-slate-600 text-slate-400'}`}>
+                      {c.seleccionado ? '\u2713' : ''}
+                    </div>
                   </div>
                 </div>
               ))}

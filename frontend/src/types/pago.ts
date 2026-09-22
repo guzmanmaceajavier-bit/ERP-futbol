@@ -17,6 +17,13 @@ export interface Pago {
   vencimiento: string;
   estado_pago: EstadoPago;
   saldo_pendiente: number;
+  metodo_pago?: string;
+  registrado_por?: number;
+  registrado_por_nombre?: string;
+  anulado?: boolean;
+  anulado_motivo?: string | null;
+  anulado_por?: number | null;
+  anulado_at?: string | null;
   created_at: string;
 }
 
@@ -29,4 +36,10 @@ export interface PagoForm {
   mes_pago: string;
   cantidad_meses: number;
   meses_cubiertos?: { anio: number; mes: number }[];
+  metodo_pago?: string;
+}
+
+export interface PagoAnulacion {
+  pago_id: number;
+  motivo: string;
 }

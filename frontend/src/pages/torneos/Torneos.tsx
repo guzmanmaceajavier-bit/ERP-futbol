@@ -5,8 +5,8 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { torneoService } from '../../services/torneoService';
-import type { Torneo, TorneoForm } from '../../types';
-import { CATEGORIAS } from '../../utils/constants';
+import type { Torneo, TorneoForm, EstadoTorneo } from '../../types';
+import { CATEGORIAS, ESTADOS_TORNEO } from '../../utils/constants';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
@@ -15,6 +15,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { Textarea } from '../../components/ui/Textarea';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -23,11 +24,13 @@ import { ErrorState } from '../../components/feedback/ErrorState';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
 
+const EMPTY_FORM: TorneoForm = { nombre: '', tipo_genero: '', categoria_requerida: '', fecha_inicio: '', fecha_fin: '', lugar: '', costo: 0, estado: 'proximo', equipos_participantes: [], observacion: '' };
+
 export function Torneos() {
   const { data: torneos, loading, error, refetch } = useApi(() => torneoService.getAll());
   const { isOpen, editing, openNew, openEdit, close } = useModal<Torneo>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
-  const [form, setForm] = useState<TorneoForm>({ nombre: '', tipo_genero: '', categoria_requerida: '', fecha_inicio: '', fecha_fin: '', lugar: '', costo: 0, observacion: '' });
+  const [form, setForm] = useState<TorneoForm>(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<Torneo | null>(null);
   const [saving, setSaving] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -51,8 +54,8 @@ export function Torneos() {
   ];
 
   const openForm = (t?: Torneo) => {
-    if (t) { setForm({ nombre: t.nombre, tipo_genero: t.tipo_genero || '', categoria_requerida: t.categoria_requerida || '', fecha_inicio: t.fecha_inicio || '', fecha_fin: t.fecha_fin || '', lugar: t.lugar || '', costo: t.costo, observacion: t.observacion || '' }); openEdit(t); }
-    else { setForm({ nombre: '', tipo_genero: '', categoria_requerida: '', fecha_inicio: '', fecha_fin: '', lugar: '', costo: 0, observacion: '' }); openNew(); }
+    if (t) { setForm({ nombre: t.nombre, tipo_genero: t.tipo_genero || '', categoria_requerida: t.categoria_requerida || '', fecha_inicio: t.fecha_inicio || '', fecha_fin: t.fecha_fin || '', lugar: t.lugar || '', costo: t.costo, estado: t.estado || 'proximo', equipos_participantes: t.equipos_participantes || [], observacion: t.observacion || '' }); openEdit(t); }
+    else { setForm(EMPTY_FORM); openNew(); }
   };
 
   const handleSave = async () => {
@@ -92,6 +95,11 @@ export function Torneos() {
           <Input label="Costo de inscripcion" type="number" value={form.costo} onChange={(e) => setForm({ ...form, costo: Number(e.target.value) })} />
           <Input label="Fecha de inicio" type="date" value={form.fecha_inicio} onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })} />
           <Input label="Fecha de fin" type="date" value={form.fecha_fin} onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })} />
+          <Select label="Estado" value={(form.estado as string) || 'proximo'} onChange={(e) => setForm({ ...form, estado: e.target.value as EstadoTorneo })}
+            options={ESTADOS_TORNEO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ') }))} />
+          <div className="md:col-span-2">
+            <Textarea label="Equipos participantes (separados por coma)" value={(form.equipos_participantes || []).join(', ')} onChange={(e) => setForm({ ...form, equipos_participantes: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })} placeholder="Ej: Equipo A, Equipo B, Equipo C" rows={2} />
+          </div>
           <div className="md:col-span-2">
             <Input label="Observaciones" value={form.observacion} onChange={(e) => setForm({ ...form, observacion: e.target.value })} placeholder="Detalles adicionales..." />
           </div>

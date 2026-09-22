@@ -4,8 +4,8 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { partidoService } from '../../services/partidoService';
-import type { Partido, PartidoForm } from '../../types';
-import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO } from '../../utils/constants';
+import type { Partido, PartidoForm, LocaliaPartido } from '../../types';
+import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO, LOCALIAS_PARTIDO } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
@@ -25,6 +25,9 @@ const EMPTY_FORM: PartidoForm = {
   hora: '16:00',
   lugar: '',
   categoria: '',
+  localia: '',
+  torneo_id: null,
+  arbitro: '',
   resultado: null,
   goles_favor: null,
   goles_contra: null,
@@ -60,7 +63,7 @@ export function Partidos() {
   const { pagina, setPagina, totalPaginas, paginados, total } = usePagination(itemsFiltrados);
 
   const openForm = (p?: Partido) => {
-    if (p) { setForm({ rival: p.rival, fecha: p.fecha, hora: p.hora, lugar: p.lugar, categoria: p.categoria, resultado: p.resultado, goles_favor: p.goles_favor, goles_contra: p.goles_contra, observaciones: p.observaciones, estado: p.estado }); openEdit(p); }
+    if (p) { setForm({ rival: p.rival, fecha: p.fecha, hora: p.hora, lugar: p.lugar, categoria: p.categoria, localia: p.localia || '', torneo_id: p.torneo_id ?? null, arbitro: p.arbitro || '', resultado: p.resultado, goles_favor: p.goles_favor, goles_contra: p.goles_contra, observaciones: p.observaciones, estado: p.estado }); openEdit(p); }
     else { setForm(EMPTY_FORM); openNew(); }
   };
 
@@ -139,6 +142,10 @@ export function Partidos() {
           <Select label="Categoria" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}
             options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Seleccionar..." required />
           <Input label="Lugar" value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="Ej: Cancha principal" />
+          <Select label="Localia" value={(form.localia as string) || ''} onChange={(e) => setForm({ ...form, localia: e.target.value as LocaliaPartido || '' })}
+            options={LOCALIAS_PARTIDO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} placeholder="Seleccionar..." />
+          <Input label="Torneo ID" type="number" value={form.torneo_id ?? ''} onChange={(e) => setForm({ ...form, torneo_id: e.target.value ? Number(e.target.value) : null })} placeholder="ID del torneo" />
+          <Input label="Arbitro" value={form.arbitro || ''} onChange={(e) => setForm({ ...form, arbitro: e.target.value })} placeholder="Nombre del arbitro" />
           <Select label="Estado" value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value as any })}
             options={ESTADOS_PARTIDO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} />
           <Select label="Resultado" value={form.resultado || ''} onChange={(e) => setForm({ ...form, resultado: e.target.value as any || null })}

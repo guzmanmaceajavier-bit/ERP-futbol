@@ -1,5 +1,6 @@
 export type TipoAlerta = 'DEUDA' | 'ABONO' | 'VENCIMIENTO' | 'MANUAL';
 export type TipoOrigen = 'automatica' | 'manual';
+export type EstadoCobranza = 'deuda' | 'contactado' | 'prometio_pagar' | 'pagado' | 'descartada';
 
 export interface Alerta {
   id: string | number;
@@ -12,8 +13,12 @@ export interface Alerta {
   deuda: number;
   mensualidad_objetivo?: number;
   mes_abono?: string;
+  periodo?: string;
+  vencimiento?: string | null;
   tipo_alerta: TipoAlerta;
   tipo: TipoOrigen;
+  estado_cobranza: EstadoCobranza;
+  ultimo_contacto?: string | null;
   titulo?: string;
   mensaje?: string;
   fecha_vencimiento?: string | null;
@@ -28,4 +33,4 @@ export interface AlertaManualForm {
   fecha_vencimiento: string;
 }
 
-export type AlertaAccion = 'crear' | 'descartar' | 'restaurar' | 'whatsapp_masivo';
+export type AlertaAccion = 'crear' | 'descartar' | 'restaurar' | 'contactado' | 'prometio_pagar' | 'whatsapp_masivo';

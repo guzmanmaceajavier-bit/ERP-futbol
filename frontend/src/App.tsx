@@ -48,26 +48,26 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
 
-        <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe', 'auxiliar']}><Jugadores /></RoleGuard>} />
+        <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Jugadores /></RoleGuard>} />
         <Route path="categorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Categorias /></RoleGuard>} />
         <Route path="profesores" element={<RoleGuard roles={['super_admin', 'admin']}><Profesores /></RoleGuard>} />
-        <Route path="asistencias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe', 'auxiliar']}><Asistencias /></RoleGuard>} />
+        <Route path="asistencias" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Asistencias /></RoleGuard>} />
         <Route path="torneos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Torneos /></RoleGuard>} />
 
         <Route path="entrenamientos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Entrenamientos /></RoleGuard>} />
         <Route path="partidos" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Partidos /></RoleGuard>} />
         <Route path="convocatorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Convocatorias /></RoleGuard>} />
 
-        <Route path="pagos" element={<RoleGuard roles={['super_admin', 'admin']}><Pagos /></RoleGuard>} />
-        <Route path="caja" element={<RoleGuard roles={['super_admin', 'admin']}><Caja /></RoleGuard>} />
-        <Route path="gastos" element={<RoleGuard roles={['super_admin', 'admin']}><Gastos /></RoleGuard>} />
-        <Route path="reportes" element={<RoleGuard roles={['super_admin', 'admin']}><Reportes /></RoleGuard>} />
+        <Route path="pagos" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><Pagos /></RoleGuard>} />
+        <Route path="caja" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><Caja /></RoleGuard>} />
+        <Route path="gastos" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><Gastos /></RoleGuard>} />
+        <Route path="reportes" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><Reportes /></RoleGuard>} />
 
-        <Route path="inventario" element={<RoleGuard roles={['super_admin', 'admin', 'auxiliar']}><Inventario /></RoleGuard>} />
+        <Route path="inventario" element={<RoleGuard roles={['super_admin', 'admin', 'auxiliar', 'asistente', 'tesorero']}><Inventario /></RoleGuard>} />
         <Route path="notas" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Notas /></RoleGuard>} />
 
-        <Route path="alertas" element={<RoleGuard roles={['super_admin', 'admin']}><Alertas /></RoleGuard>} />
-        <Route path="whatsapp" element={<RoleGuard roles={['super_admin', 'admin']}><WhatsApp /></RoleGuard>} />
+        <Route path="alertas" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><Alertas /></RoleGuard>} />
+        <Route path="whatsapp" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero']}><WhatsApp /></RoleGuard>} />
         <Route path="bitacora" element={<RoleGuard roles={['super_admin']}><Bitacora /></RoleGuard>} />
         <Route path="configuracion" element={<RoleGuard roles={['super_admin']}><Configuracion /></RoleGuard>} />
       </Route>

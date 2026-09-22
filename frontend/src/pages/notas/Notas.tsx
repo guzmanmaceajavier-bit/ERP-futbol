@@ -8,13 +8,16 @@ import { useAuth } from '../../context/AuthContext';
 import { notaService } from '../../services/notaService';
 import { jugadorService } from '../../services/jugadorService';
 import type { Nota, NotaForm, Jugador } from '../../types';
+import { TIPOS_NOTA } from '../../utils/constants';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ToastList } from '../../components/feedback/ToastList';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
+import { Badge } from '../../components/ui/Badge';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { FormModal } from '../../components/forms/FormModal';
@@ -29,7 +32,7 @@ export function Notas() {
   const [error, setError] = useState<string | null>(null);
   const { isOpen, openNew, close } = useModal();
   const { toasts, showSuccess, showError, dismiss } = useToast();
-  const [form, setForm] = useState<NotaForm & { jugador_id: number }>({ jugador_id: 0, nota: '' });
+  const [form, setForm] = useState<NotaForm & { jugador_id: number }>({ jugador_id: 0, nota: '', tipo: 'otra', visibilidad: 'privada' });
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Nota | null>(null);
   const [busqueda, setBusqueda] = useState('');
@@ -85,13 +88,23 @@ export function Notas() {
     catch (err: any) { showError(err.message); }
   };
 
+  const getTipoVariant = (tipo?: string): 'info' | 'warning' | 'danger' | 'success' | 'default' => {
+    switch (tipo) {
+      case 'disciplinaria': return 'danger';
+      case 'medica': return 'warning';
+      case 'deportiva': return 'success';
+      case 'administrativa': return 'info';
+      default: return 'default';
+    }
+  };
+
   if (loading) return <LoadingOverlay />;
   if (error) return <ErrorState error={error} onRetry={loadAll} />;
 
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Notas" subtitle={`${total} registros`} actions={<Button onClick={() => { setForm({ jugador_id: 0, nota: '' }); openNew(); }}>+ Nueva Nota</Button>} />
+      <PageHeader title="Notas" subtitle={`${total} registros`} actions={<Button onClick={() => { setForm({ jugador_id: 0, nota: '', tipo: 'otra', visibilidad: 'privada' }); openNew(); }}>+ Nueva Nota</Button>} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar notas..." className="flex-1" />
@@ -113,9 +126,19 @@ export function Notas() {
                 <div key={n.id} className="px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-800/30">
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm">{n.nota}</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      {n.tipo && <Badge variant={getTipoVariant(n.tipo)}>{n.tipo}</Badge>}
+                      {n.visibilidad && (
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${n.visibilidad === 'privada' ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-green-900/30 text-green-300 border-green-700'}`}>
+                          {n.visibilidad === 'privada' ? '🔒 privada' : '🌐 publica'}
+                        </span>
+                      )}
                       <p className="text-xs text-slate-400">{n.creador_nombre || 'Sistema'}</p>
                       <p className="text-xs text-slate-500">{formatDateTime(n.created_at)}</p>
+                      {(() => {
+                        const jug = jugadores.find((j) => j.id === n.jugador_id);
+                        return jug ? <span className="text-xs text-slate-500">· {jug.nombre} {jug.apellidos}</span> : null;
+                      })()}
                     </div>
                   </div>
                   <button onClick={() => setConfirmDelete(n)}
@@ -140,7 +163,22 @@ export function Notas() {
             options={jugadores.map((j) => ({ value: String(j.id), label: `${j.nombre} ${j.apellidos}` }))}
             placeholder="Seleccionar jugador..."
           />
-          <Input label="Nota" value={form.nota} onChange={(e) => setForm({ ...form, nota: e.target.value })} required placeholder="Escribe tu nota..." />
+          <Select
+            label="Tipo"
+            value={form.tipo || 'otra'}
+            onChange={(e) => setForm({ ...form, tipo: e.target.value as NotaForm['tipo'] })}
+            options={TIPOS_NOTA.map((t) => ({ value: t, label: t }))}
+          />
+          <Select
+            label="Visibilidad"
+            value={form.visibilidad || 'privada'}
+            onChange={(e) => setForm({ ...form, visibilidad: e.target.value as NotaForm['visibilidad'] })}
+            options={[
+              { value: 'publica', label: 'Publica' },
+              { value: 'privada', label: 'Privada' },
+            ]}
+          />
+          <Textarea label="Nota" value={form.nota} onChange={(e) => setForm({ ...form, nota: e.target.value })} required placeholder="Escribe tu nota..." rows={3} />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>

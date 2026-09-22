@@ -1,6 +1,7 @@
 export type TipoIdentificacion = 'Cedula' | 'Tarjeta' | 'Pasaporte';
 export type Genero = 'Masculino' | 'Femenino';
 export type TipoBeca = 'Normal' | 'Becado 50%' | 'Becado 100%' | 'Patrocinado';
+export type EstadoJugador = 'activo' | 'inactivo' | 'retirado';
 
 export interface Jugador {
   id: number;
@@ -20,9 +21,17 @@ export interface Jugador {
   acudiente_telefono: string | null;
   whatsapp_opt_out: boolean;
   activo: boolean;
+  estado: EstadoJugador;
+  fecha_ingreso: string | null;
   created_at: string;
   objetivo_real?: number;
   saldo_pendiente?: number;
+  // Calculados (no persisted, vienen de periodos)
+  total_pagado?: number;
+  deuda_actual?: number;
+  proximo_vencimiento?: string | null;
+  ultima_asistencia?: string | null;
+  ultimo_pago?: string | null;
 }
 
 export interface JugadorForm {
@@ -37,11 +46,13 @@ export interface JugadorForm {
   tipo_beca: TipoBeca;
   acudiente_nombre: string;
   acudiente_telefono: string;
+  fecha_ingreso?: string;
+  estado?: EstadoJugador;
 }
 
 export interface JugadorFiltros {
   busqueda: string;
   categoria: string;
   genero: Genero | '';
-  estado: 'activo' | 'inactivo' | '';
+  estado: EstadoJugador | '';
 }

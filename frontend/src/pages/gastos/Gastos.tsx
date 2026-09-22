@@ -19,9 +19,10 @@ import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
-import { validateGasto } from '../../utils/validators';
+import { validateGasto, validateAnulacion } from '../../utils/validators';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Textarea } from '../../components/ui/Textarea';
 
 export function Gastos() {
   const { data: gastos, loading, error, refetch } = useApi(() => gastoService.getAll());
@@ -30,6 +31,8 @@ export function Gastos() {
   const [form, setForm] = useState<GastoForm>({ concepto: '', descripcion: '', monto: 0, categoria: 'General', fecha: todayISO() });
   const [busqueda, setBusqueda] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<Gasto | null>(null);
+  const [anularGasto, setAnularGasto] = useState<Gasto | null>(null);
+  const [motivoAnular, setMotivoAnular] = useState('');
   const [saving, setSaving] = useState(false);
 
   const busquedaDebounced = useDebounce(busqueda);
@@ -42,16 +45,34 @@ export function Gastos() {
   const { pagina, setPagina, totalPaginas, paginados, total } = usePagination(gastosFiltrados);
 
   const columns: Column<Gasto>[] = [
-    { key: 'concepto', label: 'Concepto', render: (g) => <span className="text-white font-medium">{g.concepto}</span> },
+    { key: 'concepto', label: 'Concepto', render: (g) => (
+      <span className={`${g.anulado ? 'text-slate-500 line-through' : 'text-white'} font-medium`}>{g.concepto}{g.anulado && g.anulado_motivo ? <span className="block text-[10px] text-amber-400 font-normal">Motivo: {g.anulado_motivo}</span> : null}</span>
+    ) },
     { key: 'categoria', label: 'Categoria' },
-    { key: 'monto', label: 'Monto', render: (g) => <span className="font-mono text-red-400">{formatCurrency(g.monto)}</span> },
+    { key: 'monto', label: 'Monto', render: (g) => <span className={`font-mono ${g.anulado ? 'text-slate-500 line-through' : 'text-red-400'}`}>{formatCurrency(g.monto)}</span> },
     { key: 'fecha', label: 'Fecha', render: (g) => formatDate(g.fecha) },
     {
       key: 'acciones',
       label: '',
-      className: 'w-24',
+      className: 'w-36',
       render: (g) => (
-        <ActionsCell onEdit={() => openForm(g)} onDelete={() => setConfirmDelete(g)} />
+        g.anulado ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-600 text-slate-300 border border-slate-500">Anulado</span>
+        ) : (
+          <ActionsCell
+            onEdit={() => openForm(g)}
+            onDelete={() => setConfirmDelete(g)}
+            extra={
+              <button
+                onClick={(e) => { e.stopPropagation(); setAnularGasto(g); setMotivoAnular(''); }}
+                className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all"
+                title="Anular"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+              </button>
+            }
+          />
+        )
       ),
     },
   ];
@@ -76,6 +97,21 @@ export function Gastos() {
     if (!confirmDelete) return;
     try { await gastoService.remove(confirmDelete.id); showSuccess('Gasto eliminado'); setConfirmDelete(null); refetch(); }
     catch (err: any) { showError(err.message); }
+  };
+
+  const handleAnular = async () => {
+    if (!anularGasto) return;
+    const errors = validateAnulacion(motivoAnular);
+    if (Object.keys(errors).length > 0) { showError(errors.motivo || 'Motivo invalido'); return; }
+    setSaving(true);
+    try {
+      await gastoService.anular({ gasto_id: anularGasto.id, motivo: motivoAnular });
+      showSuccess('Gasto anulado correctamente');
+      setAnularGasto(null);
+      setMotivoAnular('');
+      refetch();
+    } catch (err: any) { showError(err.message || 'Error al anular gasto'); }
+    finally { setSaving(false); }
   };
 
   if (loading) return <LoadingOverlay />;
@@ -107,6 +143,29 @@ export function Gastos() {
       </FormModal>
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}
         title="Eliminar gasto" message="¿Estas seguro de eliminar este gasto?" />
+
+      <FormModal isOpen={!!anularGasto} onClose={() => { setAnularGasto(null); setMotivoAnular(''); }} title="Anular gasto">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            ¿Anular el gasto <span className="text-white font-bold">{anularGasto?.concepto}</span> por <span className="font-mono text-red-400">{formatCurrency(anularGasto?.monto || 0)}</span>?
+          </p>
+          <Textarea
+            label="Motivo de anulacion *"
+            placeholder="Minimo 10 caracteres..."
+            value={motivoAnular}
+            onChange={(e) => setMotivoAnular(e.target.value)}
+            rows={3}
+            required
+          />
+          <p className="text-[11px] text-slate-500">Esta accion no se puede deshacer.</p>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+          <button onClick={() => { setAnularGasto(null); setMotivoAnular(''); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm transition-colors">Cancelar</button>
+          <button onClick={handleAnular} disabled={saving} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-colors">
+            {saving ? 'Anulando...' : 'Anular gasto'}
+          </button>
+        </div>
+      </FormModal>
     </div>
   );
 }

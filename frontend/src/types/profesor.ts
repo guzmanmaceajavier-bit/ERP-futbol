@@ -1,3 +1,5 @@
+export type TipoContrato = 'indefinido' | 'fijo' | 'prestacion' | 'hora';
+
 export interface Profesor {
   id: number;
   nombre: string;
@@ -5,6 +7,8 @@ export interface Profesor {
   especialidad: string | null;
   salario: number;
   fecha_ingreso: string | null;
+  tipo_contrato: TipoContrato | null;
+  categorias_asignadas: string[];
   activo: boolean;
 }
 
@@ -14,6 +18,8 @@ export interface ProfesorForm {
   especialidad: string;
   salario: number;
   fecha_ingreso: string;
+  tipo_contrato?: TipoContrato | '';
+  categorias_asignadas?: string[];
 }
 
 export interface NominaPago {

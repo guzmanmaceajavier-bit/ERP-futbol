@@ -1,3 +1,5 @@
+export type EstadoTorneo = 'proximo' | 'en_curso' | 'finalizado';
+
 export interface Torneo {
   id: number;
   nombre: string;
@@ -7,6 +9,8 @@ export interface Torneo {
   fecha_fin: string | null;
   lugar: string | null;
   costo: number;
+  estado: EstadoTorneo;
+  equipos_participantes?: string[];
   observacion: string | null;
   convocados?: number;
   created_at: string;
@@ -20,5 +24,7 @@ export interface TorneoForm {
   fecha_fin: string;
   lugar: string;
   costo: number;
+  estado?: EstadoTorneo;
+  equipos_participantes?: string[];
   observacion: string;
 }

@@ -6,17 +6,28 @@ import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ToastList } from '../../components/feedback/ToastList';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { pagoService } from '../../services/pagoService';
+import { gastoService } from '../../services/gastoService';
 
 export function Reportes() {
-  const [tab, setTab] = useState<'mes' | 'categoria' | 'cuenta'>('mes');
+  const [tab, setTab] = useState<'mes' | 'categoria' | 'cuenta' | 'caja'>('mes');
   const { data: porMes, loading: loadMes, error: errMes, refetch: refMes } = useApi(() => reporteService.getPorMes());
   const { data: porCat, loading: loadCat, error: errCat, refetch: refCat } = useApi(() => reporteService.getPorCategoria());
   const { data: cuenta, loading: loadCuenta, error: errCuenta, refetch: refCuenta } = useApi(() => reporteService.getEstadoCuenta());
+  const { data: pagos } = useApi(() => pagoService.getAll());
+  const { data: gastos } = useApi(() => gastoService.getAll());
   const { toasts, dismiss } = useToast();
 
   const loading = loadMes || loadCat || loadCuenta;
   const error = errMes || errCat || errCuenta;
+
+  const cajaResumen = useMemo(() => {
+    const totalIngresos = (pagos || []).reduce((s, p) => s + (Number(p.monto) || 0), 0);
+    const totalGastos = (gastos || []).reduce((s, g) => s + (Number(g.monto) || 0), 0);
+    const utilidad = totalIngresos - totalGastos;
+    return { totalIngresos, totalGastos, utilidad, cntPagos: pagos?.length || 0, cntGastos: gastos?.length || 0 };
+  }, [pagos, gastos]);
 
   if (loading) return <LoadingOverlay />;
   if (error) return <ErrorState error={error || ''} onRetry={() => { refMes(); refCat(); refCuenta(); }} />;
@@ -27,12 +38,12 @@ export function Reportes() {
       <PageHeader title="Reportes" />
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-700 pb-2">
-        {(['mes', 'categoria', 'cuenta'] as const).map((t) => (
+      <div className="flex gap-2 border-b border-slate-700 pb-2 overflow-x-auto">
+        {(['mes', 'categoria', 'cuenta', 'caja'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
               ${tab === t ? 'bg-[#22C55E]/20 text-[#22C55E]' : 'text-slate-400 hover:text-white'}`}>
-            {t === 'mes' ? 'Por Mes' : t === 'categoria' ? 'Por Categoria' : 'Estado de Cuenta'}
+            {t === 'mes' ? 'Por Mes' : t === 'categoria' ? 'Por Categoria' : t === 'cuenta' ? 'Estado de Cuenta' : 'Caja'}
           </button>
         ))}
       </div>
@@ -97,6 +108,49 @@ export function Reportes() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Caja / Inventario resumen (ingresos vs gastos) */}
+      {tab === 'caja' && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 space-y-4">
+          <h3 className="font-sport font-bold text-white">Resumen Caja</h3>
+          <p className="text-xs text-slate-400">Total ingresos (pagos) vs total gastos del periodo registrado. Utilidad = ingresos - gastos.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4">
+              <p className="text-xs text-slate-400">Total ingresos</p>
+              <p className="font-mono text-lg font-bold text-green-400">{formatCurrency(cajaResumen.totalIngresos)}</p>
+              <p className="text-xs text-slate-500 mt-1">{cajaResumen.cntPagos} pagos registrados</p>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4">
+              <p className="text-xs text-slate-400">Total gastos</p>
+              <p className="font-mono text-lg font-bold text-red-400">{formatCurrency(cajaResumen.totalGastos)}</p>
+              <p className="text-xs text-slate-500 mt-1">{cajaResumen.cntGastos} gastos registrados</p>
+            </div>
+            <div className={`bg-slate-900/60 border rounded-xl p-4 ${cajaResumen.utilidad >= 0 ? 'border-green-700/40' : 'border-red-700/40'}`}>
+              <p className="text-xs text-slate-400">Utilidad</p>
+              <p className={`font-mono text-lg font-bold ${cajaResumen.utilidad >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(cajaResumen.utilidad)}</p>
+              <p className="text-xs text-slate-500 mt-1">Ingresos - Gastos</p>
+            </div>
+          </div>
+          <div className="pt-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>Ingresos</span><span>Gastos</span>
+            </div>
+            <div className="flex h-3 rounded-full overflow-hidden bg-slate-700">
+              {(() => {
+                const total = Math.max(1, cajaResumen.totalIngresos + cajaResumen.totalGastos);
+                const pctIng = (cajaResumen.totalIngresos / total) * 100;
+                const pctGas = (cajaResumen.totalGastos / total) * 100;
+                return (
+                  <>
+                    <div className="bg-green-600" style={{ width: `${pctIng}%` }} />
+                    <div className="bg-red-600" style={{ width: `${pctGas}%` }} />
+                  </>
+                );
+              })()}
+            </div>
+          </div>
         </div>
       )}
     </div>

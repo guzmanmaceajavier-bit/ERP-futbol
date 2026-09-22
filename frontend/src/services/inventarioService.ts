@@ -12,4 +12,7 @@ export const inventarioService = {
 
   remove: (id: number) =>
     apiClient.delete(`/inventario?id=${id}`),
+
+  movimiento: (payload: { item_id: number; tipo: 'entrada' | 'salida' | 'ajuste'; cantidad: number; motivo: string }) =>
+    apiClient.post<InventarioItem>('/inventario', { accion: 'movimiento', ...payload }),
 };

@@ -1,5 +1,5 @@
 import type { JugadorForm as FormType } from '../../types';
-import { CATEGORIAS, GENEROS, TIPOS_BECA } from '../../utils/constants';
+import { CATEGORIAS, GENEROS, TIPOS_BECA, ESTADOS_JUGADOR } from '../../utils/constants';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
@@ -33,6 +33,9 @@ export function JugadorForm({ isOpen, editing, form, setForm, errors = {}, onClo
           options={TIPOS_BECA.map((b) => ({ value: b, label: b }))} />
         <Input label="Acudiente (nombre)" value={form.acudiente_nombre} onChange={(e) => setForm({ ...form, acudiente_nombre: e.target.value })} />
         <Input label="Acudiente (telefono)" value={form.acudiente_telefono} onChange={(e) => setForm({ ...form, acudiente_telefono: e.target.value })} />
+        <DatePicker label="Fecha de ingreso" value={form.fecha_ingreso || ''} onChange={(e) => setForm({ ...form, fecha_ingreso: e.target.value })} error={errors.fecha_ingreso} />
+        <Select label="Estado" value={form.estado || 'activo'} onChange={(e) => setForm({ ...form, estado: e.target.value as any })}
+          options={ESTADOS_JUGADOR.map((e) => ({ value: e, label: e.charAt(0).toUpperCase() + e.slice(1) }))} />
       </div>
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>
