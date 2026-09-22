@@ -5,6 +5,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ToastList } from '../../components/feedback/ToastList';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { useState } from 'react';
 
 export function Reportes() {
@@ -23,7 +24,7 @@ export function Reportes() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <h1 className="font-sport text-2xl font-bold text-white">Reportes</h1>
+      <PageHeader title="Reportes" />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-700 pb-2">

@@ -4,6 +4,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useDebounce } from '../../hooks/useDebounce';
 import { bitacoraService } from '../../services/bitacoraService';
 import { formatDateTime } from '../../utils/formatters';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
@@ -27,10 +28,7 @@ export function Bitacora() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-sport text-2xl font-bold text-white">Bitacora</h1>
-        <p className="text-slate-400 text-sm">{total} registros</p>
-      </div>
+      <PageHeader title="Bitacora" />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por usuario, modulo o accion..." />
 

@@ -7,6 +7,7 @@ import type { Jugador, Categoria } from '../../types';
 import { todayISO } from '../../utils/formatters';
 import { CATEGORIAS } from '../../utils/constants';
 import { Button } from '../../components/ui/Button';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { FilterSelect } from '../../components/data/FilterSelect';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
@@ -91,14 +92,7 @@ export function Asistencias() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="font-sport text-2xl font-bold text-white">Asistencias</h1>
-        <div className="flex gap-2">
-          {tab === 'registrar' && (
-            <Button onClick={handleGuardar} loading={saving}>Guardar Asistencia</Button>
-          )}
-        </div>
-      </div>
+      <PageHeader title="Asistencias" actions={tab === 'registrar' ? <Button onClick={handleGuardar} loading={saving}>Guardar Asistencia</Button> : undefined} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)}

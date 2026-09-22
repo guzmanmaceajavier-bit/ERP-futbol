@@ -7,6 +7,7 @@ import { alertaService } from '../../services/alertaService';
 import { formatCurrency } from '../../utils/formatters';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -49,10 +50,7 @@ export function Alertas() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div>
-        <h1 className="font-sport text-2xl font-bold text-white">Alertas</h1>
-        <p className="text-slate-400 text-sm">{total} alertas</p>
-      </div>
+      <PageHeader title="Alertas" subtitle={`${total} alertas`} />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar alerta..." />
 

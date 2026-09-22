@@ -9,6 +9,7 @@ import { ToastList } from '../../components/feedback/ToastList';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { CATEGORIAS } from '../../utils/constants';
 
 const PLANTILLAS = [
@@ -115,10 +116,7 @@ export function Configuracion() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      <div className="flex items-center justify-between">
-        <h1 className="font-sport text-2xl font-bold text-white">Configuracion</h1>
-        <Button onClick={handleSave} loading={saving}>Guardar Cambios</Button>
-      </div>
+      <PageHeader title="Configuracion" actions={<Button onClick={handleSave} loading={saving}>Guardar Cambios</Button>} />
 
       {/* 1. Datos de la escuela */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 space-y-4">

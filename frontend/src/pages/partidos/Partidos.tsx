@@ -9,6 +9,7 @@ import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO } from '../../utils/con
 import { formatDate } from '../../utils/formatters';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
@@ -88,13 +89,7 @@ export function Partidos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Partidos</h1>
-          <p className="text-slate-400 text-sm">{total} registros</p>
-        </div>
-        <Button onClick={() => openForm()}>+ Nuevo Partido</Button>
-      </div>
+      <PageHeader title="Partidos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Partido</Button>} />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por rival o categoria..." />
 

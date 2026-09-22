@@ -4,6 +4,7 @@ import { useModal } from '../../hooks/useModal';
 import { useToast } from '../../hooks/useToast';
 import { cajaService } from '../../services/cajaService';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
@@ -44,7 +45,7 @@ export function Caja() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <h1 className="font-sport text-2xl font-bold text-white">Caja</h1>
+      <PageHeader title="Caja" />
 
       {/* Resumen del dia */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">

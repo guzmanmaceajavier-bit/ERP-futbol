@@ -18,6 +18,7 @@ import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
 import { ActionsCell } from '../../components/ui/ActionsCell';
+import { PageHeader } from '../../components/layout/PageHeader';
 
 const EMPTY_FORM: EntrenamientoForm = {
   fecha: new Date().toISOString().split('T')[0],
@@ -95,13 +96,7 @@ export function Entrenamientos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Entrenamientos</h1>
-          <p className="text-slate-400 text-sm">{total} registros</p>
-        </div>
-        <Button onClick={() => openForm()}>+ Nuevo Entrenamiento</Button>
-      </div>
+      <PageHeader title="Entrenamientos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Entrenamiento</Button>} />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por tema, entrenador o categoria..." />
 

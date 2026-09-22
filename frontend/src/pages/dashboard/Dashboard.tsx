@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { KPICard } from '../../components/dashboard/KPICard';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { Button } from '../../components/ui/Button';
 import { useApi } from '../../hooks/useApi';
 import { jugadorService } from '../../services/jugadorService';
 import { pagoService } from '../../services/pagoService';
@@ -98,32 +100,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Encabezado */}
-      <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] border border-slate-700 rounded-2xl p-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="font-sport text-2xl font-bold text-white">{escuelaNombre}</h1>
-            <p className="text-slate-400 mt-1">
-              Bienvenido, {user?.nombre || 'Usuario'}
-            </p>
-            <p className="text-slate-500 text-sm mt-1">
-              {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              API activa
-            </span>
-            <button
-              onClick={() => navigate('/pagos')}
-              className="bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              + Registrar pago
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageHeader title={escuelaNombre} subtitle={`Bienvenido, ${user?.nombre || 'Usuario'}`} actions={<Button onClick={() => navigate('/pagos')}>+ Registrar pago</Button>} />
 
       {/* 2. KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

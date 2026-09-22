@@ -4,6 +4,7 @@ import { partidoService } from '../../services/partidoService';
 import { jugadorService } from '../../services/jugadorService';
 import { useToast } from '../../hooks/useToast';
 import type { Convocado, Partido, Jugador, Convocatoria } from '../../types';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -90,7 +91,7 @@ export function Convocatorias() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <h1 className="font-sport text-2xl font-bold text-white">Convocatorias</h1>
+      <PageHeader title="Convocatorias" />
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
         <h2 className="font-sport font-bold text-white mb-4">Partidos</h2>

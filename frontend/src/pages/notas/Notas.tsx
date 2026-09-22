@@ -11,6 +11,7 @@ import type { Nota, NotaForm, Jugador } from '../../types';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ToastList } from '../../components/feedback/ToastList';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -90,13 +91,7 @@ export function Notas() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sport text-2xl font-bold text-white">Notas</h1>
-          <p className="text-slate-400 text-sm">{total} registros</p>
-        </div>
-        <Button onClick={() => { setForm({ jugador_id: 0, nota: '' }); openNew(); }}>+ Nueva Nota</Button>
-      </div>
+      <PageHeader title="Notas" subtitle={`${total} registros`} actions={<Button onClick={() => { setForm({ jugador_id: 0, nota: '' }); openNew(); }}>+ Nueva Nota</Button>} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar notas..." className="flex-1" />

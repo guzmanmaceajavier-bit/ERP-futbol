@@ -4,6 +4,7 @@ import { whatsappService } from '../../services/whatsappService';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ToastList } from '../../components/feedback/ToastList';
 import { Badge } from '../../components/ui/Badge';
+import { PageHeader } from '../../components/layout/PageHeader';
 import type { WhatsAppPlantilla, WhatsAppHistorialEntry } from '../../types';
 
 export function WhatsApp() {
@@ -37,7 +38,7 @@ export function WhatsApp() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <h1 className="font-sport text-2xl font-bold text-white">WhatsApp</h1>
+      <PageHeader title="WhatsApp" />
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
         <h2 className="font-sport font-bold text-white mb-4">Plantillas disponibles</h2>
