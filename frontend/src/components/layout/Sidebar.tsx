@@ -68,11 +68,12 @@ const MENU: MenuGroup[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapsed }: SidebarProps) {
   const { user, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     INICIO: true, ESCUELA: true, DEPORTIVO: true, DINERO: true, CANCHA: true, SISTEMA: true,
   });
@@ -120,7 +121,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           )}
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={onToggleCollapsed}
             className={`p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors hidden lg:block ${collapsed ? 'mx-auto' : ''}`}
             title={collapsed ? 'Expandir' : 'Colapsar'}
           >
