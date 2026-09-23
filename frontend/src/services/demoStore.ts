@@ -75,16 +75,16 @@ export function initDemoData() {
   });
 
   const jugadores = [
-    { id: 1, nombre: 'Santiago', apellidos: 'Garcia Perez', fecha_nacimiento: '2008-03-15', tipo_identificacion: 'Cedula', numero_identificacion: '1234567890', categoria: 'Sub 17-18', telefono: '3105551111', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Masculino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Pedro Garcia', acudiente_telefono: '3105551112', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-01', created_at: now(), saldo_pendiente: 50000 },
-    { id: 2, nombre: 'Valentina', apellidos: 'Rodriguez Diaz', fecha_nacimiento: '2009-07-22', tipo_identificacion: 'Cedula', numero_identificacion: '2345678901', categoria: 'Sub 16-15', telefono: '3115552222', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Ana Rodriguez', acudiente_telefono: '3115552223', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 3, nombre: 'Mateo', apellidos: 'Lopez Suarez', fecha_nacimiento: '2010-01-10', tipo_identificacion: 'Cedula', numero_identificacion: '3456789012', categoria: 'Sub 14-13', telefono: '3125553333', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', tipo_beca: 'Becado 50%', descuento_beca: 20000, acudiente_nombre: 'Jorge Lopez', acudiente_telefono: '3125553334', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-01', created_at: now(), saldo_pendiente: 20000 },
-    { id: 4, nombre: 'Camila', apellidos: 'Hernandez Ruiz', fecha_nacimiento: '2011-05-18', tipo_identificacion: 'Tarjeta', numero_identificacion: '4567890123', categoria: 'Sub 12-11', telefono: '3135554444', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Laura Hernandez', acudiente_telefono: '3135554445', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-10', created_at: now(), saldo_pendiente: 0 },
-    { id: 5, nombre: 'Sebastian', apellidos: 'Torres Vargas', fecha_nacimiento: '2012-09-03', tipo_identificacion: 'Cedula', numero_identificacion: '5678901234', categoria: 'Sub 10-9', telefono: '3145555555', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', tipo_beca: 'Becado 100%', descuento_beca: 30000, acudiente_nombre: 'Carlos Torres', acudiente_telefono: '3145555556', whatsapp_opt_out: true, activo: true, estado: 'activo', fecha_ingreso: '2024-04-01', created_at: now(), saldo_pendiente: 0 },
-    { id: 6, nombre: 'Isabella', apellidos: 'Martinez Cruz', fecha_nacimiento: '2008-11-25', tipo_identificacion: 'Cedula', numero_identificacion: '6789012345', categoria: 'Sub 17-18', telefono: '3155556666', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Roberto Martinez', acudiente_telefono: '3155556667', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-04-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 7, nombre: 'Daniel', apellidos: 'Gutierrez Palacios', fecha_nacimiento: '2010-04-12', tipo_identificacion: 'Cedula', numero_identificacion: '7890123456', categoria: 'Sub 14-13', telefono: '3165557777', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Patricia Gutierrez', acudiente_telefono: '3165557778', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-01', created_at: now(), saldo_pendiente: 40000 },
-    { id: 8, nombre: 'Sofia', apellidos: 'Ramirez Ospina', fecha_nacimiento: '2011-08-30', tipo_identificacion: 'Cedula', numero_identificacion: '8901234567', categoria: 'Sub 12-11', telefono: '3175558888', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', tipo_beca: 'Patrocinado', descuento_beca: 40000, acudiente_nombre: 'Fernando Ramirez', acudiente_telefono: '3175558889', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 9, nombre: 'Nicolas', apellidos: 'Morales Castano', fecha_nacimiento: '2013-02-14', tipo_identificacion: 'Cedula', numero_identificacion: '9012345678', categoria: 'Sub 8-7', telefono: '3185559999', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Diana Morales', acudiente_telefono: '3185559990', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-06-01', created_at: now(), saldo_pendiente: 30000 },
-    { id: 10, nombre: 'Luciana', apellidos: 'Vargas Mejia', fecha_nacimiento: '2012-06-07', tipo_identificacion: 'Tarjeta', numero_identificacion: '0123456789', categoria: 'Sub 10-9', telefono: '3195550000', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Femenino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Gloria Vargas', acudiente_telefono: '3195550001', whatsapp_opt_out: false, activo: true, estado: 'retirado', fecha_ingreso: '2024-06-15', created_at: now(), saldo_pendiente: 0 },
+    { id: 1, nombre: 'Santiago', apellidos: 'Garcia Perez', fecha_nacimiento: '2008-03-15', tipo_identificacion: 'Cedula', numero_identificacion: '1234567890', categoria: 'Sub 17-18', telefono: '3105551111', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Masculino', acudiente_nombre: 'Pedro Garcia', acudiente_telefono: '3105551112', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-01', created_at: now(), saldo_pendiente: 50000 },
+    { id: 2, nombre: 'Valentina', apellidos: 'Rodriguez Diaz', fecha_nacimiento: '2009-07-22', tipo_identificacion: 'Cedula', numero_identificacion: '2345678901', categoria: 'Sub 16-15', telefono: '3115552222', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', acudiente_nombre: 'Ana Rodriguez', acudiente_telefono: '3115552223', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-15', created_at: now(), saldo_pendiente: 0 },
+    { id: 3, nombre: 'Mateo', apellidos: 'Lopez Suarez', fecha_nacimiento: '2010-01-10', tipo_identificacion: 'Cedula', numero_identificacion: '3456789012', categoria: 'Sub 14-13', telefono: '3125553333', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', acudiente_nombre: 'Jorge Lopez', acudiente_telefono: '3125553334', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-01', created_at: now(), saldo_pendiente: 20000 },
+    { id: 4, nombre: 'Camila', apellidos: 'Hernandez Ruiz', fecha_nacimiento: '2011-05-18', tipo_identificacion: 'Tarjeta', numero_identificacion: '4567890123', categoria: 'Sub 12-11', telefono: '3135554444', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', acudiente_nombre: 'Laura Hernandez', acudiente_telefono: '3135554445', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-10', created_at: now(), saldo_pendiente: 0 },
+    { id: 5, nombre: 'Sebastian', apellidos: 'Torres Vargas', fecha_nacimiento: '2012-09-03', tipo_identificacion: 'Cedula', numero_identificacion: '5678901234', categoria: 'Sub 10-9', telefono: '3145555555', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', acudiente_nombre: 'Carlos Torres', acudiente_telefono: '3145555556', whatsapp_opt_out: true, activo: true, estado: 'activo', fecha_ingreso: '2024-04-01', created_at: now(), saldo_pendiente: 0 },
+    { id: 6, nombre: 'Isabella', apellidos: 'Martinez Cruz', fecha_nacimiento: '2008-11-25', tipo_identificacion: 'Cedula', numero_identificacion: '6789012345', categoria: 'Sub 17-18', telefono: '3155556666', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', acudiente_nombre: 'Roberto Martinez', acudiente_telefono: '3155556667', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-04-15', created_at: now(), saldo_pendiente: 0 },
+    { id: 7, nombre: 'Daniel', apellidos: 'Gutierrez Palacios', fecha_nacimiento: '2010-04-12', tipo_identificacion: 'Cedula', numero_identificacion: '7890123456', categoria: 'Sub 14-13', telefono: '3165557777', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', acudiente_nombre: 'Patricia Gutierrez', acudiente_telefono: '3165557778', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-01', created_at: now(), saldo_pendiente: 40000 },
+    { id: 8, nombre: 'Sofia', apellidos: 'Ramirez Ospina', fecha_nacimiento: '2011-08-30', tipo_identificacion: 'Cedula', numero_identificacion: '8901234567', categoria: 'Sub 12-11', telefono: '3175558888', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', acudiente_nombre: 'Fernando Ramirez', acudiente_telefono: '3175558889', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-15', created_at: now(), saldo_pendiente: 0 },
+    { id: 9, nombre: 'Nicolas', apellidos: 'Morales Castano', fecha_nacimiento: '2013-02-14', tipo_identificacion: 'Cedula', numero_identificacion: '9012345678', categoria: 'Sub 8-7', telefono: '3185559999', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', acudiente_nombre: 'Diana Morales', acudiente_telefono: '3185559990', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-06-01', created_at: now(), saldo_pendiente: 30000 },
+    { id: 10, nombre: 'Luciana', apellidos: 'Vargas Mejia', fecha_nacimiento: '2012-06-07', tipo_identificacion: 'Tarjeta', numero_identificacion: '0123456789', categoria: 'Sub 10-9', telefono: '3195550000', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Femenino', acudiente_nombre: 'Gloria Vargas', acudiente_telefono: '3195550001', whatsapp_opt_out: false, activo: true, estado: 'retirado', fecha_ingreso: '2024-06-15', created_at: now(), saldo_pendiente: 0 },
   ];
 
   const pagos = [
@@ -284,7 +284,7 @@ export function demoHandle(method: string, url: string, body?: any): any {
   if (seg0 === 'jugadores' && method === 'GET') return getCollection('jugadores');
   if (seg0 === 'jugadores' && method === 'POST') {
     const items = getCollection<any>('jugadores');
-    const newItem = { ...body, id: nextId('jugadores'), activo: body.estado !== 'retirado', estado: body.estado || 'activo', fecha_ingreso: body.fecha_ingreso || now().slice(0, 10), created_at: now(), saldo_pendiente: body.saldo_pendiente || 0, mensualidad: body.mensualidad || 0, mensualidad_objetivo: body.mensualidad_objetivo || 0, descuento_beca: body.descuento_beca || 0 };
+    const newItem = { ...body, id: nextId('jugadores'), activo: body.estado !== 'retirado', estado: body.estado || 'activo', fecha_ingreso: body.fecha_ingreso || now().slice(0, 10), created_at: now(), saldo_pendiente: body.saldo_pendiente || 0, mensualidad: body.mensualidad || 0, mensualidad_objetivo: body.mensualidad_objetivo || 0 };
     items.push(newItem);
     setCollection('jugadores', items);
     // bitacora
@@ -345,6 +345,92 @@ export function demoHandle(method: string, url: string, body?: any): any {
     const newItem = { ...body, id: nextId('pagos'), metodo_pago: body.metodo_pago || 'Efectivo', registrado_por: 1, registrado_por_nombre: 'Admin', anulado: false, anulado_motivo: null, anulado_por: null, anulado_at: null, created_at: now(), recibo_numero: body.recibo_numero || 'REC-' + String(nextId('pagos')).padStart(3, '0') };
     items.push(newItem);
     setCollection('pagos', items);
+    // --- Crear periodos reales usando expandirPagoMeses (monto/mensualidad) ---
+    try {
+      const jugadores = getCollection<any>('jugadores');
+      const j = jugadores.find((x: any) => x.id === body.jugador_id);
+      const MENSUALIDAD_FALLBACK: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
+      let mensualidad = 0;
+      if (j) {
+        const tipoBeca = (j as any).tipo_beca;
+        if (tipoBeca === 'Becado 100%') mensualidad = 0;
+        else if (tipoBeca === 'Becado 50%') {
+          const base = (j as any).mensualidad_objetivo || j.mensualidad || MENSUALIDAD_FALLBACK[j.categoria] || 0;
+          mensualidad = base / 2;
+        } else {
+          mensualidad = j.mensualidad || (j as any).mensualidad_objetivo || MENSUALIDAD_FALLBACK[j.categoria] || 0;
+        }
+      }
+      if (body.mensualidad && Number(body.mensualidad) > 0) mensualidad = Number(body.mensualidad);
+      const monto = Number(body.monto) || 0;
+      if (mensualidad > 0 && monto > 0) {
+        const mesesCompletos = Math.floor(monto / mensualidad);
+        const resto = monto % mensualidad;
+        const detalle: { pagado: number; estado: string }[] = [];
+        for (let i = 0; i < mesesCompletos; i++) detalle.push({ pagado: mensualidad, estado: 'completo' });
+        if (resto > 0) detalle.push({ pagado: resto, estado: 'abono' });
+        // $150000 ÷ $50000 = 3 periodos completos, $125000 -> 2 completos + 1 abono $25000 handled by above
+        if (detalle.length > 0) {
+          const periodos = getCollection<any>('periodos');
+          const pagoPeriodos = getCollection<any>('pago_periodos');
+          let startAnio: number | null = null;
+          let startMes: number | null = null;
+          if (Array.isArray(body.meses_cubiertos) && body.meses_cubiertos.length > 0) {
+            startAnio = Number(body.meses_cubiertos[0].anio);
+            startMes = Number(body.meses_cubiertos[0].mes);
+          }
+          if (!startAnio || !startMes || isNaN(startAnio) || isNaN(startMes)) {
+            const fecha = body.fecha ? new Date(body.fecha) : new Date();
+            startAnio = fecha.getFullYear();
+            startMes = fecha.getMonth() + 1;
+          }
+          if (isNaN(startAnio)) startAnio = new Date().getFullYear();
+          if (isNaN(startMes) || startMes < 1 || startMes > 12) startMes = new Date().getMonth() + 1;
+          detalle.forEach((d, idx) => {
+            const totalOffset = (startMes! - 1) + idx;
+            const anio = startAnio! + Math.floor(totalOffset / 12);
+            const mes = (totalOffset % 12) + 1;
+            let periodo = periodos.find((p: any) => p.jugador_id === body.jugador_id && p.anio === anio && p.mes === mes);
+            if (!periodo) {
+              periodo = {
+                id: nextId('periodos'),
+                jugador_id: body.jugador_id,
+                jugador_nombre: j ? `${j.nombre} ${j.apellidos}` : `Jugador #${body.jugador_id}`,
+                categoria: j?.categoria || body.jugador_categoria || '',
+                anio,
+                mes,
+                objetivo: mensualidad,
+                pagado: d.pagado,
+                saldo: Math.max(0, mensualidad - d.pagado),
+                vencimiento: `${anio}-${String(mes).padStart(2, '0')}-10`,
+                estado: d.estado,
+                notas: '',
+                created_at: now()
+              };
+              periodos.push(periodo);
+            } else {
+              const prevPagado = Number(periodo.pagado) || 0;
+              const objetivo = Number(periodo.objetivo) || mensualidad;
+              if (d.estado === 'completo') {
+                periodo.pagado = objetivo;
+              } else {
+                if (prevPagado === 0) periodo.pagado = d.pagado;
+                else periodo.pagado = Math.min(objetivo, prevPagado + d.pagado);
+                if (periodo.pagado > objetivo) periodo.pagado = objetivo;
+              }
+              periodo.objetivo = objetivo;
+              periodo.saldo = Math.max(0, objetivo - periodo.pagado);
+              periodo.estado = periodo.pagado === 0 ? 'pendiente' : periodo.pagado < objetivo ? 'abono' : 'completo';
+            }
+            pagoPeriodos.push({ id: nextId('pago_periodos'), pago_id: newItem.id, periodo_id: periodo.id, monto_aplicado: d.pagado, created_at: now() });
+          });
+          setCollection('periodos', periodos);
+          setCollection('pago_periodos', pagoPeriodos);
+        }
+      }
+    } catch (e) {
+      console.warn('periodos expansion failed', e);
+    }
     // bitacora
     const bit2 = getCollection<any>('bitacora');
     bit2.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'registrar_pago', modulo: 'pagos', detalle: `Pago $${body.monto} registrado para jugador #${body.jugador_id}` });

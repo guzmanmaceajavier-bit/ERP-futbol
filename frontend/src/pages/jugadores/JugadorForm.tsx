@@ -1,5 +1,5 @@
 import type { JugadorForm as FormType } from '../../types';
-import { CATEGORIAS, GENEROS, TIPOS_BECA, ESTADOS_JUGADOR } from '../../utils/constants';
+import { CATEGORIAS, GENEROS, ESTADOS_JUGADOR } from '../../utils/constants';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
@@ -48,8 +48,6 @@ export function JugadorForm({ isOpen, editing, form, setForm, errors = {}, onClo
           options={POSICIONES.map((p) => ({ value: p, label: p }))} placeholder="Seleccionar..." />
         <Input label="Numero de camiseta" type="number" value={form.numero_camiseta ?? ''} onChange={(e) => setForm({ ...form, numero_camiseta: e.target.value ? Number(e.target.value) : null })} placeholder="Ej: 10" />
         <DatePicker label="Fecha de ingreso" value={form.fecha_ingreso || ''} onChange={(e) => setForm({ ...form, fecha_ingreso: e.target.value })} />
-        <Select label="Tipo de beca" value={form.tipo_beca} onChange={(e) => setForm({ ...form, tipo_beca: e.target.value as any })}
-          options={TIPOS_BECA.map((b) => ({ value: b, label: b }))} />
         <Select label="Estado" value={form.estado || 'activo'} onChange={(e) => setForm({ ...form, estado: e.target.value as any })}
           options={ESTADOS_JUGADOR.map((e) => ({ value: e, label: e.charAt(0).toUpperCase() + e.slice(1) }))} />
       </div>

@@ -134,7 +134,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Badge variant="default">{jugador.categoria}</Badge>
                     <Badge variant={estadoVariant(estadoRaw)}>{estadoLabel}</Badge>
-                    <Badge variant={jugador.tipo_beca !== 'Normal' ? 'warning' : 'default'}>{jugador.tipo_beca}</Badge>
+                    <Badge variant="default">{jugador.mensualidad ? formatCurrency(jugador.mensualidad) : '-'}</Badge>
                     <span className="text-xs text-slate-400 capitalize">{jugador.genero}</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
@@ -190,7 +190,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                 <PlaceholderField label="Posición" />
                 <PlaceholderField label="Número de camiseta" />
                 <Field label="Género" value={jugador.genero || '-'} />
-                <Field label="Tipo de beca" value={jugador.tipo_beca || '-'} />
+                <Field label="Estado" value={estadoLabel} />
               </div>
               <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Nota</p>
@@ -226,7 +226,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                 <Field label="Mensualidad" value={formatCurrency(jugador.mensualidad)} />
                 <Field label="Mensualidad objetivo" value={formatCurrency(jugador.mensualidad_objetivo)} />
                 <Field label="Objetivo real" value={jugador.objetivo_real != null ? formatCurrency(jugador.objetivo_real) : '-'} />
-                <Field label="Descuento beca" value={jugador.descuento_beca ? `${jugador.descuento_beca}%` : '0%'} />
+                <Field label="Direccion" value={jugador.direccion || '-'} />
                 <Field label="Estado de cuenta" value={
                   deuda > 0 ? <span className="text-red-400 font-bold">Con saldo pendiente</span> : <span className="text-green-400 font-bold">Al día</span>
                 } />
@@ -265,12 +265,12 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                     <p className="text-sm font-mono font-bold text-red-400 mt-1">{formatCurrency(jugador.deuda_actual ?? deuda)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide">Tipo beca</p>
-                    <p className="text-sm text-white mt-1">{jugador.tipo_beca}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide">Categoria</p>
+                    <p className="text-sm text-white mt-1">{jugador.categoria}</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 mt-3">
-                  Para el detalle por periodo (año/mes, estado pendiente/abono/completo/beca) integrar con <span className="font-mono text-slate-400">periodoService</span> / <span className="font-mono text-slate-400">PeriodoMensual[]</span>.
+                  Para el detalle por periodo (año/mes, estado pendiente/abono/completo) integrar con <span className="font-mono text-slate-400">periodoService</span> / <span className="font-mono text-slate-400">PeriodoMensual[]</span>.
                 </p>
               </div>
 

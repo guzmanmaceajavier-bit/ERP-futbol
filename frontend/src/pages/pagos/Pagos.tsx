@@ -98,7 +98,7 @@ export function Pagos() {
   const selectJugador = (j: Jugador) => {
     setJugadorSeleccionado(j);
     const base = getMensualidad(j.categoria) || MENSUALIDAD_MAP[j.categoria] || 50000;
-    const obj = j.tipo_beca === 'Becado 100%' ? 0 : j.tipo_beca === 'Becado 50%' ? base / 2 : (j.mensualidad || base);
+    const obj = j.mensualidad || base;
     setMonto(obj);
     setBusquedaJugador('');
     setFiltroCatForm('');
@@ -106,15 +106,18 @@ export function Pagos() {
     setMesesSeleccionados([{ anio: now.getFullYear(), mes: now.getMonth() + 1 }]);
   };
 
-  // Pre-selected jugador: when navigated from Jugadores with state { jugador } auto-select
+  // Pre-selected jugador: when navigated from Jugadores with state { jugador, periodo_id, mensualidad } auto-select
   useEffect(() => {
-    const st = location.state as { jugador?: Jugador; saldo?: number } | null;
+    const st = location.state as { jugador?: Jugador; saldo?: number; periodo_id?: number | null; mensualidad?: number; proximo_pago?: string | null } | null;
     if (st?.jugador) {
       const jug = st.jugador as Jugador;
-      // also read location.state?.saldo if available
       if (st.saldo != null && (jug.saldo_pendiente == null || jug.saldo_pendiente === 0)) {
         (jug as Jugador).saldo_pendiente = Number(st.saldo);
       }
+      if (st.mensualidad != null && (jug.mensualidad == null || jug.mensualidad === 0)) {
+        (jug as any).mensualidad = Number(st.mensualidad);
+      }
+      // if periodo_id is targeted, it will be shown below via banner (st.periodo_id)
       selectJugador(jug);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,8 +144,6 @@ export function Pagos() {
 
   const mensualidadEfectiva = useMemo(() => {
     if (!jugadorSeleccionado) return 0;
-    if (jugadorSeleccionado.tipo_beca === 'Becado 100%') return 0;
-    if (jugadorSeleccionado.tipo_beca === 'Becado 50%') return mensualidadBase / 2;
     return jugadorSeleccionado.mensualidad || mensualidadBase || MENSUALIDAD_MAP[jugadorSeleccionado.categoria] || 0;
   }, [jugadorSeleccionado, mensualidadBase]);
 
@@ -165,6 +166,9 @@ export function Pagos() {
   }, [proximoVencimientoRaw, estadoFinanciero]);
 
   const proximoTrasPago = useMemo(() => calcularProximoPago(fecha), [fecha]);
+
+  const periodoIdTarget = useMemo(() => (location.state as { periodo_id?: number | null })?.periodo_id ?? null, [location.state]);
+  const mensualidadFromState = useMemo(() => (location.state as { mensualidad?: number })?.mensualidad ?? null, [location.state]);
 
   const expansion = useMemo(() => {
     if (!jugadorSeleccionado || mensualidadEfectiva <= 0 || monto <= 0) return null;
@@ -328,7 +332,7 @@ export function Pagos() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[240px] overflow-auto">
                   {jugadoresGrid.map((j) => {
                     const saldo = j.saldo_pendiente || 0;
-                    const barColor = j.tipo_beca?.includes('Becado') ? 'bg-purple-500' : saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500';
+                    const barColor = saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500';
                     return (
                       <button key={j.id} onClick={() => selectJugador(j)}
                         className="text-left p-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:border-[#22C55E]/50 hover:bg-slate-700/50 transition-all">
@@ -407,6 +411,20 @@ export function Pagos() {
                   <p className="text-[11px] text-slate-500 mt-3">Ultimo pago: {formatDate(jugadorSeleccionado.ultimo_pago)} {proximoVencimientoRaw && `· Proximo: ${proximoVencimientoRaw}`}</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Periodo objetivo when navigated from Jugadores Cobrar */}
+          {jugadorSeleccionado && periodoIdTarget != null && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 flex items-center gap-2">
+              <span className="text-blue-400">📅</span>
+              <p className="text-xs font-bold text-blue-300">Periodo objetivo: #{periodoIdTarget}{mensualidadFromState ? ` · Mensualidad ${formatCurrency(mensualidadFromState)}` : ''}</p>
+              <span className="ml-auto text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">Desde Cobrar</span>
+            </div>
+          )}
+          {jugadorSeleccionado && periodoIdTarget == null && (location.state as any)?.jugador && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2">
+              <p className="text-[11px] text-slate-400">Jugador pre-seleccionado desde <span className="text-white font-bold">Jugadores → Cobrar</span>{mensualidadFromState ? ` · Mensualidad ${formatCurrency(mensualidadFromState)}` : ''}</p>
             </div>
           )}
 

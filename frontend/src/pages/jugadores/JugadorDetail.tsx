@@ -38,8 +38,8 @@ export function JugadorDetail({ jugador }: JugadorDetailProps) {
           </p>
         </div>
         <div>
-          <p className="text-slate-500">Beca</p>
-          <p className="text-white">{jugador.tipo_beca || 'Normal'}</p>
+          <p className="text-slate-500">Categoria</p>
+          <p className="text-white">{jugador.categoria || '-'}</p>
         </div>
         <div>
           <p className="text-slate-500">Acudiente</p>

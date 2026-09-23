@@ -36,7 +36,6 @@ const EMPTY_FORM: JugadorFormType = {
   categoria: '',
   telefono: '',
   genero: 'Masculino',
-  tipo_beca: 'Normal',
   acudiente_nombre: '',
   acudiente_telefono: '',
   fecha_ingreso: '',
@@ -86,16 +85,22 @@ export function Jugadores() {
     {
       key: 'nombre',
       label: 'Jugador',
-      className: 'min-w-[160px]',
+      className: 'min-w-[170px]',
       render: (j) => (
         <div className="flex items-center gap-3">
           <Avatar nombre={`${j.nombre} ${j.apellidos}`} size="sm" />
           <div>
             <p className="text-white font-medium">{j.nombre} {j.apellidos}</p>
-            <p className="text-xs text-slate-400">{j.categoria}</p>
+            <p className="text-xs text-slate-400">{j.genero}</p>
           </div>
         </div>
       ),
+    },
+    {
+      key: 'categoria',
+      label: 'Categoria',
+      className: 'w-28',
+      render: (j) => <Badge variant="default">{j.categoria || '-'}</Badge>,
     },
     { key: 'telefono', label: 'Telefono', className: 'w-28' },
     {
@@ -103,20 +108,9 @@ export function Jugadores() {
       label: 'Mensualidad',
       className: 'w-28',
       render: (j) => {
-        // ensure mensualidad helper is wired (handles beca / categoria base)
         void getMensualidad(j.categoria);
         return <span className="font-mono text-[#22C55E]">{formatCurrency(j.mensualidad)}</span>;
       },
-    },
-    {
-      key: 'tipo_beca',
-      label: 'Beca',
-      className: 'w-24',
-      render: (j) => (
-        <Badge variant={j.tipo_beca !== 'Normal' ? 'warning' : 'default'}>
-          {j.tipo_beca}
-        </Badge>
-      ),
     },
     {
       key: 'saldo_pendiente',
@@ -127,6 +121,19 @@ export function Jugadores() {
           {formatCurrency(j.saldo_pendiente || 0)}
         </span>
       ),
+    },
+    {
+      key: 'proximo_pago',
+      label: 'Proximo pago',
+      className: 'w-32',
+      render: (j) => {
+        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        return (
+          <span className="text-sm text-slate-300 font-mono">
+            {proximoPago ? formatDate(proximoPago) : '—'}
+          </span>
+        );
+      },
     },
     {
       key: 'estado_financiero',
@@ -145,30 +152,6 @@ export function Jugadores() {
         };
         const variant = variantMap[estadoFin.color] ?? 'default';
         return <Badge variant={variant}>{estadoFin.label}</Badge>;
-      },
-    },
-    {
-      key: 'proximo_pago',
-      label: 'Proximo pago',
-      className: 'w-32',
-      render: (j) => {
-        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
-        return (
-          <span className="text-sm text-slate-300 font-mono">
-            {proximoPago ? formatDate(proximoPago) : '—'}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'estado',
-      label: 'Estado',
-      className: 'w-24',
-      render: (j) => {
-        const estado = j.estado || (j.activo ? 'activo' : 'inactivo');
-        const variant = estado === 'activo' ? 'success' : estado === 'inactivo' ? 'warning' : 'danger';
-        const label = estado.charAt(0).toUpperCase() + estado.slice(1);
-        return <Badge variant={variant as 'success' | 'warning' | 'danger'}>{label}</Badge>;
       },
     },
     {
@@ -195,7 +178,7 @@ export function Jugadores() {
                   </svg>
                 </button>
                 <button
-                  onClick={() => navigate('/pagos', { state: { jugador: j, proximo_pago: proximoPago, saldo } })}
+                  onClick={() => navigate('/pagos', { state: { jugador: j, proximo_pago: proximoPago, saldo, periodo_id: null as number | null, mensualidad: j.mensualidad } })}
                   className="p-1.5 rounded-lg hover:bg-green-900/50 text-slate-400 hover:text-green-400 transition-colors"
                   title="Cobrar"
                 >
@@ -225,7 +208,6 @@ export function Jugadores() {
         categoria: jugador.categoria,
         telefono: jugador.telefono,
         genero: jugador.genero,
-        tipo_beca: jugador.tipo_beca,
         acudiente_nombre: jugador.acudiente_nombre || '',
         acudiente_telefono: jugador.acudiente_telefono || '',
         fecha_ingreso: jugador.fecha_ingreso || '',

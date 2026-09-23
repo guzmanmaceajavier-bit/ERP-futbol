@@ -76,7 +76,7 @@ export function PagoForm(props: PagoFormProps) {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[240px] overflow-auto">
               {jugadoresGrid.map((j) => {
                 const saldo = j.saldo_pendiente || 0;
-                const barColor = j.tipo_beca?.includes('Becado') ? 'bg-purple-500' : saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500';
+                const barColor = saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500';
                 return (
                   <button key={j.id} onClick={() => onSelectJugador(j)}
                     className="text-left p-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:border-[#22C55E]/50 hover:bg-slate-700/50 transition-all">

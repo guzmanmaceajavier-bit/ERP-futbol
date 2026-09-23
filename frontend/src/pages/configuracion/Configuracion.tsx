@@ -157,7 +157,6 @@ export function Configuracion() {
               <p className="text-xs text-slate-500 mt-1">Dia del mes a partir del cual se marca como mora</p>
             </div>
             <Input label="Dias antes para recordatorio" type="number" value={form.regla_dias_recordatorio || '3'} onChange={e => updateField('regla_dias_recordatorio', e.target.value)} />
-            <Input label="Meses de gracia (beca)" type="number" value={form.regla_meses_gracia || '0'} onChange={e => updateField('regla_meses_gracia', e.target.value)} />
           </div>
         </div>
 
@@ -179,14 +178,6 @@ export function Configuracion() {
             <button className={`w-11 h-6 rounded-full flex items-center px-1 transition-colors ${form.regla_aplicar_saldo_favor !== 'false' ? 'bg-[#22C55E]' : 'bg-slate-600'}`} onClick={() => toggleField('regla_aplicar_saldo_favor')}>
               <div className={`w-4 h-4 rounded-full bg-white transition-transform shadow ${form.regla_aplicar_saldo_favor !== 'false' ? 'translate-x-5' : ''}`} />
             </button>
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">Becas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Descuento beca 50%" value={form.beca_descuento_50 || '50'} onChange={e => updateField('beca_descuento_50', e.target.value)} placeholder="50" />
-            <Input label="Descuento beca 100%" value={form.beca_descuento_100 || '100'} onChange={e => updateField('beca_descuento_100', e.target.value)} placeholder="100" />
           </div>
         </div>
 

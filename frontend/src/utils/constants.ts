@@ -25,8 +25,6 @@ export const MESES = [
 
 export const GENEROS = ['Masculino', 'Femenino'] as const;
 
-export const TIPOS_BECA = ['Normal', 'Becado 50%', 'Becado 100%', 'Patrocinado'] as const;
-
 export const ESTADOS_JUGADOR = ['activo', 'inactivo', 'retirado'] as const;
 
 export const TIPOS_PAGO = ['abono', 'matricula', 'multa', 'otro'] as const;
