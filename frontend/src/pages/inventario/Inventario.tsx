@@ -79,9 +79,9 @@ export function Inventario() {
                 setMovMotivo('');
               }}
               className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
-              title="Movimiento"
+              title="Movimientos"
             >
-              Mov
+              Movimientos
             </button>
           }
         />
@@ -139,14 +139,14 @@ export function Inventario() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Inventario" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Agregar Material</Button>} />
+      <PageHeader title="Inventario" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Registrar material</Button>} />
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar item..." />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={paginados} onRowClick={(i) => openForm(i)} />
         <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
           onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Material' : 'Agregar Material'}>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Actualizar material' : 'Registrar material'}>
         <div className="space-y-4">
           <Input label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
           <Select

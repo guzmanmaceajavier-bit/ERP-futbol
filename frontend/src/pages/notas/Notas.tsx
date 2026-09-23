@@ -76,7 +76,7 @@ export function Notas() {
     setSaving(true);
     try {
       await notaService.create(form);
-      showSuccess('Nota creada');
+      showSuccess('Nota registrada');
       close();
       loadAll();
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
@@ -104,7 +104,7 @@ export function Notas() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Notas" subtitle={`${total} registros`} actions={<Button onClick={() => { setForm({ jugador_id: 0, nota: '', tipo: 'otra', visibilidad: 'privada' }); openNew(); }}>+ Nueva Nota</Button>} />
+      <PageHeader title="Notas" subtitle={`${total} registros`} actions={<Button onClick={() => { setForm({ jugador_id: 0, nota: '', tipo: 'otra', visibilidad: 'privada' }); openNew(); }}>+ Registrar nota</Button>} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar notas..." className="flex-1" />
@@ -154,7 +154,7 @@ export function Notas() {
         )}
       </div>
 
-      <FormModal isOpen={isOpen} onClose={close} title="Nueva Nota">
+      <FormModal isOpen={isOpen} onClose={close} title="Registrar nota">
         <div className="space-y-4">
           <Select
             label="Jugador"

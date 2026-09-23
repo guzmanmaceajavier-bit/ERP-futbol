@@ -43,7 +43,7 @@ export function Reportes() {
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
               ${tab === t ? 'bg-[#22C55E]/20 text-[#22C55E]' : 'text-slate-400 hover:text-white'}`}>
-            {t === 'mes' ? 'Por Mes' : t === 'categoria' ? 'Por Categoria' : t === 'cuenta' ? 'Estado de Cuenta' : 'Caja'}
+            {t === 'mes' ? 'Por mes' : t === 'categoria' ? 'Por categoria' : t === 'cuenta' ? 'Estado de cuenta' : 'Resumen de caja'}
           </button>
         ))}
       </div>
@@ -114,7 +114,7 @@ export function Reportes() {
       {/* Caja / Inventario resumen (ingresos vs gastos) */}
       {tab === 'caja' && (
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 space-y-4">
-          <h3 className="font-sport font-bold text-white">Resumen Caja</h3>
+          <h3 className="font-sport font-bold text-white">Resumen de caja</h3>
           <p className="text-xs text-slate-400">Total ingresos (pagos) vs total gastos del periodo registrado. Utilidad = ingresos - gastos.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4">

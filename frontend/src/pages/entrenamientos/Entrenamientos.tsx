@@ -79,7 +79,7 @@ export function Entrenamientos() {
   const handleSave = async () => {
     try {
       if (editing) { await entrenamientoService.update(editing.id, form); showSuccess('Entrenamiento actualizado'); }
-      else { await entrenamientoService.create(form); showSuccess('Entrenamiento creado'); }
+      else { await entrenamientoService.create(form); showSuccess('Entrenamiento registrado'); }
       close(); reload();
     } catch (err: any) { showError(err.message); }
   };
@@ -100,9 +100,9 @@ export function Entrenamientos() {
       <PageHeader title="Entrenamientos" subtitle={`${total} registros`} actions={
         <div className="flex gap-2">
           <Link to="/asistencias">
-            <Button variant="ghost">Ver asistencia</Button>
+            <Button variant="ghost">Consultar asistencia</Button>
           </Link>
-          <Button onClick={() => openForm()}>+ Nuevo Entrenamiento</Button>
+          <Button onClick={() => openForm()}>+ Registrar entrenamiento</Button>
         </div>
       } />
 
@@ -142,7 +142,7 @@ export function Entrenamientos() {
         </>
       )}
 
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Entrenamiento' : 'Nuevo Entrenamiento'} wide>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Entrenamiento' : 'Registrar entrenamiento'} wide>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Fecha" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
           <Input label="Hora" type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} required />
@@ -165,7 +165,7 @@ export function Entrenamientos() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave}>{editing ? 'Actualizar' : 'Crear'}</Button>
+          <Button onClick={handleSave}>{editing ? 'Actualizar' : 'Registrar'}</Button>
         </div>
       </FormModal>
 

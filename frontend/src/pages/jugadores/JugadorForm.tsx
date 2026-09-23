@@ -19,7 +19,7 @@ interface JugadorFormProps {
 
 export function JugadorForm({ isOpen, editing, form, setForm, errors = {}, onClose, onSave, saving }: JugadorFormProps) {
   return (
-    <FormModal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar Jugador' : 'Nuevo Jugador'} wide>
+    <FormModal isOpen={isOpen} onClose={onClose} title={editing ? 'Actualizar ficha' : 'Registrar jugador'} wide>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} error={errors.nombre} required />
         <Input label="Apellidos" value={form.apellidos} onChange={(e) => setForm({ ...form, apellidos: e.target.value })} error={errors.apellidos} required />
@@ -39,7 +39,7 @@ export function JugadorForm({ isOpen, editing, form, setForm, errors = {}, onClo
       </div>
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-        <Button onClick={onSave} loading={saving}>{editing ? 'Actualizar' : 'Crear Jugador'}</Button>
+        <Button onClick={onSave} loading={saving}>{editing ? 'Guardar cambios' : 'Registrar jugador'}</Button>
       </div>
     </FormModal>
   );

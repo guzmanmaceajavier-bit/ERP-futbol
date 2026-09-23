@@ -103,7 +103,7 @@ export function Convocatorias() {
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
         <h2 className="font-sport font-bold text-white mb-4">Partidos</h2>
         {partidos.length === 0 ? (
-          <p className="text-slate-500 text-sm">No hay partidos programados. Crea uno primero.</p>
+          <p className="text-slate-500 text-sm">No hay partidos programados. Registra uno primero.</p>
         ) : (
           <div className="space-y-2">
             {partidos.map((p) => {

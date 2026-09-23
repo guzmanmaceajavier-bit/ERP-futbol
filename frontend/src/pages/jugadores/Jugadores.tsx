@@ -224,7 +224,7 @@ export function Jugadores() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      <PageHeader title="Jugadores" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Jugador</Button>} />
+      <PageHeader title="Jugadores" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Registrar jugador</Button>} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar jugador..." className="flex-1" />

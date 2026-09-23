@@ -70,7 +70,7 @@ export function Partidos() {
   const handleSave = async () => {
     try {
       if (editing) { await partidoService.update(editing.id, form); showSuccess('Partido actualizado'); }
-      else { await partidoService.create(form); showSuccess('Partido creado'); }
+      else { await partidoService.create(form); showSuccess('Partido registrado'); }
       close(); reload();
     } catch (err: any) { showError(err.message); }
   };
@@ -92,7 +92,7 @@ export function Partidos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Partidos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Partido</Button>} />
+      <PageHeader title="Partidos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Registrar partido</Button>} />
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por rival o categoria..." />
 
@@ -134,7 +134,7 @@ export function Partidos() {
         </>
       )}
 
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Partido' : 'Nuevo Partido'} wide>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Partido' : 'Registrar partido'} wide>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Rival" value={form.rival} onChange={(e) => setForm({ ...form, rival: e.target.value })} required placeholder="Nombre del equipo rival" />
           <Input label="Fecha" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
@@ -160,7 +160,7 @@ export function Partidos() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave}>{editing ? 'Actualizar' : 'Crear Partido'}</Button>
+          <Button onClick={handleSave}>{editing ? 'Actualizar' : 'Registrar'}</Button>
         </div>
       </FormModal>
 

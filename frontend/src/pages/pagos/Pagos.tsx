@@ -168,7 +168,7 @@ export function Pagos() {
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
-    try { await pagoService.remove(confirmDelete.id); showSuccess('Pago eliminado'); setConfirmDelete(null); refetch(); refetchJugadores(); }
+    try { await pagoService.remove(confirmDelete.id); showSuccess('Operacion anulada'); setConfirmDelete(null); refetch(); refetchJugadores(); }
     catch (err: any) { showError(err.message); }
   };
 
@@ -179,12 +179,12 @@ export function Pagos() {
     setSaving(true);
     try {
       await pagoService.anular({ pago_id: anularPago.id, motivo: motivoAnular });
-      showSuccess('Pago anulado correctamente');
+      showSuccess('Operacion anulada correctamente');
       setAnularPago(null);
       setMotivoAnular('');
       refetch();
       refetchJugadores();
-    } catch (err: any) { showError(err.message || 'Error al anular pago'); }
+    } catch (err: any) { showError(err.message || 'Error al anular operacion'); }
     finally { setSaving(false); }
   };
 
@@ -399,7 +399,7 @@ export function Pagos() {
           )}
           <button onClick={handleGuardar} disabled={saving}
             className="w-full py-3 bg-[#22C55E] hover:bg-[#1DA84C] text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-colors">
-            {saving ? 'Guardando...' : editingPago ? 'Actualizar pago' : 'Guardar pago y generar recibo'}
+            {saving ? 'Guardando...' : editingPago ? 'Guardar cambios' : 'Confirmar registro'}
           </button>
         </div>
       </section>
@@ -456,7 +456,7 @@ export function Pagos() {
                         <button onClick={() => handleEdit(p)} className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all" title="Editar">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </button>
-                        <button onClick={() => { setAnularPago(p); setMotivoAnular(''); }} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all" title="Anular">
+                        <button onClick={() => { setAnularPago(p); setMotivoAnular(''); }} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all" title="Anular operacion">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                         </button>
                         {p.jugador_telefono && (
@@ -521,12 +521,12 @@ export function Pagos() {
       </details>
 
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}
-        title="Eliminar pago" message={`¿Eliminar el pago de ${confirmDelete?.jugador || ''} por ${formatCurrency(confirmDelete?.monto || 0)}?`} />
+        title="Anular operacion" message={`¿Anular la operacion de ${confirmDelete?.jugador || ''} por ${formatCurrency(confirmDelete?.monto || 0)}?`} />
 
-      <FormModal isOpen={!!anularPago} onClose={() => { setAnularPago(null); setMotivoAnular(''); }} title="Anular pago">
+      <FormModal isOpen={!!anularPago} onClose={() => { setAnularPago(null); setMotivoAnular(''); }} title="Anular operacion">
         <div className="space-y-4">
           <p className="text-sm text-slate-400">
-            ¿Anular el pago de <span className="text-white font-bold">{anularPago?.jugador || `Jugador #${anularPago?.jugador_id}`}</span> por <span className="text-[#22C55E] font-mono">{formatCurrency(anularPago?.monto || 0)}</span>?
+            ¿Anular la operacion de <span className="text-white font-bold">{anularPago?.jugador || `Jugador #${anularPago?.jugador_id}`}</span> por <span className="text-[#22C55E] font-mono">{formatCurrency(anularPago?.monto || 0)}</span>?
           </p>
           <Textarea
             label="Motivo de anulacion *"
@@ -541,7 +541,7 @@ export function Pagos() {
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <button onClick={() => { setAnularPago(null); setMotivoAnular(''); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm transition-colors">Cancelar</button>
           <button onClick={handleAnular} disabled={saving} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-colors">
-            {saving ? 'Anulando...' : 'Anular pago'}
+            {saving ? 'Anulando...' : 'Anular operacion'}
           </button>
         </div>
       </FormModal>

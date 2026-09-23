@@ -109,29 +109,29 @@ export function Caja() {
 
         <div className="flex gap-3 mt-6">
           {resumen?.estado !== 'abierta' ? (
-            <Button onClick={() => { setSaldoInicial(0); openNew(); }}>Abrir Caja</Button>
+            <Button onClick={() => { setSaldoInicial(0); openNew(); }}>Apertura de caja</Button>
           ) : (
             <>
-              <Button variant="danger" onClick={() => { setSaldoContado(saldoSistema); setShowCerrar(true); }} loading={saving}>Cerrar Caja</Button>
-              <Button variant="ghost" onClick={() => { setMotivo(''); handleAccion('desbloquear'); }}>Desbloquear</Button>
+              <Button variant="danger" onClick={() => { setSaldoContado(saldoSistema); setShowCerrar(true); }} loading={saving}>Cierre de caja</Button>
+              <Button variant="ghost" onClick={() => { setMotivo(''); handleAccion('desbloquear'); }}>Reabrir caja</Button>
             </>
           )}
         </div>
       </div>
 
       {/* Abrir caja modal */}
-      <FormModal isOpen={isOpen} onClose={close} title="Abrir Caja">
+      <FormModal isOpen={isOpen} onClose={close} title="Apertura de caja">
         <div className="space-y-4">
           <Input label="Saldo inicial" type="number" value={saldoInicial} onChange={(e) => setSaldoInicial(Number(e.target.value))} />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={() => handleAccion('abrir')} loading={saving}>Abrir</Button>
+          <Button onClick={() => handleAccion('abrir')} loading={saving}>Confirmar apertura</Button>
         </div>
       </FormModal>
 
       {/* Cerrar caja modal */}
-      <FormModal isOpen={showCerrar} onClose={() => setShowCerrar(false)} title="Cerrar Caja">
+      <FormModal isOpen={showCerrar} onClose={() => setShowCerrar(false)} title="Cierre de caja">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 bg-slate-900/50 border border-slate-700 rounded-xl p-3">
             <div>
@@ -154,7 +154,7 @@ export function Caja() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={() => setShowCerrar(false)}>Cancelar</Button>
-          <Button variant="danger" onClick={() => handleAccion('cerrar')} loading={saving}>Cerrar Caja</Button>
+          <Button variant="danger" onClick={() => handleAccion('cerrar')} loading={saving}>Confirmar cierre</Button>
         </div>
       </FormModal>
     </div>

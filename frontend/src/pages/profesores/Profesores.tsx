@@ -119,11 +119,11 @@ export function Profesores() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Profesores" actions={<Button onClick={() => openForm()}>+ Nuevo Profesor</Button>} />
+      <PageHeader title="Profesores" actions={<Button onClick={() => openForm()}>+ Registrar profesor</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={profesores || []} onRowClick={(p) => openForm(p)} />
       </div>
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Profesor' : 'Nuevo Profesor'}>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Actualizar profesor' : 'Registrar profesor'}>
         <div className="space-y-4">
           <Input label="Nombre completo" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
           <Input label="Telefono" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
@@ -169,7 +169,7 @@ export function Profesores() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Crear'}</Button>
+          <Button onClick={handleSave} loading={saving}>{editing ? 'Guardar cambios' : 'Registrar'}</Button>
         </div>
       </FormModal>
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}

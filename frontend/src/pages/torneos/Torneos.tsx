@@ -62,7 +62,7 @@ export function Torneos() {
     setSaving(true);
     try {
       if (editing) { await torneoService.update(editing.id, form); showSuccess('Torneo actualizado'); }
-      else { await torneoService.create(form); showSuccess('Torneo creado'); }
+      else { await torneoService.create(form); showSuccess('Torneo registrado'); }
       close(); refetch();
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
   };
@@ -79,14 +79,14 @@ export function Torneos() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Torneos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Nuevo Torneo</Button>} />
+      <PageHeader title="Torneos" subtitle={`${total} registros`} actions={<Button onClick={() => openForm()}>+ Registrar torneo</Button>} />
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar torneo..." />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={paginados} onRowClick={(t) => openForm(t)} />
         <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
           onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Torneo' : 'Nuevo Torneo'} wide>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Torneo' : 'Registrar torneo'} wide>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Nombre del torneo" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required placeholder="Ej: Copa Efusa 2026" />
           <Input label="Lugar" value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="Ej: Cancha municipal" />
@@ -106,7 +106,7 @@ export function Torneos() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Crear Torneo'}</Button>
+          <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Registrar'}</Button>
         </div>
       </FormModal>
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}

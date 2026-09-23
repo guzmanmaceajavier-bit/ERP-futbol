@@ -116,7 +116,7 @@ export function Asistencias() {
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
 
-      <PageHeader title="Asistencias" actions={tab === 'registrar' ? <Button onClick={handleGuardar} loading={saving}>Guardar Asistencia</Button> : undefined} />
+      <PageHeader title="Asistencias" actions={tab === 'registrar' ? <Button onClick={handleGuardar} loading={saving}>Registrar asistencia</Button> : undefined} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)}

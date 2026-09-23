@@ -132,11 +132,11 @@ export function Categorias() {
   return (
     <div className="space-y-6">
       <ToastList toasts={toasts} onDismiss={dismiss} />
-      <PageHeader title="Categorias" actions={<Button onClick={() => openForm()}>+ Nueva Categoria</Button>} />
+      <PageHeader title="Categorias" actions={<Button onClick={() => openForm()}>+ Registrar categoria</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <DataTable columns={columns} data={(categorias || []) as any} onRowClick={(c) => openForm(c)} />
       </div>
-      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Categoria' : 'Nueva Categoria'}>
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Actualizar categoria' : 'Registrar categoria'}>
         <div className="space-y-4">
           <Input label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Ej: Sub 14-13" required />
           <Select
@@ -171,7 +171,7 @@ export function Categorias() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Crear'}</Button>
+          <Button onClick={handleSave} loading={saving}>{editing ? 'Guardar cambios' : 'Registrar'}</Button>
         </div>
       </FormModal>
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}
