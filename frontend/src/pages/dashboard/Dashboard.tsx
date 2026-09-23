@@ -259,37 +259,37 @@ export function Dashboard() {
         <KPICard
           label="Ingresos del mes"
           value={formatCurrency(totalIngresos)}
-          icon={<Icon name="chartUp" className="w-5 h-5 text-white" />}
+          icon={<Icon name="subida" className="w-5 h-5 text-white" />}
           color="bg-green-600"
         />
         <KPICard
           label="Gastos del mes"
           value={formatCurrency(totalGastos)}
-          icon={<Icon name="chartDown" className="w-5 h-5 text-white" />}
+          icon={<Icon name="bajada" className="w-5 h-5 text-white" />}
           color="bg-red-600"
         />
         <KPICard
           label="Balance del mes"
           value={formatCurrency(balance)}
-          icon={<Icon name="money" className="w-5 h-5 text-white" />}
+          icon={<Icon name="dinero" className="w-5 h-5 text-white" />}
           color="bg-blue-600"
         />
         <KPICard
           label="Jugadores activos"
           value={jugadoresActivos.length}
-          icon={<Icon name="users" className="w-5 h-5 text-white" />}
+          icon={<Icon name="usuarios" className="w-5 h-5 text-white" />}
           color="bg-purple-600"
         />
         <KPICard
           label="Pagos pendientes"
           value={jugadoresConDeuda.length}
-          icon={<Icon name="warning" className="w-5 h-5 text-white" />}
+          icon={<Icon name="alerta" className="w-5 h-5 text-white" />}
           color="bg-yellow-600"
         />
         <KPICard
           label="Pagos hoy"
           value={`${pagosHoy.length} / ${formatCurrency(pagosHoyValor)}`}
-          icon={<Icon name="wallet" className="w-5 h-5 text-white" />}
+          icon={<Icon name="billetera" className="w-5 h-5 text-white" />}
           color="bg-indigo-600"
         />
       </div>

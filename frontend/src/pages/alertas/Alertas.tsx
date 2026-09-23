@@ -185,25 +185,25 @@ export function Alertas() {
         <KPICard
           label="Pendientes"
           value={pendientes}
-          icon={<Icon name="warning" className="w-5 h-5 text-white" />}
+          icon={<Icon name="alerta" className="w-5 h-5 text-white" />}
           color="bg-red-600"
         />
         <KPICard
           label="Por cobrar"
           value={formatCurrency(deudaTotal)}
-          icon={<Icon name="money" className="w-5 h-5 text-white" />}
+          icon={<Icon name="dinero" className="w-5 h-5 text-white" />}
           color="bg-amber-600"
         />
         <KPICard
           label="Abonos"
           value={abonos}
-          icon={<Icon name="wallet" className="w-5 h-5 text-white" />}
+          icon={<Icon name="billetera" className="w-5 h-5 text-white" />}
           color="bg-yellow-600"
         />
         <KPICard
           label="Adelantados"
           value={adelantados}
-          icon={<Icon name="chartUp" className="w-5 h-5 text-white" />}
+          icon={<Icon name="subida" className="w-5 h-5 text-white" />}
           color="bg-blue-600"
         />
       </div>
@@ -238,7 +238,7 @@ export function Alertas() {
 
       {alertasFiltradas.length === 0 ? (
         <div className="text-center py-12 bg-slate-800/50 border border-slate-700 rounded-2xl">
-          <Icon name="checkCircle" className="w-12 h-12 mx-auto text-slate-600 mt-4" />
+          <Icon name="verificar" className="w-12 h-12 mx-auto text-slate-600 mt-4" />
           <p className="text-slate-400 mt-4">No hay seguimientos pendientes</p>
         </div>
       ) : (
@@ -374,7 +374,7 @@ export function Alertas() {
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#22C55E]/30 bg-[#22C55E]/10 hover:bg-[#22C55E]/20 transition-all text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-[#22C55E]/20 flex items-center justify-center text-[#22C55E]">
-                    <Icon name="money" className="w-4 h-4" />
+                    <Icon name="dinero" className="w-4 h-4" />
                   </span>
                   <div className="flex-1">
                     <p className="text-white text-sm font-medium">Registrar pago</p>
@@ -410,7 +410,7 @@ export function Alertas() {
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-700/30 transition-all text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-300">
-                    <Icon name="user" className="w-4 h-4" />
+                    <Icon name="usuario" className="w-4 h-4" />
                   </span>
                   <div className="flex-1">
                     <p className="text-white text-sm font-medium">Ver ficha</p>

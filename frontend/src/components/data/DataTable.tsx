@@ -30,7 +30,7 @@ export function DataTable<T extends { id: string | number }>({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Icon name="spinner" className="h-8 w-8 text-[#22C55E]" />
+        <Icon name="cargando" className="h-8 w-8 text-[#22C55E]" />
       </div>
     );
   }

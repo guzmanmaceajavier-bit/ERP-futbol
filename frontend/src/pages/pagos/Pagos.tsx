@@ -303,7 +303,7 @@ export function Pagos() {
         ].map(({ label, value, color, textColor, icon }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center gap-3">
             <div className={`w-9 h-9 rounded-xl ${color} text-white flex items-center justify-center`}>
-              <Icon name={icon.startsWith('M5 13') ? 'check' : icon.startsWith('M12 8v4') ? 'clock' : 'users'} className="w-5 h-5" />
+              <Icon name={icon.startsWith('M5 13') ? 'confirmar' : icon.startsWith('M12 8v4') ? 'reloj' : 'usuarios'} className="w-5 h-5" />
             </div>
             <div>
               <p className="text-[11px] font-black text-slate-500 uppercase">{label}</p>
@@ -379,14 +379,14 @@ export function Pagos() {
                 </div>
                 <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
                   className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
-                  <Icon name="close" className="w-4 h-4 text-white" />
+                  <Icon name="cerrar" className="w-4 h-4 text-white" />
                 </button>
               </div>
 
               {/* Estado financiero mini-section */}
               <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-4">
                 <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
-                  <Icon name="chart" className="w-4 h-4" />
+                  <Icon name="grafica" className="w-4 h-4" />
                   Estado financiero
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -666,10 +666,10 @@ export function Pagos() {
                     ) : (
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => handleEdit(p)} className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all" title="Editar">
-                          <Icon name="edit" className="w-4 h-4" />
+                          <Icon name="editar" className="w-4 h-4" />
                         </button>
                         <button onClick={() => { setAnularPago(p); setMotivoAnular(''); }} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all" title="Anular operacion">
-                          <Icon name="ban" className="w-4 h-4" />
+                          <Icon name="bloqueo" className="w-4 h-4" />
                         </button>
                         {p.jugador_telefono && (
                           <button onClick={() => window.open(`https://wa.me/${p.jugador_telefono}`, '_blank')}
@@ -695,7 +695,7 @@ export function Pagos() {
       {/* Estado de cuentas */}
       <details className="bg-slate-800/50 border border-slate-700 rounded-2xl">
         <summary className="px-5 py-3 font-bold text-sm cursor-pointer flex items-center gap-2 text-slate-300 hover:text-white">
-          <Icon name="users" className="w-5 h-5" />
+          <Icon name="usuarios" className="w-5 h-5" />
           Ver estado de cuentas por jugador
         </summary>
         <div className="p-4 border-t border-slate-700">

@@ -41,7 +41,7 @@ export function Button({
       {...props}
     >
       {loading && (
-        <Icon name="spinner" className="h-4 w-4" />
+        <Icon name="cargando" className="h-4 w-4" />
       )}
       {icon && !loading && icon}
       {children}

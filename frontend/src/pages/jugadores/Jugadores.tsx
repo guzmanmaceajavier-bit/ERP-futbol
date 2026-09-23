@@ -173,7 +173,7 @@ export function Jugadores() {
                   className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
                   title="Ver ficha"
                 >
-                  <Icon name="eye" className="w-4 h-4" />
+                  <Icon name="ver" className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate(`/pagos?jugador_id=${j.id}`)}

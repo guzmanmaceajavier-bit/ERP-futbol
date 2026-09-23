@@ -68,9 +68,9 @@ export function Login() {
             tabIndex={-1}
           >
             {showPassword ? (
-              <Icon name="eyeOff" className="w-5 h-5" />
+              <Icon name="ocultar" className="w-5 h-5" />
             ) : (
-              <Icon name="eye" className="w-5 h-5" />
+              <Icon name="ver" className="w-5 h-5" />
             )}
           </button>
         </div>
