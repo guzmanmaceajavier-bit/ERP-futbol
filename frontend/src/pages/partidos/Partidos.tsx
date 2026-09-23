@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
@@ -7,6 +8,7 @@ import { partidoService } from '../../services/partidoService';
 import type { Partido, PartidoForm, LocaliaPartido } from '../../types';
 import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO, LOCALIAS_PARTIDO } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
+import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -17,7 +19,6 @@ import { Select } from '../../components/ui/Select';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
-import { ActionsCell } from '../../components/ui/ActionsCell';
 
 const EMPTY_FORM: PartidoForm = {
   rival: '',
@@ -36,6 +37,7 @@ const EMPTY_FORM: PartidoForm = {
 };
 
 export function Partidos() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Partido[]>([]);
   const [loading, setLoading] = useState(true);
   const { isOpen, editing, openNew, openEdit, close } = useModal<Partido>();
@@ -43,6 +45,7 @@ export function Partidos() {
   const [form, setForm] = useState<PartidoForm>(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<Partido | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  const [viewPartido, setViewPartido] = useState<Partido | null>(null);
 
   const busquedaDebounced = useDebounce(busqueda);
 
@@ -87,6 +90,114 @@ export function Partidos() {
     return 'warning';
   };
 
+  const localiaVariant = (l: string | null) => {
+    if (l === 'local') return 'success' as const;
+    if (l === 'visitante') return 'warning' as const;
+    if (l === 'neutral') return 'info' as const;
+    return 'default' as const;
+  };
+
+  const estadoVariant = (e: string) => {
+    if (e === 'programado') return 'info' as const;
+    if (e === 'jugado') return 'success' as const;
+    if (e === 'cancelado') return 'danger' as const;
+    if (e === 'aplazado') return 'warning' as const;
+    return 'default' as const;
+  };
+
+  const columns: Column<Partido>[] = [
+    {
+      key: 'fecha',
+      label: 'Fecha',
+      render: (p) => (
+        <span className="font-mono text-sm whitespace-nowrap">
+          {formatDate(p.fecha)} <span className="text-slate-400">{p.hora}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'categoria',
+      label: 'Categoria',
+      render: (p) => <span className="text-slate-300 text-sm">{p.categoria || '—'}</span>,
+    },
+    {
+      key: 'rival',
+      label: 'Rival',
+      render: (p) => (
+        <div>
+          <p className="text-white font-medium text-sm">vs {p.rival}</p>
+          {p.lugar && <p className="text-xs text-slate-500">{p.lugar}</p>}
+        </div>
+      ),
+    },
+    {
+      key: 'localia',
+      label: 'Localia',
+      render: (p) => p.localia ? <Badge variant={localiaVariant(p.localia)}>{p.localia.charAt(0).toUpperCase() + p.localia.slice(1)}</Badge> : <span className="text-slate-500 text-sm">—</span>,
+    },
+    {
+      key: 'torneo',
+      label: 'Torneo',
+      render: (p) => <span className="text-slate-300 text-sm">{p.torneo_nombre ?? (p.torneo_id ? `#${p.torneo_id}` : '—')}</span>,
+    },
+    {
+      key: 'resultado',
+      label: 'Resultado',
+      render: (p) => {
+        if (p.goles_favor == null || p.goles_contra == null) return <span className="text-slate-500">—</span>;
+        const color = p.resultado === 'victoria' ? 'text-[#22C55E]' : p.resultado === 'derrota' ? 'text-red-400' : p.resultado === 'empate' ? 'text-yellow-400' : 'text-slate-200';
+        return (
+          <span className={`font-mono font-bold text-sm ${color}`}>
+            {p.goles_favor} - {p.goles_contra}
+            {p.resultado && <Badge variant={resultadoColor(p.resultado) as any} className="ml-2">{p.resultado}</Badge>}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'estado',
+      label: 'Estado',
+      render: (p) => <Badge variant={estadoVariant(p.estado)}>{p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}</Badge>,
+    },
+    {
+      key: 'acciones',
+      label: 'Acciones',
+      className: 'w-36',
+      render: (p) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setViewPartido(p); }}
+            className="p-1.5 rounded-md bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 hover:text-white transition-all"
+            title="Ver"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); openForm(p); }}
+            className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all"
+            title="Editar"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(p); }}
+            className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
+            title="Eliminar"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   if (loading) return <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-2 border-[#22C55E] border-t-transparent rounded-full" /></div>;
 
   return (
@@ -96,43 +207,114 @@ export function Partidos() {
 
       <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar por rival o categoria..." />
 
-      {itemsFiltrados.length === 0 ? (
-        <div className="text-center py-12 bg-slate-800/50 border border-slate-700 rounded-2xl">
-          <p className="text-slate-400 mt-4">No hay partidos programados</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginados.map((p) => (
-              <div key={p.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:border-slate-600 transition-all cursor-pointer relative group"
-                onClick={() => openForm(p)}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-mono text-sm text-slate-400">{p.fecha} {p.hora}</span>
-                  <Badge variant={resultadoColor(p.resultado) as any}>{p.estado}</Badge>
-                </div>
-                <h3 className="text-white font-medium mb-1">vs {p.rival}</h3>
-                <p className="text-sm text-slate-400">{p.categoria}</p>
-                {p.resultado && (
-                  <p className="font-mono text-lg text-[#22C55E] mt-2">
-                    {p.goles_favor} - {p.goles_contra}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
+        <DataTable columns={columns} data={paginados} onRowClick={(p) => setViewPartido(p)} emptyMessage="No hay partidos programados" />
+        <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
+          onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
+      </div>
+
+      {/* Detail view modal */}
+      <FormModal isOpen={!!viewPartido} onClose={() => setViewPartido(null)} title="Ver partido" wide>
+        {viewPartido && (
+          <div className="space-y-5">
+            {/* EFUSA vs RIVAL header with score */}
+            <div className="bg-slate-700/50 border border-slate-600 rounded-xl p-5 text-center">
+              <p className="text-xs tracking-widest text-slate-400 font-semibold mb-2">PARTIDO</p>
+              <h3 className="text-white font-bold text-xl">
+                EFUSA <span className="text-slate-400 font-normal mx-2">vs</span> {viewPartido.rival}
+              </h3>
+              <div className="mt-3">
+                {viewPartido.goles_favor != null && viewPartido.goles_contra != null ? (
+                  <p className="font-mono font-bold text-3xl">
+                    <span className="text-white">{viewPartido.goles_favor}</span>
+                    <span className="text-slate-500 mx-3">VS</span>
+                    <span className="text-white">{viewPartido.goles_contra}</span>
                   </p>
+                ) : (
+                  <p className="font-mono text-slate-500 text-lg">— : —</p>
                 )}
-                <p className="text-xs text-slate-500 mt-2">{p.lugar}</p>
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                  <button onClick={(ev) => { ev.stopPropagation(); openForm(p); }} className="p-1.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                  </button>
-                  <button onClick={(ev) => { ev.stopPropagation(); setConfirmDelete(p); }} className="p-1.5 rounded bg-slate-700 hover:bg-red-900/50 text-slate-300 hover:text-red-400">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+                {viewPartido.resultado && (
+                  <Badge variant={resultadoColor(viewPartido.resultado) as any} className="mt-2">
+                    {viewPartido.resultado.charAt(0).toUpperCase() + viewPartido.resultado.slice(1)}
+                  </Badge>
+                )}
+                {viewPartido.estado !== 'jugado' && !viewPartido.resultado && (
+                  <p className="text-xs text-slate-500 mt-1">Partido no jugado</p>
+                )}
               </div>
-            ))}
+              <p className="text-sm text-slate-300 mt-3">
+                {formatDate(viewPartido.fecha)} {viewPartido.hora} {viewPartido.lugar ? `| ${viewPartido.lugar}` : ''} | {viewPartido.categoria}
+              </p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                {viewPartido.localia && <Badge variant={localiaVariant(viewPartido.localia)}>{viewPartido.localia}</Badge>}
+                <Badge variant={estadoVariant(viewPartido.estado)}>{viewPartido.estado}</Badge>
+              </div>
+            </div>
+
+            {/* Details grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Categoria</p>
+                <p className="text-white font-medium mt-1">{viewPartido.categoria || '—'}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Torneo</p>
+                <p className="text-white font-medium mt-1">{viewPartido.torneo_nombre ?? (viewPartido.torneo_id ? `#${viewPartido.torneo_id}` : '—')}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Arbitro</p>
+                <p className="text-white font-medium mt-1">{viewPartido.arbitro || '—'}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Lugar</p>
+                <p className="text-white font-medium mt-1">{viewPartido.lugar || '—'}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Goles</p>
+                <p className="text-white font-mono font-bold mt-1">
+                  {viewPartido.goles_favor != null && viewPartido.goles_contra != null ? `${viewPartido.goles_favor} - ${viewPartido.goles_contra}` : '—'}
+                </p>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Convocados</p>
+                <p className="text-white font-medium mt-1">
+                  {(viewPartido as any).convocados_count ?? (viewPartido as any).convocados?.length ?? '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Tarjetas if exists */}
+            {(viewPartido as any).tarjetas && (
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Tarjetas</p>
+                <p className="text-white text-sm">{String((viewPartido as any).tarjetas)}</p>
+              </div>
+            )}
+
+            {/* Observaciones */}
+            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Observaciones</p>
+              <p className="text-slate-300 text-sm whitespace-pre-wrap">{viewPartido.observaciones || '—'}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2 justify-between pt-2 border-t border-slate-700">
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => { setViewPartido(null); navigate('/convocatorias'); }}>
+                  Ver convocatorias
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { setViewPartido(null); navigate('/asistencias'); }}>
+                  Asistencia
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setViewPartido(null)}>Cerrar</Button>
+                <Button onClick={() => { const p = viewPartido; setViewPartido(null); if (p) openForm(p); }}>Editar</Button>
+              </div>
+            </div>
           </div>
-          <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
-            onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
-        </>
-      )}
+        )}
+      </FormModal>
 
       <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Partido' : 'Registrar partido'} wide>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -14,6 +14,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -159,10 +160,10 @@ export function Inventario() {
             <Input label="Escribe la categoria" value={customCategoria} onChange={(e) => setCustomCategoria(e.target.value)} placeholder="Ej: GPS, Radar..." required />
           )}
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Stock actual" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
-            <Input label="Stock minimo" type="number" value={form.stock_minimo} onChange={(e) => setForm({ ...form, stock_minimo: Number(e.target.value) })} />
+            <NumberInput label="Stock actual" value={form.stock} onChange={(v) => setForm({ ...form, stock: v === '' ? 0 : v })} min={0} />
+            <NumberInput label="Stock minimo" value={form.stock_minimo} onChange={(v) => setForm({ ...form, stock_minimo: v === '' ? 0 : v })} min={0} />
           </div>
-          <Input label="Costo unitario" type="number" value={form.costo_unitario} onChange={(e) => setForm({ ...form, costo_unitario: Number(e.target.value) })} />
+          <NumberInput label="Costo unitario" value={form.costo_unitario} onChange={(v) => setForm({ ...form, costo_unitario: v === '' ? 0 : v })} min={0} />
           <Input label="Proveedor" value={form.proveedor} onChange={(e) => setForm({ ...form, proveedor: e.target.value })} />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
@@ -188,7 +189,7 @@ export function Inventario() {
               { value: 'ajuste', label: 'Ajuste' },
             ]}
           />
-          <Input label="Cantidad" type="number" value={movCantidad} onChange={(e) => setMovCantidad(Number(e.target.value))} placeholder="0" />
+          <NumberInput label="Cantidad" value={movCantidad} onChange={(v) => setMovCantidad(v === '' ? 0 : v)} min={0} placeholder="0" />
           <Textarea label="Motivo" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} placeholder="Motivo del movimiento..." rows={3} />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">

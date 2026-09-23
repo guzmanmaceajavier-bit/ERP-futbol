@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
@@ -95,19 +96,19 @@ export function Categorias() {
     const errors = validateCategoria({ nombre: form.nombre, mensualidad_base: form.mensualidad_base });
     if (Object.keys(errors).length > 0) { showError(errors.nombre || errors.mensualidad_base || 'Corrige los campos'); return; }
     setSaving(true);
+    const payload = {
+      nombre: form.nombre.trim(),
+      tipo_genero: form.tipo_genero,
+      mensualidad_base: form.mensualidad_base,
+      profesor_id: form.profesor_id !== '' ? Number(form.profesor_id) : null,
+      edad_min: form.edad_min !== '' ? Number(form.edad_min) : null,
+      edad_max: form.edad_max !== '' ? Number(form.edad_max) : null,
+      horario: form.horario.trim() || null,
+      dias_entrenamiento: form.dias_entrenamiento.trim() || null,
+      cancha: form.cancha.trim() || null,
+      cupo_maximo: form.cupo_maximo !== '' ? Number(form.cupo_maximo) : null,
+    };
     try {
-      const payload = {
-        nombre: form.nombre.trim(),
-        tipo_genero: form.tipo_genero,
-        mensualidad_base: form.mensualidad_base,
-        profesor_id: form.profesor_id !== '' ? Number(form.profesor_id) : null,
-        edad_min: form.edad_min !== '' ? Number(form.edad_min) : null,
-        edad_max: form.edad_max !== '' ? Number(form.edad_max) : null,
-        horario: form.horario.trim() || null,
-        dias_entrenamiento: form.dias_entrenamiento.trim() || null,
-        cancha: form.cancha.trim() || null,
-        cupo_maximo: form.cupo_maximo !== '' ? Number(form.cupo_maximo) : null,
-      };
       if (editing) {
         await categoriaService.update(editing.id, payload as any);
         showSuccess('Categoria actualizada');
@@ -117,6 +118,20 @@ export function Categorias() {
       }
       close();
       refetch();
+      // Bidirectional sync: update profesor's categorias_asignadas to include this categoria
+      if (payload.profesor_id != null) {
+        try {
+          const allProfs = await profesorService.getAll();
+          const target = allProfs.find((p) => p.id === payload.profesor_id);
+          if (target) {
+            const current = target.categorias_asignadas || [];
+            if (!current.includes(payload.nombre)) {
+              const updated = [...current, payload.nombre];
+              try { await profesorService.update(target.id, { categorias_asignadas: updated } as any); } catch { /* best-effort */ }
+            }
+          }
+        } catch { /* best-effort, ignore sync failures */ }
+      }
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
   };
 
@@ -149,10 +164,10 @@ export function Categorias() {
               { value: 'Mixto', label: 'Mixto' },
             ]}
           />
-          <Input label="Mensualidad base" type="number" value={form.mensualidad_base} onChange={(e) => setForm({ ...form, mensualidad_base: Number(e.target.value) })} />
+           <NumberInput label="Mensualidad base" value={form.mensualidad_base} onChange={(v) => setForm({ ...form, mensualidad_base: v === '' ? 0 : v })} min={0} placeholder="0" />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Edad minima" type="number" value={form.edad_min} onChange={(e) => setForm({ ...form, edad_min: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 12" />
-            <Input label="Edad maxima" type="number" value={form.edad_max} onChange={(e) => setForm({ ...form, edad_max: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 14" />
+            <NumberInput label="Edad minima" value={form.edad_min} onChange={(v) => setForm({ ...form, edad_min: v })} min={0} placeholder="Ej: 12" />
+            <NumberInput label="Edad maxima" value={form.edad_max} onChange={(v) => setForm({ ...form, edad_max: v })} min={0} placeholder="Ej: 14" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Horario" value={form.horario} onChange={(e) => setForm({ ...form, horario: e.target.value })} placeholder="Ej: 16:00 - 18:00" />
@@ -160,7 +175,7 @@ export function Categorias() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Dias de entrenamiento" value={form.dias_entrenamiento} onChange={(e) => setForm({ ...form, dias_entrenamiento: e.target.value })} placeholder="Ej: Lun/Mie/Vie" />
-            <Input label="Cupo maximo" type="number" value={form.cupo_maximo} onChange={(e) => setForm({ ...form, cupo_maximo: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Ej: 25" />
+            <NumberInput label="Cupo maximo" value={form.cupo_maximo} onChange={(v) => setForm({ ...form, cupo_maximo: v })} min={0} placeholder="Ej: 25" />
           </div>
           <Select
             label="Profesor encargado"

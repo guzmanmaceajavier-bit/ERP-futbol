@@ -71,6 +71,34 @@ export function Convocatorias() {
     setConvocados((prev) => prev.map((c, i) => i === idx ? { ...c, estado } : c));
   };
 
+  const convocarSeleccionados = () => {
+    // Select all players as convocados (or keep already selected)
+    setConvocados((prev) => prev.map((c) => ({ ...c, seleccionado: true })));
+  };
+
+  const confirmarTodos = () => {
+    setConvocados((prev) => prev.map((c) => ({ ...c, seleccionado: true, estado: 'confirmado' as EstadoConvocado })));
+  };
+
+  const enviarWhatsApp = () => {
+    if (!selectedPartido) return;
+    const partido = partidos.find((p) => p.id === selectedPartido);
+    const seleccionadosList = convocados.filter((c) => c.seleccionado);
+    if (seleccionadosList.length === 0) {
+      showError('No hay jugadores seleccionados para enviar convocatoria');
+      return;
+    }
+    const header = `Convocatoria EFUSA vs ${partido?.rival ?? ''} — ${partido?.fecha ?? ''} ${partido?.hora ?? ''} | ${partido?.categoria ?? ''} | ${partido?.lugar ?? ''}`;
+    const lines = seleccionadosList.map((c) => {
+      const j = jugadores.find((jug) => jug.id === c.jugador_id);
+      const phone = j?.telefono ? ` - ${j.telefono}` : j?.acudiente_telefono ? ` - ${j.acudiente_telefono}` : '';
+      return `• ${c.jugador_nombre} (${c.categoria})${phone} - ${c.estado}`;
+    });
+    const text = `${header}\n\nConvocados (${seleccionadosList.length}):\n${lines.join('\n')}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   const saveConvocatoria = async () => {
     if (!selectedPartido) return;
     const partido = partidos.find((p) => p.id === selectedPartido);
@@ -92,6 +120,7 @@ export function Convocatorias() {
   };
 
   const seleccionados = convocados.filter((c) => c.seleccionado);
+  const selectedPartidoObj = partidos.find((p) => p.id === selectedPartido) || null;
 
   if (loading) return <LoadingOverlay />;
 
@@ -127,11 +156,18 @@ export function Convocatorias() {
         )}
       </div>
 
-      {selectedPartido && (
+      {selectedPartido && selectedPartidoObj && (
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+          {/* PARTIDO header card */}
+          <div className="bg-slate-700/50 border border-slate-600 rounded-xl p-4 mb-4">
+            <p className="text-xs tracking-widest text-slate-400 font-semibold mb-1">PARTIDO</p>
+            <p className="text-white font-bold text-lg">EFUSA vs {selectedPartidoObj.rival} — {selectedPartidoObj.fecha}</p>
+            <p className="text-sm text-slate-300">{selectedPartidoObj.categoria} | {selectedPartidoObj.lugar} | {selectedPartidoObj.hora}</p>
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-sport font-bold text-white">
-              Convocatoria vs {partidos.find((p) => p.id === selectedPartido)?.rival}
+              Convocatoria vs {selectedPartidoObj.rival}
             </h2>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setSelectedPartido(null)}>Cerrar</Button>
@@ -139,32 +175,68 @@ export function Convocatorias() {
             </div>
           </div>
 
+          {/* Bulk actions row */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button variant="ghost" size="sm" onClick={convocarSeleccionados}>
+              Convocar seleccionados ({seleccionados.length}/{convocados.length})
+            </Button>
+            <Button variant="ghost" size="sm" onClick={confirmarTodos}>
+              Confirmar todos
+            </Button>
+            <Button variant="ghost" size="sm" onClick={enviarWhatsApp}>
+              Enviar convocatoria por WhatsApp
+            </Button>
+          </div>
+
           {convocados.length === 0 ? (
             <p className="text-slate-500 text-sm">No hay jugadores disponibles para esta categoria</p>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {convocados.map((c, idx) => (
-                <div key={c.jugador_id}
-                  className={`flex items-center justify-between py-3 px-4 rounded-lg cursor-pointer transition-all gap-2
-                    ${c.seleccionado ? 'bg-[#22C55E]/10 border border-[#22C55E]/30' : 'bg-slate-700/30 border border-transparent hover:bg-slate-700/50'}`}
-                  onClick={() => toggleConvocado(idx)}>
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Avatar nombre={c.jugador_nombre} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-white text-sm">{c.jugador_nombre}</p>
-                      <p className="text-xs text-slate-400">{c.categoria}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Select value={c.estado || 'convocado'} onChange={(e) => updateConvocadoEstado(idx, e.target.value as EstadoConvocado)}
-                      options={ESTADOS_CONVOCADO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ') }))} />
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm flex-shrink-0
-                      ${c.seleccionado ? 'bg-[#22C55E] text-white' : 'bg-slate-600 text-slate-400'}`}>
-                      {c.seleccionado ? '\u2713' : ''}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-400 border-b border-slate-700">
+                    <th className="py-2 px-3 font-medium">Jugador</th>
+                    <th className="py-2 px-3 font-medium">Categoria</th>
+                    <th className="py-2 px-3 font-medium">Estado</th>
+                    <th className="py-2 px-3 font-medium">Confirmacion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {convocados.map((c, idx) => (
+                    <tr
+                      key={c.jugador_id}
+                      className={`border-b border-slate-700/50 transition-colors ${c.seleccionado ? 'bg-[#22C55E]/10' : 'hover:bg-slate-700/30'}`}
+                    >
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar nombre={c.jugador_nombre} size="sm" />
+                          <span className="text-white text-sm">{c.jugador_nombre}</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 text-slate-300">{c.categoria}</td>
+                      <td className="py-2 px-3">
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={c.estado || 'convocado'}
+                            onChange={(e) => updateConvocadoEstado(idx, e.target.value as EstadoConvocado)}
+                            options={ESTADOS_CONVOCADO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ') }))}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={c.seleccionado}
+                            onChange={() => toggleConvocado(idx)}
+                            className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#22C55E] focus:ring-[#22C55E] focus:ring-2"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

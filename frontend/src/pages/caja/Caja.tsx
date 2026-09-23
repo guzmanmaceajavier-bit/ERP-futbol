@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { FormModal } from '../../components/forms/FormModal';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
@@ -122,7 +122,7 @@ export function Caja() {
       {/* Abrir caja modal */}
       <FormModal isOpen={isOpen} onClose={close} title="Apertura de caja">
         <div className="space-y-4">
-          <Input label="Saldo inicial" type="number" value={saldoInicial} onChange={(e) => setSaldoInicial(Number(e.target.value))} />
+          <NumberInput label="Saldo inicial" value={saldoInicial} onChange={(v) => setSaldoInicial(v === '' ? 0 : v)} min={0} placeholder="0" />
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
@@ -149,7 +149,7 @@ export function Caja() {
               </p>
             </div>
           </div>
-          <Input label="Saldo contado *" type="number" value={saldoContado} onChange={(e) => setSaldoContado(Number(e.target.value))} />
+          <NumberInput label="Saldo contado *" value={saldoContado} onChange={(v) => setSaldoContado(v === '' ? 0 : v)} min={0} placeholder="0" />
           <p className="text-[11px] text-slate-500">Ingresa el efectivo contado fisicamente para comparar con el saldo del sistema.</p>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
