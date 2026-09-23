@@ -22,6 +22,7 @@ import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Icon } from '../../components/ui/Icon';
 
 const EMPTY_FORM: TorneoForm = { nombre: '', tipo_genero: '', categoria_requerida: '', fecha_inicio: '', fecha_fin: '', lugar: '', costo: 0, estado: 'proximo', equipos_participantes: [], observacion: '' };
 

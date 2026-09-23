@@ -10,6 +10,7 @@ import { Badge } from '../../components/ui/Badge';
 import { NumberInput } from '../../components/ui/NumberInput';
 import { FormModal } from '../../components/forms/FormModal';
 import { ToastList } from '../../components/feedback/ToastList';
+import { Icon } from '../../components/ui/Icon';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 

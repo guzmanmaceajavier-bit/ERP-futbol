@@ -8,6 +8,7 @@ import { entrenamientoService } from '../../services/entrenamientoService';
 import type { Jugador, Categoria } from '../../types';
 import { todayISO } from '../../utils/formatters';
 import { CATEGORIAS } from '../../utils/constants';
+import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { FilterSelect } from '../../components/data/FilterSelect';

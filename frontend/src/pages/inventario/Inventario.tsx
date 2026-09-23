@@ -23,6 +23,7 @@ import { ErrorState } from '../../components/feedback/ErrorState';
 import { formatCurrency } from '../../utils/formatters';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Icon } from '../../components/ui/Icon';
 
 const CATEGORIAS_INV = [
   'Balones',
