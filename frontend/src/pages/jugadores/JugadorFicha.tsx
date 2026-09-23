@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Jugador } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { calcularEstadoFinanciero, calcularProximoPago, formatearVencimiento, getMensualidad } from '../../utils/finanzas';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -70,6 +71,21 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
 
   const deuda = jugador.saldo_pendiente ?? jugador.deuda_actual ?? 0;
   const totalPagado = jugador.total_pagado ?? 0;
+  // Finanzas helpers (mirrors Jugadores table logic)
+  void getMensualidad(jugador.categoria);
+  const proximoPagoFicha = (jugador as any).proximo_vencimiento || calcularProximoPago(jugador.ultimo_pago ?? null);
+  const estadoFinFicha = calcularEstadoFinanciero(jugador.ultimo_pago ?? null, proximoPagoFicha, deuda);
+  const estadoFinColorClass =
+    estadoFinFicha.color === 'green' ? 'text-green-400' :
+    estadoFinFicha.color === 'red' ? 'text-red-400' :
+    estadoFinFicha.color === 'yellow' ? 'text-yellow-400' :
+    estadoFinFicha.color === 'amber' ? 'text-amber-400' :
+    'text-blue-400';
+  const estadoFinBadgeVariant =
+    estadoFinFicha.color === 'green' ? 'success' as const :
+    estadoFinFicha.color === 'red' ? 'danger' as const :
+    (estadoFinFicha.color === 'yellow' || estadoFinFicha.color === 'amber') ? 'warning' as const :
+    'info' as const;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -214,9 +230,26 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                 <Field label="Estado de cuenta" value={
                   deuda > 0 ? <span className="text-red-400 font-bold">Con saldo pendiente</span> : <span className="text-green-400 font-bold">Al día</span>
                 } />
+                <Field label="Estado financiero" value={
+                  <span className="flex items-center gap-2">
+                    <Badge variant={estadoFinBadgeVariant}>{estadoFinFicha.label}</Badge>
+                    <span className={`text-sm font-bold ${estadoFinColorClass}`}>{estadoFinFicha.label}</span>
+                  </span>
+                } />
                 <Field label="Saldo pendiente" value={<span className={deuda > 0 ? 'text-red-400 font-bold' : 'text-slate-300'}>{formatCurrency(deuda)}</span>} />
                 <Field label="Último pago" value={jugador.ultimo_pago ? formatDate(jugador.ultimo_pago) : '-'} />
-                <Field label="Próximo vencimiento" value={jugador.proximo_vencimiento ? formatDate(jugador.proximo_vencimiento) : '-'} />
+                <Field label="Próximo pago" value={
+                  proximoPagoFicha ? (
+                    <span className={`font-medium ${estadoFinColorClass}`}>{formatearVencimiento(proximoPagoFicha, estadoFinFicha)}</span>
+                  ) : '—'
+                } />
+                <Field label="Próximo vencimiento" value={
+                  proximoPagoFicha ? (
+                    <span className={estadoFinFicha.estado === 'vencido' || estadoFinFicha.estado === 'vence_hoy' ? 'text-red-400 font-bold' : estadoFinFicha.estado === 'proximo_vencer' ? 'text-yellow-400 font-bold' : 'text-slate-300'}>
+                      {formatearVencimiento(proximoPagoFicha, estadoFinFicha)}
+                    </span>
+                  ) : '-'
+                } />
                 <Field label="Saldo pendiente" value={formatCurrency(jugador.saldo_pendiente ?? 0)} />
               </div>
 

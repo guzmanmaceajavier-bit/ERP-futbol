@@ -11,7 +11,8 @@ import { gastoService } from '../../services/gastoService';
 import { alertaService } from '../../services/alertaService';
 import { periodoService } from '../../services/periodoService';
 import { configService } from '../../services/configService';
-import { formatCurrency, todayISO } from '../../utils/formatters';
+import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
+import { calcularEstadoFinanciero, calcularProximoPago } from '../../utils/finanzas';
 import { Link } from 'react-router-dom';
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -105,6 +106,129 @@ export function Dashboard() {
     return { deudaTotal, abonosPendientes, pendientes, totalPendiente, morosidad, jugadoresAlDia, conDeuda };
   }, [periodosResumen, anioActual, mesActual, jugadoresConDeuda.length, jugadoresActivos.length]);
 
+  // Estado de pagos — 5 cards calculated from jugadores + periodos
+  const estadoPagos = useMemo(() => {
+    const periodosMap = new Map<number, any[]>();
+    periodosResumen?.forEach((r: any) => periodosMap.set(r.jugador_id, r.periodos || []));
+
+    let alDia = 0;
+    let proximosAVencer = 0;
+    let conAbono = 0;
+    let vencidos = 0;
+    let adelantados = 0;
+
+    for (const j of jugadoresActivos) {
+      const saldo = (j.saldo_pendiente ?? (j as any).deuda_actual ?? 0) as number;
+      const proximo = (j as any).proximo_vencimiento || calcularProximoPago((j as any).ultimo_pago ?? j.ultimo_pago ?? null);
+      const periodos = periodosMap.get(j.id) || [];
+      const periodoActual = periodos.find((p: any) => p.anio === anioActual && p.mes === mesActual);
+      const periodoEstado: string | undefined = periodoActual?.estado;
+
+      const estadoFin = calcularEstadoFinanciero((j as any).ultimo_pago ?? null, proximo, saldo, periodoEstado);
+
+      // 🟢 Al dia (count where saldo_pendiente <= 0)
+      if (saldo <= 0) alDia++;
+
+      // 🟡 Proximos a vencer (where proximoVencimiento within 5 days and not paid) — uses calcularEstadoFinanciero categorization
+      if (estadoFin.estado === 'proximo_vencer' || estadoFin.estado === 'vence_hoy') {
+        // only count if not already considered al_dia with no debt? Keep as categorized; but if saldo <=0 we still may be proximo — count anyway per spec "not paid" implies saldo >0
+        // We count if estado is proximo_vencer regardless, but keep logic: requires saldo >0 or not fully paid
+        // To respect spec "and not paid", we ensure saldo >0 OR periodo not completo
+        if (saldo > 0 || periodoEstado === 'pendiente' || periodoEstado === 'abono') {
+          proximosAVencer++;
+        } else if (saldo <= 0 && estadoFin.estado === 'proximo_vencer') {
+          // if saldo al dia but still near due, we still count as proximo for visibility unless user wants strictly not paid
+          // Choose to count only if saldo >0 to avoid double counting with Al dia
+          // So skip when saldo <=0
+        }
+      }
+
+      // 🟠 Con abono (where periodo estado === 'abono')
+      // Check any periodo up to current month with estado abono, or current periodo is abono
+      const tieneAbono = periodos.some((p: any) => p.estado === 'abono' && p.anio === anioActual && p.mes <= mesActual)
+        || periodoEstado === 'abono'
+        || estadoFin.estado === 'abono';
+      if (tieneAbono) conAbono++;
+
+      // 🔴 Vencidos (where vencido, saldo > 0 and proximo < today)
+      if (estadoFin.estado === 'vencido' && saldo > 0) {
+        vencidos++;
+      } else if (estadoFin.estado === 'vencido') {
+        // also count pure vencido even if saldo not tracked but proximo < today
+        // saldo check above already covers spec; if saldo ===0 we don't count as vencido per spec
+      }
+
+      // 🔵 Adelantados (where multiple periods are completo/adelantado)
+      // Heuristic: has at least one future month (mes > mesActual) marked completo, or has >=2 completos in current year
+      const completosCurrentYear = periodos.filter((p: any) => p.anio === anioActual && (p.estado === 'completo' || p.estado === 'adelantado')).length;
+      const futuroCompleto = periodos.some((p: any) => p.anio === anioActual && p.mes > mesActual && (p.estado === 'completo' || p.estado === 'adelantado' || (Number(p.pagado) || 0) >= (Number(p.objetivo) || 0) && Number(p.objetivo) > 0));
+      const futuroCount = periodos.filter((p: any) => p.anio === anioActual && p.mes > mesActual && (p.estado === 'completo' || p.estado === 'adelantado')).length;
+      if (futuroCompleto || futuroCount >= 1 || completosCurrentYear >= 2 && futuroCount >= 1) {
+        adelantados++;
+      } else if (completosCurrentYear > (mesActual - 1) && saldo <= 0) {
+        // alternative: if they have more completos than months elapsed, they are ahead
+        // e.g., mesActual=5 but 6 completos means adelantado
+        adelantados++;
+      }
+    }
+
+    return { alDia, proximosAVencer, conAbono, vencidos, adelantados };
+  }, [jugadoresActivos, periodosResumen, anioActual, mesActual]);
+
+  // Proximos vencimientos — next 5-10 jugadores sorted by closest vencimiento
+  const proximosVencimientos = useMemo(() => {
+    if (!jugadoresActivos.length) return [];
+    const todayDate = new Date(today.includes('T') ? today : `${today}T00:00:00`);
+    todayDate.setHours(0, 0, 0, 0);
+    const periodosMap = new Map<number, any[]>();
+    periodosResumen?.forEach((r: any) => periodosMap.set(r.jugador_id, r.periodos || []));
+
+    const entries = jugadoresActivos.map(j => {
+      const proximo = (j as any).proximo_vencimiento || calcularProximoPago((j as any).ultimo_pago ?? j.ultimo_pago ?? null);
+      if (!proximo) return null;
+      const venc = new Date(proximo.includes('T') ? proximo : `${proximo}T00:00:00`);
+      if (isNaN(venc.getTime())) return null;
+      venc.setHours(0, 0, 0, 0);
+      const diffMs = venc.getTime() - todayDate.getTime();
+      const diasRestantes = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      const saldo = (j.saldo_pendiente ?? (j as any).deuda_actual ?? 0) as number;
+      const periodos = periodosMap.get(j.id) || [];
+      const periodoActual = periodos.find((p: any) => p.anio === anioActual && p.mes === mesActual);
+      const periodoEstado: string | undefined = periodoActual?.estado;
+      const estadoFin = calcularEstadoFinanciero((j as any).ultimo_pago ?? null, proximo, saldo, periodoEstado);
+      // Valor: mensualidad objetivo or periodo objetivo
+      const valor = (j as any).mensualidad_objetivo ?? j.mensualidad ?? periodoActual?.objetivo ?? 0;
+      return {
+        jugador: j,
+        nombre: `${j.nombre} ${j.apellidos}`,
+        categoria: j.categoria,
+        proximo,
+        diasRestantes,
+        valor,
+        saldo,
+        estadoFin,
+      };
+    }).filter(Boolean) as Array<{
+      jugador: typeof jugadoresActivos[number];
+      nombre: string;
+      categoria: string;
+      proximo: string;
+      diasRestantes: number;
+      valor: number;
+      saldo: number;
+      estadoFin: ReturnType<typeof calcularEstadoFinanciero>;
+    }>;
+
+    // Sort by closest vencimiento (earliest date first)
+    entries.sort((a, b) => new Date(a.proximo).getTime() - new Date(b.proximo).getTime());
+
+    // Prefer those within ~30 days window but keep 5-10 entries
+    // Spec says "within 7 days or so" — we filter to window then fallback
+    const withinWindow = entries.filter(e => e.diasRestantes >= -60 && e.diasRestantes <= 14);
+    const result = withinWindow.length >= 5 ? withinWindow.slice(0, 10) : entries.slice(0, 10);
+    return result;
+  }, [jugadoresActivos, periodosResumen, today, anioActual, mesActual]);
+
   const pagosHoy = useMemo(() => pagos?.filter(p => p.fecha === today) || [], [pagos, today]);
   const pagosHoyValor = pagosHoy.reduce((s, p) => s + (p.monto || 0), 0);
 
@@ -123,6 +247,7 @@ export function Dashboard() {
   };
 
   const maxBar = Math.max(totalIngresos, totalGastos, 1);
+  void maxBar;
 
   return (
     <div className="space-y-6">
@@ -166,6 +291,118 @@ export function Dashboard() {
           icon={<svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           color="bg-indigo-600"
         />
+      </div>
+
+      {/* 2a. Estado de pagos — 5 cards */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-sport font-bold text-white text-sm">Estado de pagos</h3>
+          <span className="text-xs text-slate-400">{jugadoresActivos.length} jugadores activos</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-slate-900/60 border border-green-600/20 rounded-xl p-3">
+            <p className="text-xs text-slate-400 flex items-center gap-1">🟢 Al dia</p>
+            <p className="font-mono text-lg font-bold text-green-400">{estadoPagos.alDia}</p>
+            <p className="text-[11px] text-slate-500 mt-1">saldo_pendiente &le; 0</p>
+          </div>
+          <div className="bg-slate-900/60 border border-yellow-600/20 rounded-xl p-3">
+            <p className="text-xs text-slate-400 flex items-center gap-1">🟡 Proximos a vencer</p>
+            <p className="font-mono text-lg font-bold text-yellow-400">{estadoPagos.proximosAVencer}</p>
+            <p className="text-[11px] text-slate-500 mt-1">vencimiento en &le; 5 dias</p>
+          </div>
+          <div className="bg-slate-900/60 border border-orange-600/20 rounded-xl p-3">
+            <p className="text-xs text-slate-400 flex items-center gap-1">🟠 Con abono</p>
+            <p className="font-mono text-lg font-bold text-orange-400">{estadoPagos.conAbono}</p>
+            <p className="text-[11px] text-slate-500 mt-1">periodo estado = abono</p>
+          </div>
+          <div className="bg-slate-900/60 border border-red-600/20 rounded-xl p-3">
+            <p className="text-xs text-slate-400 flex items-center gap-1">🔴 Vencidos</p>
+            <p className="font-mono text-lg font-bold text-red-400">{estadoPagos.vencidos}</p>
+            <p className="text-[11px] text-slate-500 mt-1">saldo &gt; 0 y vencido</p>
+          </div>
+          <div className="bg-slate-900/60 border border-blue-600/20 rounded-xl p-3">
+            <p className="text-xs text-slate-400 flex items-center gap-1">🔵 Adelantados</p>
+            <p className="font-mono text-lg font-bold text-blue-400">{estadoPagos.adelantados}</p>
+            <p className="text-[11px] text-slate-500 mt-1">periodos futuro completos</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2c. Proximos vencimientos */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-sport font-bold text-white">Proximos vencimientos</h3>
+          <span className="text-xs text-slate-400">Ordenado por vencimiento mas cercano</span>
+        </div>
+        {proximosVencimientos.length === 0 ? (
+          <p className="text-slate-500 text-sm py-4 text-center">No hay vencimientos proximos</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-500 text-xs border-b border-slate-700">
+                  <th className="text-left py-2 font-medium">Jugador</th>
+                  <th className="text-left py-2 font-medium">Fecha</th>
+                  <th className="text-right py-2 font-medium">Valor</th>
+                  <th className="text-left py-2 font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proximosVencimientos.map((row) => {
+                  const dias = row.diasRestantes;
+                  let diasLabel = '';
+                  let diasColor = 'text-slate-400';
+                  if (dias < 0) {
+                    diasLabel = `Vencido hace ${Math.abs(dias)} dia${Math.abs(dias) !== 1 ? 's' : ''}`;
+                    diasColor = 'text-red-400';
+                  } else if (dias === 0) {
+                    diasLabel = 'Vence hoy';
+                    diasColor = 'text-red-400';
+                  } else if (dias === 1) {
+                    diasLabel = 'Falta 1 dia';
+                    diasColor = 'text-yellow-400';
+                  } else if (dias <= 5) {
+                    diasLabel = `Faltan ${dias} dias`;
+                    diasColor = 'text-yellow-400';
+                  } else {
+                    diasLabel = `Faltan ${dias} dias`;
+                    diasColor = 'text-green-400';
+                  }
+
+                  const estadoColorMap: Record<string, string> = {
+                    green: 'bg-green-900/40 text-green-400',
+                    yellow: 'bg-yellow-900/40 text-yellow-400',
+                    amber: 'bg-orange-900/40 text-orange-400',
+                    red: 'bg-red-900/40 text-red-400',
+                    blue: 'bg-blue-900/40 text-blue-400',
+                  };
+                  const badgeClass = estadoColorMap[row.estadoFin.color] || 'bg-slate-700 text-slate-300';
+
+                  return (
+                    <tr key={row.jugador.id} className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/20">
+                      <td className="py-2">
+                        <div>
+                          <p className="text-white font-medium">{row.nombre}</p>
+                          <p className="text-xs text-slate-500">{row.categoria}</p>
+                        </div>
+                      </td>
+                      <td className="py-2">
+                        <div>
+                          <p className="text-slate-300 font-mono text-xs">{formatDate(row.proximo)}</p>
+                          <p className={`text-xs ${diasColor}`}>{diasLabel}</p>
+                        </div>
+                      </td>
+                      <td className="py-2 text-right font-mono font-bold text-white">{formatCurrency(row.valor)}</td>
+                      <td className="py-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${badgeClass}`}>{row.estadoFin.label}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* 2b. Cobranza pendiente (financial focus) */}

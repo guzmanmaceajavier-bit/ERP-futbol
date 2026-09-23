@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
@@ -9,6 +10,7 @@ import type { Pago, PagoForm, Jugador } from '../../types';
 import { CATEGORIAS, MESES } from '../../utils/constants';
 import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
 import { validateAnulacion } from '../../utils/validators';
+import { calcularProximoPago, calcularEstadoFinanciero, getMensualidad, formatearVencimiento, expandirPagoMeses } from '../../utils/finanzas';
 import { Pagination } from '../../components/data/Pagination';
 import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
@@ -22,6 +24,7 @@ import { Textarea } from '../../components/ui/Textarea';
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
 
 export function Pagos() {
+  const location = useLocation();
   const { data: pagos, loading, error, refetch } = useApi(() => pagoService.getAll());
   const { data: jugadores, refetch: refetchJugadores } = useApi(() => jugadorService.getAll());
   const { toasts, showSuccess, showError, dismiss } = useToast();
@@ -94,13 +97,28 @@ export function Pagos() {
 
   const selectJugador = (j: Jugador) => {
     setJugadorSeleccionado(j);
-    const obj = MENSUALIDAD_MAP[j.categoria] || 50000;
-    setMonto(j.tipo_beca === 'Becado 100%' ? 0 : j.tipo_beca === 'Becado 50%' ? obj / 2 : obj);
+    const base = getMensualidad(j.categoria) || MENSUALIDAD_MAP[j.categoria] || 50000;
+    const obj = j.tipo_beca === 'Becado 100%' ? 0 : j.tipo_beca === 'Becado 50%' ? base / 2 : (j.mensualidad || base);
+    setMonto(obj);
     setBusquedaJugador('');
     setFiltroCatForm('');
     const now = new Date();
     setMesesSeleccionados([{ anio: now.getFullYear(), mes: now.getMonth() + 1 }]);
   };
+
+  // Pre-selected jugador: when navigated from Jugadores with state { jugador } auto-select
+  useEffect(() => {
+    const st = location.state as { jugador?: Jugador; saldo?: number } | null;
+    if (st?.jugador) {
+      const jug = st.jugador as Jugador;
+      // also read location.state?.saldo if available
+      if (st.saldo != null && (jug.saldo_pendiente == null || jug.saldo_pendiente === 0)) {
+        (jug as Jugador).saldo_pendiente = Number(st.saldo);
+      }
+      selectJugador(jug);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const resetForm = () => {
     setJugadorSeleccionado(null);
@@ -113,6 +131,55 @@ export function Pagos() {
     setMedioPago('Efectivo');
     setObservacion('');
     setEditingPago(null);
+  };
+
+  // Enhanced financial context computed when jugadorSeleccionado is set
+  const mensualidadBase = useMemo(() => {
+    if (!jugadorSeleccionado) return 0;
+    return getMensualidad(jugadorSeleccionado.categoria) || MENSUALIDAD_MAP[jugadorSeleccionado.categoria] || 0;
+  }, [jugadorSeleccionado]);
+
+  const mensualidadEfectiva = useMemo(() => {
+    if (!jugadorSeleccionado) return 0;
+    if (jugadorSeleccionado.tipo_beca === 'Becado 100%') return 0;
+    if (jugadorSeleccionado.tipo_beca === 'Becado 50%') return mensualidadBase / 2;
+    return jugadorSeleccionado.mensualidad || mensualidadBase || MENSUALIDAD_MAP[jugadorSeleccionado.categoria] || 0;
+  }, [jugadorSeleccionado, mensualidadBase]);
+
+  const saldoPendiente = useMemo(() => jugadorSeleccionado?.saldo_pendiente || 0, [jugadorSeleccionado]);
+
+  const proximoVencimientoRaw = useMemo(() => {
+    if (!jugadorSeleccionado) return null;
+    const calc = calcularProximoPago(jugadorSeleccionado.ultimo_pago || null);
+    return calc || jugadorSeleccionado.proximo_vencimiento || null;
+  }, [jugadorSeleccionado]);
+
+  const estadoFinanciero = useMemo(() => {
+    if (!jugadorSeleccionado) return null;
+    return calcularEstadoFinanciero(jugadorSeleccionado.ultimo_pago || null, proximoVencimientoRaw, saldoPendiente);
+  }, [jugadorSeleccionado, proximoVencimientoRaw, saldoPendiente]);
+
+  const vencimientoFormateado = useMemo(() => {
+    if (!estadoFinanciero) return '';
+    return formatearVencimiento(proximoVencimientoRaw, estadoFinanciero);
+  }, [proximoVencimientoRaw, estadoFinanciero]);
+
+  const proximoTrasPago = useMemo(() => calcularProximoPago(fecha), [fecha]);
+
+  const expansion = useMemo(() => {
+    if (!jugadorSeleccionado || mensualidadEfectiva <= 0 || monto <= 0) return null;
+    return expandirPagoMeses(monto, mensualidadEfectiva);
+  }, [jugadorSeleccionado, mensualidadEfectiva, monto]);
+
+  const estadoBadgeCls = (color: string) => {
+    switch (color) {
+      case 'green': return 'bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/30';
+      case 'yellow': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'red': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'amber': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      case 'blue': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      default: return 'bg-slate-700 text-slate-300 border-slate-600';
+    }
   };
 
   const handleGuardar = async () => {
@@ -131,10 +198,11 @@ export function Pagos() {
         cantidad_meses: mesesSeleccionados.length,
         meses_cubiertos: mesesSeleccionados,
       };
-      if (editingPago) { await pagoService.update(editingPago.id, payload); showSuccess('Pago actualizado'); }
-      else { await pagoService.create(payload); showSuccess('Pago registrado y recibo generado'); }
+      const proximoAuto = calcularProximoPago(fecha);
+      if (editingPago) { await pagoService.update(editingPago.id, payload); showSuccess(proximoAuto ? `Pago actualizado. Proximo vencimiento: ${proximoAuto} (+1 mes)` : 'Pago actualizado'); }
+      else { await pagoService.create(payload); showSuccess(proximoAuto ? `Pago registrado y recibo generado. Proximo vencimiento: ${proximoAuto}` : 'Pago registrado y recibo generado'); }
       resetForm(); refetch(); refetchJugadores();
-    } catch (err: any) { showError(err.message || 'Error al guardar'); }
+    } catch (err: unknown) { const msg = err instanceof Error ? err.message : 'Error al guardar'; showError(msg); }
     finally { setSaving(false); }
   };
 
@@ -169,7 +237,7 @@ export function Pagos() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try { await pagoService.remove(confirmDelete.id); showSuccess('Operacion anulada'); setConfirmDelete(null); refetch(); refetchJugadores(); }
-    catch (err: any) { showError(err.message); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : 'Error'; showError(msg); }
   };
 
   const handleAnular = async () => {
@@ -184,7 +252,7 @@ export function Pagos() {
       setMotivoAnular('');
       refetch();
       refetchJugadores();
-    } catch (err: any) { showError(err.message || 'Error al anular operacion'); }
+    } catch (err: unknown) { const msg = err instanceof Error ? err.message : 'Error al anular operacion'; showError(msg); }
     finally { setSaving(false); }
   };
 
@@ -275,27 +343,70 @@ export function Pagos() {
             )}
           </div>
 
-          {/* Ficha del jugador */}
+          {/* Ficha del jugador + Estado financiero */}
           {jugadorSeleccionado && (
-            <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#22C55E] text-white flex items-center justify-center font-black text-lg flex-shrink-0">
-                {jugadorSeleccionado.nombre.charAt(0)}{jugadorSeleccionado.apellidos.charAt(0)}
+            <div className="space-y-3">
+              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#22C55E] text-white flex items-center justify-center font-black text-lg flex-shrink-0">
+                  {jugadorSeleccionado.nombre.charAt(0)}{jugadorSeleccionado.apellidos.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-white">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
+                  <p className="text-xs text-slate-400">{jugadorSeleccionado.categoria} | {jugadorSeleccionado.telefono || 'S/T'}{jugadorSeleccionado.acudiente_nombre ? ' | Acud: ' + jugadorSeleccionado.acudiente_nombre : ''}</p>
+                  <p className="text-xs mt-1">
+                    {(jugadorSeleccionado.saldo_pendiente || 0) > 0 ? (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400">Debe {formatCurrency(jugadorSeleccionado.saldo_pendiente || 0)}</span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#22C55E]/20 text-[#22C55E]">Al dia</span>
+                    )}
+                  </p>
+                </div>
+                <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-white">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
-                <p className="text-xs text-slate-400">{jugadorSeleccionado.categoria} | {jugadorSeleccionado.telefono || 'S/T'}{jugadorSeleccionado.acudiente_nombre ? ' | Acud: ' + jugadorSeleccionado.acudiente_nombre : ''}</p>
-                <p className="text-xs mt-1">
-                  {(jugadorSeleccionado.saldo_pendiente || 0) > 0 ? (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400">Debe {formatCurrency(jugadorSeleccionado.saldo_pendiente || 0)}</span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#22C55E]/20 text-[#22C55E]">Al dia</span>
-                  )}
-                </p>
+
+              {/* Estado financiero mini-section */}
+              <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-4">
+                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  Estado financiero
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500">Estado</p>
+                    {estadoFinanciero ? (
+                      <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-black border ${estadoBadgeCls(estadoFinanciero.color)}`}>
+                        {estadoFinanciero.label}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
+                    {estadoFinanciero?.diasAtraso != null && <p className="text-[11px] text-red-400 mt-1">{estadoFinanciero.diasAtraso} dias de atraso</p>}
+                    {estadoFinanciero?.diasFaltantes != null && <p className="text-[11px] text-yellow-400 mt-1">Faltan {estadoFinanciero.diasFaltantes} dias</p>}
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500">Saldo pendiente</p>
+                    <p className={`text-sm font-mono font-black mt-1 ${saldoPendiente > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldoPendiente)}</p>
+                    <p className="text-[11px] text-slate-500">{saldoPendiente > 0 ? 'Por pagar' : 'Al dia'}</p>
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500">Proximo pago</p>
+                    <p className="text-sm font-bold text-white mt-1">{proximoVencimientoRaw ? vencimientoFormateado : '—'}</p>
+                    {proximoVencimientoRaw && <p className="text-[11px] text-slate-500 truncate">{proximoVencimientoRaw}</p>}
+                    {!proximoVencimientoRaw && <p className="text-[11px] text-slate-500">Sin vencimiento</p>}
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <p className="text-[10px] font-black uppercase text-slate-500">Mensualidad</p>
+                    <p className="text-sm font-mono font-black text-[#22C55E] mt-1">{mensualidadEfectiva > 0 ? formatCurrency(mensualidadEfectiva) : 'Becado'}</p>
+                    <p className="text-[11px] text-slate-500">{jugadorSeleccionado.categoria} {getMensualidad(jugadorSeleccionado.categoria) ? `· base ${formatCurrency(getMensualidad(jugadorSeleccionado.categoria))}` : ''}</p>
+                  </div>
+                </div>
+                {jugadorSeleccionado.ultimo_pago && (
+                  <p className="text-[11px] text-slate-500 mt-3">Ultimo pago: {formatDate(jugadorSeleccionado.ultimo_pago)} {proximoVencimientoRaw && `· Proximo: ${proximoVencimientoRaw}`}</p>
+                )}
               </div>
-              <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
             </div>
           )}
 
@@ -313,11 +424,69 @@ export function Pagos() {
                 <input type="number" min="1" value={monto || ''} onChange={(e) => setMonto(Number(e.target.value))} placeholder="0"
                   className="w-full pl-7 pr-3 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm focus:ring-2 focus:ring-[#22C55E] focus:outline-none" />
               </div>
+              {/* Abono handling messages */}
+              {jugadorSeleccionado && mensualidadEfectiva > 0 && tipoPago === 'abono' && monto > 0 && (
+                <div className="mt-2">
+                  {saldoPendiente > 0 ? (
+                    monto >= saldoPendiente ? (
+                      <p className="text-xs font-bold text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg px-3 py-2">
+                        Completa el periodo — cubre saldo pendiente de {formatCurrency(saldoPendiente)} y cierra el periodo.
+                      </p>
+                    ) : (
+                      <p className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                        Pago parcial — quedan {formatCurrency(saldoPendiente - monto)} por completar para cerrar el periodo.
+                      </p>
+                    )
+                  ) : monto >= mensualidadEfectiva ? (
+                    <p className="text-xs font-bold text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg px-3 py-2">
+                      Completa el periodo — monto cubre mensualidad completa ({formatCurrency(mensualidadEfectiva)}).
+                    </p>
+                  ) : (
+                    <p className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                      Pago parcial — quedan {formatCurrency(mensualidadEfectiva - monto)} por completar (mensualidad {formatCurrency(mensualidadEfectiva)}).
+                    </p>
+                  )}
+                </div>
+              )}
+              {/* Multi-month handling via expandirPagoMeses */}
+              {jugadorSeleccionado && expansion && mensualidadEfectiva > 0 && monto > 0 && (expansion.mesesCompletos > 1 || (expansion.mesesCompletos >= 1 && expansion.resto > 0)) && (
+                <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
+                  <p className="text-xs font-bold text-blue-300">
+                    Este pago cubre {expansion.mesesCompletos} periodo(s) completo(s){expansion.resto > 0 ? ` + 1 abono de ${formatCurrency(expansion.resto)}` : ''} — total {expansion.detalle.length} periodo(s)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {expansion.detalle.map((d, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${d.estado === 'completo' ? 'bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/20' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'}`}>
+                        Periodo {d.mes}: {formatCurrency(d.pagado)} · {d.estado === 'completo' ? 'Completo' : 'Abono'}
+                      </span>
+                    ))}
+                  </div>
+                  {expansion.resto > 0 && <p className="text-[11px] text-slate-400 mt-1">Ultimo periodo queda como Abono (resto {formatCurrency(expansion.resto)})</p>}
+                </div>
+              )}
+              {/* Single abono remainder when monto exactly one month plus resto but not multi-month threshold */}
+              {jugadorSeleccionado && expansion && mensualidadEfectiva > 0 && monto > 0 && expansion.mesesCompletos === 1 && expansion.resto > 0 && tipoPago !== 'si' && (
+                <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
+                  <p className="text-xs font-bold text-blue-300">Cubre 1 mes completo + abono de {formatCurrency(expansion.resto)} para siguiente periodo</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {expansion.detalle.map((d, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${d.estado === 'completo' ? 'bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/20' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'}`}>
+                        Periodo {d.mes}: {formatCurrency(d.pagado)} · {d.estado === 'completo' ? 'Completo' : 'Abono'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Fecha *</label>
               <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)}
                 className="mt-1 w-full px-3 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm focus:ring-2 focus:ring-[#22C55E] focus:outline-none" />
+              {proximoTrasPago && (
+                <p className="text-[11px] text-slate-500 mt-2 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2">
+                  Proximo vencimiento tras este pago: <span className="font-bold text-white">{proximoTrasPago}</span> (+1 mes desde fecha)
+                </p>
+              )}
             </div>
           </div>
 
@@ -329,7 +498,7 @@ export function Pagos() {
               { val: 'si', label: 'Adelantado', desc: 'Varios meses', active: 'border-[#22C55E] bg-[#22C55E]/10' },
             ].map(({ val, label, desc, active }) => (
               <label key={val} className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${tipoPago === val ? active : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'}`}>
-                <input type="radio" name="tipo_pago" value={val} checked={tipoPago === val} onChange={(e) => setTipoPago(e.target.value as any)} className="accent-[#22C55E]" />
+                <input type="radio" name="tipo_pago" value={val} checked={tipoPago === val} onChange={(e) => setTipoPago(e.target.value as never)} className="accent-[#22C55E]" />
                 <span className="text-sm font-bold text-white">{label}</span>
                 <span className="text-xs text-slate-500">{desc}</span>
               </label>
@@ -361,6 +530,16 @@ export function Pagos() {
                 })}
               </div>
               <p className="text-[11px] text-slate-500 mt-2">{mesesSeleccionados.length} meses seleccionados · {formatCurrency(monto * mesesSeleccionados.length)} total</p>
+              {expansion && mensualidadEfectiva > 0 && (
+                <div className="mt-3 bg-slate-800 border border-slate-700 rounded-xl p-3">
+                  <p className="text-xs font-bold text-slate-300">Calculo expandirPagoMeses: {expansion.mesesCompletos} completo(s){expansion.resto > 0 ? ` + resto ${formatCurrency(expansion.resto)} como Abono` : ''}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {expansion.detalle.map((d, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${d.estado === 'completo' ? 'bg-[#22C55E]/20 text-[#22C55E]' : 'bg-amber-500/20 text-amber-400'}`}>{d.estado === 'completo' ? 'Completo' : 'Abono'}: {formatCurrency(d.pagado)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -401,6 +580,9 @@ export function Pagos() {
             className="w-full py-3 bg-[#22C55E] hover:bg-[#1DA84C] text-white rounded-xl font-bold text-sm disabled:opacity-50 transition-colors">
             {saving ? 'Guardando...' : editingPago ? 'Guardar cambios' : 'Confirmar registro'}
           </button>
+          {jugadorSeleccionado && proximoTrasPago && (
+            <p className="text-center text-[11px] text-slate-500">Al confirmar, el proximo vencimiento se calculara automaticamente como {proximoTrasPago} (+1 mes desde {fecha})</p>
+          )}
         </div>
       </section>
 

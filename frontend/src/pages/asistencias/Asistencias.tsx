@@ -34,7 +34,7 @@ const ESTADO_LABEL: Record<EstadoRegistro, string> = {
   presente: 'Presente',
   ausente: 'Ausente',
   ausente_con_excusa: 'Ausente con excusa',
-  no_registrado: 'No registrado',
+  no_registrado: 'Sin registrar',
 };
 
 const ESTADO_BADGE_VARIANT: Record<EstadoRegistro, 'success' | 'danger' | 'warning' | 'default'> = {
@@ -396,7 +396,7 @@ export function Asistencias() {
           </div>
           {/* summary extra for no_registrado */}
           {registrarNoRegistrados > 0 && (
-            <p className="text-xs text-slate-400">⚪ No registrados: {registrarNoRegistrados}</p>
+            <p className="text-xs text-slate-400">⚪ Sin registrar: {registrarNoRegistrados}</p>
           )}
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
             {filtroCategoria && (() => {
@@ -450,7 +450,7 @@ export function Asistencias() {
                             <option value="presente">🟢 Presente</option>
                             <option value="ausente">🔴 Ausente</option>
                             <option value="ausente_con_excusa">🟡 Ausente con excusa</option>
-                            <option value="no_registrado">⚪ No registrado</option>
+                            <option value="no_registrado">⚪ Sin registrar</option>
                           </select>
                         </div>
                       </div>
@@ -550,13 +550,13 @@ export function Asistencias() {
             </div>
           </div>
           {noRegistradosCount > 0 && (
-            <p className="text-xs text-slate-400">⚪ No registrados: {noRegistradosCount}</p>
+            <p className="text-xs text-slate-400">⚪ Sin registrar: {noRegistradosCount}</p>
           )}
           <div className="flex flex-wrap gap-2">
             <Badge variant="success">{presentes} presentes</Badge>
             <Badge variant="danger">{ausentes} ausentes</Badge>
             <Badge variant="warning">{ausentesConExcusa} con excusa</Badge>
-            {noRegistradosCount > 0 && <Badge variant="default">{noRegistradosCount} no registrados</Badge>}
+            {noRegistradosCount > 0 && <Badge variant="default">{noRegistradosCount} Sin registrar</Badge>}
             <Badge variant="info">{asistenciasFiltradas.length} total</Badge>
           </div>
 
@@ -595,7 +595,7 @@ export function Asistencias() {
                   { value: 'presente', label: 'Presente' },
                   { value: 'ausente', label: 'Ausente' },
                   { value: 'ausente_con_excusa', label: 'Ausente con excusa' },
-                  { value: 'no_registrado', label: 'No registrado' },
+                  { value: 'no_registrado', label: 'Sin registrar' },
                 ]}
               />
             </div>

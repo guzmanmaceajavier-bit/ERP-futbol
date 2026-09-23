@@ -179,6 +179,48 @@ export function Torneos() {
         <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total}
           onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
+
+      {(() => {
+        const todosEquipos = (torneos || []).flatMap((t) =>
+          ((t.equipos_participantes || []) as unknown[]).map((r, idx) => {
+            const row = parseEquipoRow(r, idx);
+            return { torneo: t.nombre, torneoId: t.id, ...row };
+          })
+        );
+        if (todosEquipos.length === 0) return null;
+        return (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="font-sport font-bold text-white">Equipos participantes</h3>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-slate-700 border border-slate-600 text-slate-300">
+                {todosEquipos.length} equipos
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-700/60 text-slate-300 text-xs uppercase tracking-wider">
+                    <th className="text-left px-3 py-2.5 font-semibold">#</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Equipo</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Ciudad</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Torneo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700">
+                  {todosEquipos.map((eq, idx) => (
+                    <tr key={`${eq.torneoId}-${eq.id}-${idx}`} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{idx + 1}</td>
+                      <td className="px-3 py-2.5 text-white font-medium">{eq.nombre}</td>
+                      <td className="px-3 py-2.5 text-slate-300">{eq.ciudad || <span className="text-slate-500 italic">—</span>}</td>
+                      <td className="px-3 py-2.5 text-slate-400">{eq.torneo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
       <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar Torneo' : 'Registrar torneo'} wide>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Nombre del torneo" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required placeholder="Ej: Copa Efusa 2026" />

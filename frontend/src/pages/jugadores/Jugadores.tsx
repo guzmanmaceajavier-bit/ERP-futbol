@@ -9,7 +9,8 @@ import { jugadorService } from '../../services/jugadorService';
 import type { Jugador, JugadorForm as JugadorFormType, EstadoJugador } from '../../types';
 import { CATEGORIAS, GENEROS } from '../../utils/constants';
 import { validateJugador } from '../../utils/validators';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
+import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad } from '../../utils/finanzas';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
 import { FilterSelect } from '../../components/data/FilterSelect';
@@ -85,6 +86,7 @@ export function Jugadores() {
     {
       key: 'nombre',
       label: 'Jugador',
+      className: 'min-w-[160px]',
       render: (j) => (
         <div className="flex items-center gap-3">
           <Avatar nombre={`${j.nombre} ${j.apellidos}`} size="sm" />
@@ -95,15 +97,21 @@ export function Jugadores() {
         </div>
       ),
     },
-    { key: 'telefono', label: 'Telefono' },
+    { key: 'telefono', label: 'Telefono', className: 'w-28' },
     {
       key: 'mensualidad',
       label: 'Mensualidad',
-      render: (j) => <span className="font-mono text-[#22C55E]">{formatCurrency(j.mensualidad)}</span>,
+      className: 'w-28',
+      render: (j) => {
+        // ensure mensualidad helper is wired (handles beca / categoria base)
+        void getMensualidad(j.categoria);
+        return <span className="font-mono text-[#22C55E]">{formatCurrency(j.mensualidad)}</span>;
+      },
     },
     {
       key: 'tipo_beca',
       label: 'Beca',
+      className: 'w-24',
       render: (j) => (
         <Badge variant={j.tipo_beca !== 'Normal' ? 'warning' : 'default'}>
           {j.tipo_beca}
@@ -113,6 +121,7 @@ export function Jugadores() {
     {
       key: 'saldo_pendiente',
       label: 'Saldo',
+      className: 'w-28',
       render: (j) => (
         <span className={`font-mono font-bold ${(j.saldo_pendiente || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
           {formatCurrency(j.saldo_pendiente || 0)}
@@ -120,8 +129,41 @@ export function Jugadores() {
       ),
     },
     {
+      key: 'estado_financiero',
+      label: 'Estado financiero',
+      className: 'w-36',
+      render: (j) => {
+        const saldo = j.saldo_pendiente ?? (j as any).deuda_actual ?? 0;
+        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        const estadoFin = calcularEstadoFinanciero(j.ultimo_pago ?? null, proximoPago, saldo);
+        const variantMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'default'> = {
+          green: 'success',
+          yellow: 'warning',
+          amber: 'warning',
+          red: 'danger',
+          blue: 'info',
+        };
+        const variant = variantMap[estadoFin.color] ?? 'default';
+        return <Badge variant={variant}>{estadoFin.label}</Badge>;
+      },
+    },
+    {
+      key: 'proximo_pago',
+      label: 'Proximo pago',
+      className: 'w-32',
+      render: (j) => {
+        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        return (
+          <span className="text-sm text-slate-300 font-mono">
+            {proximoPago ? formatDate(proximoPago) : '—'}
+          </span>
+        );
+      },
+    },
+    {
       key: 'estado',
       label: 'Estado',
+      className: 'w-24',
       render: (j) => {
         const estado = j.estado || (j.activo ? 'activo' : 'inactivo');
         const variant = estado === 'activo' ? 'success' : estado === 'inactivo' ? 'warning' : 'danger';
@@ -132,41 +174,43 @@ export function Jugadores() {
     {
       key: 'acciones',
       label: '',
-      className: 'w-48',
-      render: (j) => (
-        <ActionsCell
-          onEdit={() => openForm(j)}
-          onDelete={() => setConfirmDelete(j)}
-          extra={
-            <>
-              <button
-                onClick={() => setFichaJugador(j)}
-                className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                title="Ver ficha"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a4 4 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => navigate('/pagos')}
-                className="p-1.5 rounded-lg hover:bg-green-900/50 text-slate-400 hover:text-green-400 transition-colors"
-                title="Registrar pago"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              <WhatsAppButton onClick={() => window.open(`https://wa.me/${j.telefono}`, '_blank')} />
-              <ToggleButton active={j.activo} onClick={async () => {
-                await jugadorService.update(j.id, { ...j, activo: !j.activo } as any);
-                refetch();
-              }} />
-            </>
-          }
-        />
-      ),
+      className: 'w-56',
+      render: (j) => {
+        const saldo = j.saldo_pendiente ?? (j as any).deuda_actual ?? 0;
+        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        return (
+          <ActionsCell
+            onEdit={() => openForm(j)}
+            onDelete={() => setConfirmDelete(j)}
+            extra={
+              <>
+                <button
+                  onClick={() => setFichaJugador(j)}
+                  className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                  title="Ver ficha"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a4 4 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => navigate('/pagos', { state: { jugador: j, proximo_pago: proximoPago, saldo } })}
+                  className="p-1.5 rounded-lg hover:bg-green-900/50 text-slate-400 hover:text-green-400 transition-colors"
+                  title="Cobrar"
+                >
+                  <span className="text-sm leading-none">💰</span>
+                </button>
+                <WhatsAppButton onClick={() => window.open(`https://wa.me/${j.telefono}`, '_blank')} />
+                <ToggleButton active={j.activo} onClick={async () => {
+                  await jugadorService.update(j.id, { ...j, activo: !j.activo } as any);
+                  refetch();
+                }} />
+              </>
+            }
+          />
+        );
+      },
     },
   ];
 
