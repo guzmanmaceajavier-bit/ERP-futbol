@@ -366,15 +366,9 @@ export function Alertas() {
                 <button
                   onClick={() => {
                     const gid = gestionar.jugador_id;
-                    const gNombre = gestionar.jugador_nombre || gestionar.nombre || '';
-                    const gCategoria = gestionar.categoria || '';
-                    const saldo = gestionar.deuda || 0;
                     setGestionar(null);
-                    if (gid != null) {
-                      navigate('/pagos', { state: { jugador: { id: gid, nombre: gNombre.split(' ')[0] || gNombre, apellidos: gNombre.split(' ').slice(1).join(' ') || '', categoria: gCategoria, saldo_pendiente: saldo, mensualidad: mensualidad || undefined } as unknown as never } });
-                    } else {
-                      navigate('/pagos');
-                    }
+                    if (gid != null) navigate(`/pagos?jugador_id=${gid}`);
+                    else navigate('/pagos');
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#22C55E]/30 bg-[#22C55E]/10 hover:bg-[#22C55E]/20 transition-all text-left"
                 >

@@ -178,7 +178,7 @@ export function Jugadores() {
                   </svg>
                 </button>
                 <button
-                  onClick={() => navigate('/pagos', { state: { jugador: j, proximo_pago: proximoPago, saldo, periodo_id: null as number | null, mensualidad: j.mensualidad } })}
+                  onClick={() => navigate(`/pagos?jugador_id=${j.id}`)}
                   className="p-1.5 rounded-lg hover:bg-green-900/50 text-slate-400 hover:text-green-400 transition-colors"
                   title="Cobrar"
                 >

@@ -319,6 +319,15 @@ export function demoHandle(method: string, url: string, body?: any): any {
   if (seg0 === 'pagos' && method === 'POST') {
     const items = getCollection<any>('pagos');
     if (body?.accion === 'anular') {
+      // Regla: no anular directamente si la caja de esa fecha esta cerrada
+      const targetPago = items.find((p: any) => p.id === body.pago_id);
+      if (targetPago) {
+        const cajas = getCollection<any>('caja');
+        const cajaDia = cajas.find((c: any) => c.fecha === targetPago.fecha);
+        if (cajaDia && cajaDia.estado === 'cerrada') {
+          throw new Error('No se puede anular: la caja del ' + targetPago.fecha + ' esta cerrada. Registre un ajuste en la caja actual.');
+        }
+      }
       const idx = items.findIndex((p: any) => p.id === body.pago_id);
       if (idx >= 0) {
         items[idx].anulado = true;
@@ -599,6 +608,14 @@ export function demoHandle(method: string, url: string, body?: any): any {
   if (seg0 === 'gastos' && method === 'POST') {
     const items = getCollection<any>('gastos');
     if (body?.accion === 'anular') {
+      const targetGasto = items.find((g: any) => g.id === body.gasto_id);
+      if (targetGasto) {
+        const cajas = getCollection<any>('caja');
+        const cajaDia = cajas.find((c: any) => c.fecha === targetGasto.fecha);
+        if (cajaDia && cajaDia.estado === 'cerrada') {
+          throw new Error('No se puede anular: la caja del ' + targetGasto.fecha + ' esta cerrada. Registre un ajuste en la caja actual.');
+        }
+      }
       const idx = items.findIndex((g: any) => g.id === body.gasto_id);
       if (idx >= 0) { items[idx].anulado = true; items[idx].anulado_motivo = body.motivo; items[idx].anulado_por = 1; items[idx].anulado_at = now(); }
       const bit = getCollection<any>('bitacora');

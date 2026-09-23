@@ -106,8 +106,20 @@ export function Pagos() {
     setMesesSeleccionados([{ anio: now.getFullYear(), mes: now.getMonth() + 1 }]);
   };
 
-  // Pre-selected jugador: when navigated from Jugadores with state { jugador, periodo_id, mensualidad } auto-select
+  // Pre-selected jugador via query params (navegacion fresca: /pagos?jugador_id=15&periodo_id=28)
+  // Soporta tambien legacy location.state para compatibilidad
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const qJugadorId = params.get('jugador_id');
+    const qPeriodoId = params.get('periodo_id');
+    if (qJugadorId && jugadores) {
+      const found = jugadores.find((j) => String(j.id) === qJugadorId);
+      if (found) {
+        if (qPeriodoId) (found as any)._targetPeriodoId = Number(qPeriodoId);
+        selectJugador(found);
+        return;
+      }
+    }
     const st = location.state as { jugador?: Jugador; saldo?: number; periodo_id?: number | null; mensualidad?: number; proximo_pago?: string | null } | null;
     if (st?.jugador) {
       const jug = st.jugador as Jugador;
@@ -117,11 +129,10 @@ export function Pagos() {
       if (st.mensualidad != null && (jug.mensualidad == null || jug.mensualidad === 0)) {
         (jug as any).mensualidad = Number(st.mensualidad);
       }
-      // if periodo_id is targeted, it will be shown below via banner (st.periodo_id)
       selectJugador(jug);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state]);
+  }, [location.search, location.state, jugadores]);
 
   const resetForm = () => {
     setJugadorSeleccionado(null);
