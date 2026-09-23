@@ -28,6 +28,7 @@ export function Caja() {
   const diferencia = saldoContado - saldoSistema;
 
   const handleAccion = async (accion: string) => {
+    if (saving) return;
     setSaving(true);
     try {
       await cajaService.accion({

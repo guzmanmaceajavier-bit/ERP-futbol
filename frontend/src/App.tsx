@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { Login } from './pages/auth/Login';
+import { ErrorBoundary } from './components/feedback/ErrorBoundary';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { Jugadores } from './pages/jugadores/Jugadores';
 import { Pagos } from './pages/pagos/Pagos';
@@ -45,7 +46,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
 
-      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+      <Route path="/" element={<ProtectedRoute><ErrorBoundary><MainLayout /></ErrorBoundary></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
 
         <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Jugadores /></RoleGuard>} />
