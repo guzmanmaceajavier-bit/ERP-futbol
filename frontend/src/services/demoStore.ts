@@ -334,6 +334,17 @@ export function demoHandle(method: string, url: string, body?: any): any {
           if (peri) { peri.pagado = Math.max(0, (peri.pagado || 0) - pp.monto_aplicado); peri.saldo = (peri.objetivo || 0) - peri.pagado; peri.estado = peri.pagado === 0 ? 'pendiente' : peri.pagado < peri.objetivo ? 'abono' : 'completo'; }
         });
         setCollection('periodos', periodos);
+        // Recalcular saldo del jugador
+        try {
+          const jugadoresArr2 = getCollection<any>('jugadores');
+          const jugIdx2 = jugadoresArr2.findIndex((x: any) => x.id === items[idx].jugador_id);
+          if (jugIdx2 >= 0) {
+            let saldo2 = 0;
+            for (const p of periodos.filter((pp: any) => pp.jugador_id === items[idx].jugador_id)) saldo2 += Math.max(0, (p.objetivo || 0) - (p.pagado || 0));
+            jugadoresArr2[jugIdx2].saldo_pendiente = saldo2;
+            setCollection('jugadores', jugadoresArr2);
+          }
+        } catch {}
         // bitacora
         const bit = getCollection<any>('bitacora');
         bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'anular_pago', modulo: 'pagos', detalle: `Pago #${body.pago_id} anulado: ${body.motivo}`, antes: String(items[idx].monto), despues: '0', motivo: body.motivo });
@@ -352,14 +363,7 @@ export function demoHandle(method: string, url: string, body?: any): any {
       const MENSUALIDAD_FALLBACK: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
       let mensualidad = 0;
       if (j) {
-        const tipoBeca = (j as any).tipo_beca;
-        if (tipoBeca === 'Becado 100%') mensualidad = 0;
-        else if (tipoBeca === 'Becado 50%') {
-          const base = (j as any).mensualidad_objetivo || j.mensualidad || MENSUALIDAD_FALLBACK[j.categoria] || 0;
-          mensualidad = base / 2;
-        } else {
-          mensualidad = j.mensualidad || (j as any).mensualidad_objetivo || MENSUALIDAD_FALLBACK[j.categoria] || 0;
-        }
+        mensualidad = j.mensualidad || (j as any).mensualidad_objetivo || MENSUALIDAD_FALLBACK[j.categoria] || 0;
       }
       if (body.mensualidad && Number(body.mensualidad) > 0) mensualidad = Number(body.mensualidad);
       const monto = Number(body.monto) || 0;
@@ -426,6 +430,29 @@ export function demoHandle(method: string, url: string, body?: any): any {
           });
           setCollection('periodos', periodos);
           setCollection('pago_periodos', pagoPeriodos);
+          // Recalcular saldo y proximo vencimiento del jugador desde periodos (fuente unica)
+          try {
+            const jugadoresArr = getCollection<any>('jugadores');
+            const jugIdx = jugadoresArr.findIndex((x: any) => x.id === body.jugador_id);
+            if (jugIdx >= 0) {
+              const allPeriodos = periodos.filter((p: any) => p.jugador_id === body.jugador_id);
+              let saldo = 0;
+              let ultimoPagado: any | null = null;
+              let proximoVencimiento: string | null = null;
+              for (const p of allPeriodos) {
+                const s = Math.max(0, (p.objetivo || 0) - (p.pagado || 0));
+                saldo += s;
+                if (p.estado === 'completo' || p.estado === 'abono') ultimoPagado = p as any;
+              }
+              // proximo vencimiento = primer periodo pendiente/abono por vencimiento
+              const pendientes = allPeriodos.filter((p: any) => p.estado === 'pendiente' || p.estado === 'abono').sort((a: any, b: any) => (a.vencimiento || '').localeCompare(b.vencimiento || ''));
+              if (pendientes.length > 0) proximoVencimiento = pendientes[0].vencimiento || null;
+              jugadoresArr[jugIdx].saldo_pendiente = saldo;
+              jugadoresArr[jugIdx].ultimo_pago = body.fecha || new Date().toISOString().split('T')[0];
+              if (proximoVencimiento) jugadoresArr[jugIdx].proximo_vencimiento = proximoVencimiento;
+              setCollection('jugadores', jugadoresArr);
+            }
+          } catch (e2) { console.warn('saldo recalculo failed', e2); }
         }
       }
     } catch (e) {
