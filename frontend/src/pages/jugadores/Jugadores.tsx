@@ -40,6 +40,15 @@ const EMPTY_FORM: JugadorFormType = {
   acudiente_telefono: '',
   fecha_ingreso: '',
   estado: 'activo' as EstadoJugador,
+  direccion: '',
+  posicion: '',
+  numero_camiseta: null,
+  tipo_sangre: '',
+  eps: '',
+  alergias: '',
+  condiciones_medicas: '',
+  contacto_emergencia: '',
+  telefono_emergencia: '',
 };
 
 export function Jugadores() {
@@ -177,6 +186,15 @@ export function Jugadores() {
         acudiente_telefono: jugador.acudiente_telefono || '',
         fecha_ingreso: jugador.fecha_ingreso || '',
         estado: (jugador.estado || (jugador.activo ? 'activo' : 'inactivo')) as EstadoJugador,
+        direccion: jugador.direccion || '',
+        posicion: jugador.posicion || '',
+        numero_camiseta: jugador.numero_camiseta ?? null,
+        tipo_sangre: jugador.tipo_sangre || '',
+        eps: jugador.eps || '',
+        alergias: jugador.alergias || '',
+        condiciones_medicas: jugador.condiciones_medicas || '',
+        contacto_emergencia: jugador.contacto_emergencia || '',
+        telefono_emergencia: jugador.telefono_emergencia || '',
       });
       openEdit(jugador);
     } else {

@@ -212,9 +212,9 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                 <Field label="Objetivo real" value={jugador.objetivo_real != null ? formatCurrency(jugador.objetivo_real) : '-'} />
                 <Field label="Descuento beca" value={jugador.descuento_beca ? `${jugador.descuento_beca}%` : '0%'} />
                 <Field label="Estado de cuenta" value={
-                  deuda > 0 ? <span className="text-red-400 font-bold">Con deuda</span> : <span className="text-green-400 font-bold">Al día</span>
+                  deuda > 0 ? <span className="text-red-400 font-bold">Con saldo pendiente</span> : <span className="text-green-400 font-bold">Al día</span>
                 } />
-                <Field label="Deuda" value={<span className={deuda > 0 ? 'text-red-400 font-bold' : 'text-slate-300'}>{formatCurrency(deuda)}</span>} />
+                <Field label="Saldo pendiente" value={<span className={deuda > 0 ? 'text-red-400 font-bold' : 'text-slate-300'}>{formatCurrency(deuda)}</span>} />
                 <Field label="Último pago" value={jugador.ultimo_pago ? formatDate(jugador.ultimo_pago) : '-'} />
                 <Field label="Próximo vencimiento" value={jugador.proximo_vencimiento ? formatDate(jugador.proximo_vencimiento) : '-'} />
                 <Field label="Saldo pendiente" value={formatCurrency(jugador.saldo_pendiente ?? 0)} />
@@ -228,7 +228,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                     <p className="text-sm font-mono font-bold text-green-400 mt-1">{formatCurrency(totalPagado)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide">Deuda actual</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide">Saldo pendiente</p>
                     <p className="text-sm font-mono font-bold text-red-400 mt-1">{formatCurrency(jugador.deuda_actual ?? deuda)}</p>
                   </div>
                   <div>
@@ -244,7 +244,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
               {deuda > 0 && (
                 <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex gap-3">
                   <span className="text-red-400 text-sm">⚠</span>
-                  <p className="text-sm text-red-300">Este jugador presenta deuda pendiente de {formatCurrency(deuda)}. Revisar historial de pagos.</p>
+                  <p className="text-sm text-red-300">Este jugador presenta saldo pendiente de {formatCurrency(deuda)}. Revisar historial de pagos.</p>
                 </div>
               )}
             </div>
@@ -307,8 +307,8 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                 <h3 className="text-sm font-semibold text-white">Alertas</h3>
                 {deuda > 0 ? (
                   <div className="mt-3 bg-yellow-900/20 border border-yellow-800 rounded-lg px-4 py-3">
-                    <p className="text-sm text-yellow-300 font-medium">Alerta de deuda</p>
-                    <p className="text-xs text-yellow-200/70 mt-1">Deuda actual: {formatCurrency(deuda)} — filtrar alertas por jugador_id = {jugador.id}.</p>
+                    <p className="text-sm text-yellow-300 font-medium">Alerta de saldo pendiente</p>
+                    <p className="text-xs text-yellow-200/70 mt-1">Saldo pendiente: {formatCurrency(deuda)} — filtrar alertas por jugador_id = {jugador.id}.</p>
                   </div>
                 ) : (
                   <p className="text-sm text-slate-400 mt-2">Sin alertas activas.</p>

@@ -176,7 +176,7 @@ export function Dashboard() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
-            <p className="text-xs text-slate-400">Deuda total</p>
+            <p className="text-xs text-slate-400">Saldo pendiente</p>
             <p className="font-mono text-sm font-bold text-red-400">{formatCurrency(cobranza.deudaTotal)}</p>
             <p className="text-[11px] text-slate-500 mt-1">{cobranza.totalPendiente} periodos por cobrar</p>
           </div>
@@ -192,7 +192,7 @@ export function Dashboard() {
           </div>
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
             <p className="text-xs text-slate-400">Jugadores</p>
-            <p className="text-sm font-bold"><span className="text-green-400">{cobranza.jugadoresAlDia} al dia</span> <span className="text-slate-500 font-normal"> / </span> <span className="text-red-400">{cobranza.conDeuda} con deuda</span></p>
+            <p className="text-sm font-bold"><span className="text-green-400">{cobranza.jugadoresAlDia} al dia</span> <span className="text-slate-500 font-normal"> / </span> <span className="text-red-400">{cobranza.conDeuda} con saldo pendiente</span></p>
             <p className="text-[11px] text-slate-500 mt-1">Activos: {jugadoresActivos.length}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3 col-span-2 md:col-span-1">
@@ -347,11 +347,11 @@ export function Dashboard() {
 
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-sport font-bold text-white">Alertas pendientes</h3>
+            <h3 className="font-sport font-bold text-white">Seguimientos pendientes</h3>
             <Link to="/alertas" className="text-sm text-[#22C55E] hover:underline">Ver todas</Link>
           </div>
           {!alertas || alertas.length === 0 ? (
-            <p className="text-slate-500 text-sm py-4 text-center">No hay alertas pendientes</p>
+            <p className="text-slate-500 text-sm py-4 text-center">No hay seguimientos pendientes</p>
           ) : (
             <div className="space-y-2">
               {alertas.slice(0, 6).map((alerta, idx) => {
@@ -363,7 +363,7 @@ export function Dashboard() {
                       <p className="text-sm text-white truncate">{alerta.titulo || alerta.mensaje || `Alerta #${alerta.id}`}</p>
                       <p className="text-xs text-slate-400 truncate">
                         {alerta.jugador_nombre || ''} {alerta.categoria ? `| ${alerta.categoria}` : ''}
-                        {alerta.deuda ? ` | Deuda: ${formatCurrency(alerta.deuda)}` : ''}
+                        {alerta.deuda ? ` | Saldo pendiente: ${formatCurrency(alerta.deuda)}` : ''}
                       </p>
                     </div>
                   </div>

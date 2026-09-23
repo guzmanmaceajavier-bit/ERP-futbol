@@ -22,7 +22,7 @@ const PLANTILLAS = [
 const PLANTILLAS_TEXTO: Record<string, string> = {
   whatsapp_confirmacion: 'Gracias {nombre}, recibimos ${monto} de {jugador}. Recibo {recibo}.',
   whatsapp_recordatorio: 'Hola {nombre}, le recordamos que la mensualidad de {periodo} vence pronto. Valor: ${monto}.',
-  whatsapp_vencimiento: 'Hola {nombre}, la mensualidad de {periodo} esta vencida. Deuda: ${deuda}. Por favor regularice.',
+  whatsapp_vencimiento: 'Hola {nombre}, la mensualidad de {periodo} esta vencida. Saldo pendiente: ${deuda}. Por favor regularice.',
   whatsapp_cumpleanos: 'Feliz cumpleanos {nombre}! {escuela} le desea un excelente dia.',
 };
 

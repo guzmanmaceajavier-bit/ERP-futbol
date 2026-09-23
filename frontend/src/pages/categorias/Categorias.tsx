@@ -118,20 +118,6 @@ export function Categorias() {
       }
       close();
       refetch();
-      // Bidirectional sync: update profesor's categorias_asignadas to include this categoria
-      if (payload.profesor_id != null) {
-        try {
-          const allProfs = await profesorService.getAll();
-          const target = allProfs.find((p) => p.id === payload.profesor_id);
-          if (target) {
-            const current = target.categorias_asignadas || [];
-            if (!current.includes(payload.nombre)) {
-              const updated = [...current, payload.nombre];
-              try { await profesorService.update(target.id, { categorias_asignadas: updated } as any); } catch { /* best-effort */ }
-            }
-          }
-        } catch { /* best-effort, ignore sync failures */ }
-      }
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
   };
 

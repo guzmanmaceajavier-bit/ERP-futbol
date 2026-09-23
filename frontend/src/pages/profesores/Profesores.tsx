@@ -3,7 +3,6 @@ import { useApi } from '../../hooks/useApi';
 import { useModal } from '../../hooks/useModal';
 import { useToast } from '../../hooks/useToast';
 import { profesorService } from '../../services/profesorService';
-import { categoriaService } from '../../services/categoriaService';
 import type { Profesor, ProfesorForm } from '../../types';
 import { CATEGORIAS, TIPOS_CONTRATO } from '../../utils/constants';
 import { DataTable, type Column } from '../../components/data/DataTable';
@@ -102,23 +101,9 @@ export function Profesores() {
         tipo_contrato: (form.tipo_contrato as ProfesorForm['tipo_contrato']) || undefined,
         categorias_asignadas: form.categorias_asignadas || [],
       };
-      let savedId: number | null = null;
-      if (editing) { await profesorService.update(editing.id, payload); savedId = editing.id; showSuccess('Profesor actualizado'); }
-      else { const created = await profesorService.create(payload); savedId = (created as any)?.id ?? null; showSuccess('Profesor creado'); }
+      if (editing) { await profesorService.update(editing.id, payload); showSuccess('Profesor actualizado'); }
+      else { await profesorService.create(payload); showSuccess('Profesor creado'); }
       close(); refetch();
-      // Bidirectional sync: update each affected Categoria's profesor_id to this profesor
-      if (savedId != null && payload.categorias_asignadas && payload.categorias_asignadas.length > 0) {
-        try {
-          const allCats = await categoriaService.getAll();
-          const catMap = new Map(allCats.map((c) => [c.nombre, c.id]));
-          for (const catName of payload.categorias_asignadas) {
-            const catId = catMap.get(catName);
-            if (catId != null) {
-              try { await categoriaService.update(catId, { profesor_id: savedId } as any); } catch { /* best-effort, ignore per categoria */ }
-            }
-          }
-        } catch { /* best-effort, ignore sync failures */ }
-      }
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
   };
 

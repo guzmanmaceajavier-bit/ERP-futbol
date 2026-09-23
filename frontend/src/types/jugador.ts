@@ -23,6 +23,16 @@ export interface Jugador {
   activo: boolean;
   estado: EstadoJugador;
   fecha_ingreso: string | null;
+  // Hoja de vida
+  direccion?: string | null;
+  posicion?: string | null;
+  numero_camiseta?: number | null;
+  tipo_sangre?: string | null;
+  eps?: string | null;
+  alergias?: string | null;
+  condiciones_medicas?: string | null;
+  contacto_emergencia?: string | null;
+  telefono_emergencia?: string | null;
   created_at: string;
   objetivo_real?: number;
   saldo_pendiente?: number;
@@ -48,6 +58,15 @@ export interface JugadorForm {
   acudiente_telefono: string;
   fecha_ingreso?: string;
   estado?: EstadoJugador;
+  direccion?: string;
+  posicion?: string;
+  numero_camiseta?: number | null;
+  tipo_sangre?: string;
+  eps?: string;
+  alergias?: string;
+  condiciones_medicas?: string;
+  contacto_emergencia?: string;
+  telefono_emergencia?: string;
 }
 
 export interface JugadorFiltros {

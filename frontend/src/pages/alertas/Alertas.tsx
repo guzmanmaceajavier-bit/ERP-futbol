@@ -383,7 +383,7 @@ export function Alertas() {
                 </span>
                 <div className="flex-1">
                   <p className="text-white text-sm font-medium">{gestionar.descartada ? 'Reactivar seguimiento' : 'Archivar seguimiento'}</p>
-                  <p className="text-xs text-slate-500">{gestionar.descartada ? 'Volver a mostrar en el listado' : 'Ocultar sin eliminar la deuda'}</p>
+                  <p className="text-xs text-slate-500">{gestionar.descartada ? 'Volver a mostrar en el listado' : 'Ocultar sin eliminar el saldo pendiente'}</p>
                 </div>
               </button>
             </div>

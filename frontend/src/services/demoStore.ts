@@ -59,6 +59,21 @@ export function initDemoData() {
     { id: 3, nombre: 'Andres Martinez', telefono: '3125554444', especialidad: 'Formativas', salario: 1500000, fecha_ingreso: '2024-06-10', tipo_contrato: 'prestacion_servicios', categorias_asignadas: ['Sub 14-13', 'Sub 10-9'], activo: true },
   ];
 
+  // Centralized linkage: source of truth is categorias.profesor_id — derive from profesores categorias_asignadas for initial seed
+  const profIdByCatName: Record<string, number> = {};
+  profesores.forEach((p: any) => {
+    (p.categorias_asignadas || []).forEach((catName: string) => {
+      profIdByCatName[catName] = p.id;
+    });
+  });
+  cats.forEach((c: any) => {
+    if (profIdByCatName[c.nombre] != null) {
+      c.profesor_id = profIdByCatName[c.nombre];
+      const prof = profesores.find((p: any) => p.id === profIdByCatName[c.nombre]);
+      c.profesor_nombre = prof ? prof.nombre : null;
+    }
+  });
+
   const jugadores = [
     { id: 1, nombre: 'Santiago', apellidos: 'Garcia Perez', fecha_nacimiento: '2008-03-15', tipo_identificacion: 'Cedula', numero_identificacion: '1234567890', categoria: 'Sub 17-18', telefono: '3105551111', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Masculino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Pedro Garcia', acudiente_telefono: '3105551112', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-01', created_at: now(), saldo_pendiente: 50000 },
     { id: 2, nombre: 'Valentina', apellidos: 'Rodriguez Diaz', fecha_nacimiento: '2009-07-22', tipo_identificacion: 'Cedula', numero_identificacion: '2345678901', categoria: 'Sub 16-15', telefono: '3115552222', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', tipo_beca: 'Normal', descuento_beca: 0, acudiente_nombre: 'Ana Rodriguez', acudiente_telefono: '3115552223', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-15', created_at: now(), saldo_pendiente: 0 },
@@ -214,6 +229,33 @@ export function demoHandle(method: string, url: string, body?: any): any {
   if (seg0 === 'alertas' && method === 'GET') return getCollection('alertas');
   if (seg0 === 'alertas' && method === 'POST') {
     const items = getCollection<any>('alertas');
+    // Gestion de cobranza via accion: contactado, prometio_pagar, descartar, restaurar, crear
+    if (body?.accion && body?.alerta_id != null) {
+      const idx = items.findIndex((a: any) => String(a.id) === String(body.alerta_id));
+      if (idx >= 0) {
+        const acc = body.accion;
+        if (acc === 'descartar') { items[idx].descartada = true; items[idx].estado_cobranza = 'descartada'; }
+        else if (acc === 'restaurar') { items[idx].descartada = false; items[idx].estado_cobranza = 'deuda'; }
+        else if (acc === 'contactado') { items[idx].estado_cobranza = 'contactado'; items[idx].ultimo_contacto = now(); }
+        else if (acc === 'prometio_pagar') { items[idx].estado_cobranza = 'prometio_pagar'; items[idx].ultimo_contacto = now(); }
+        else if (acc === 'archivar') { items[idx].descartada = true; items[idx].estado_cobranza = 'descartada'; }
+        else if (acc === 'reactivar') { items[idx].descartada = false; items[idx].estado_cobranza = 'deuda'; }
+        setCollection('alertas', items);
+        // bitacora
+        const bit = getCollection<any>('bitacora');
+        bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'gestion_cobranza', modulo: 'cobranzas', detalle: `Cobranza #${body.alerta_id}: ${acc}` });
+        setCollection('bitacora', bit);
+        return items[idx];
+      }
+      return { ok: true };
+    }
+    if (body?.accion === 'crear' || !body?.accion) {
+      const newItem = { ...body, id: nextId('alertas'), tipo_alerta: body.tipo_alerta || 'MANUAL', tipo: body.tipo || 'manual', estado_cobranza: body.estado_cobranza || 'deuda', descartada: false, ultimo_contacto: null, created_at: now() };
+      delete newItem.accion;
+      items.push(newItem);
+      setCollection('alertas', items);
+      return newItem;
+    }
     const newItem = { ...body, id: nextId('alertas'), created_at: now() };
     items.push(newItem);
     setCollection('alertas', items);
@@ -358,21 +400,74 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return { ok: true };
   }
 
-  if (seg0 === 'profesores' && method === 'GET') return getCollection('profesores');
+  if (seg0 === 'profesores' && method === 'GET') {
+    const profesores = getCollection<any>('profesores');
+    const categorias = getCollection<any>('categorias');
+    const map = new Map<number, string[]>();
+    categorias.forEach((c: any) => {
+      if (c.profesor_id != null) {
+        const arr = map.get(c.profesor_id) || [];
+        arr.push(c.nombre);
+        map.set(c.profesor_id, arr);
+      }
+    });
+    return profesores.map((p: any) => ({ ...p, categorias_asignadas: map.get(p.id) || [] }));
+  }
   if (seg0 === 'profesores' && method === 'POST') {
     const items = getCollection<any>('profesores');
-    const newItem = { ...body, id: nextId('profesores'), activo: true };
+    const { categorias_asignadas, ...rest } = body || {};
+    const newItem = { ...rest, id: nextId('profesores'), activo: true };
     items.push(newItem);
     setCollection('profesores', items);
-    return newItem;
+    // Sync categorias: assign categorias listed in categorias_asignadas to this new profesor
+    if (Array.isArray(categorias_asignadas) && categorias_asignadas.length > 0) {
+      const cats = getCollection<any>('categorias');
+      let changed = false;
+      categorias_asignadas.forEach((catName: string) => {
+        const cat = cats.find((c: any) => c.nombre === catName);
+        if (cat) {
+          cat.profesor_id = newItem.id;
+          cat.profesor_nombre = newItem.nombre || null;
+          changed = true;
+        }
+      });
+      if (changed) setCollection('categorias', cats);
+    }
+    return { ...newItem, categorias_asignadas: categorias_asignadas || [] };
   }
   if (seg0 === 'profesores' && method === 'PUT') {
     const items = getCollection<any>('profesores');
     const id = parseIdFromUrl(url, body);
     const idx = items.findIndex((i: any) => i.id === id);
-    if (idx >= 0) items[idx] = { ...items[idx], ...body };
+    const { categorias_asignadas, ...rest } = body || {};
+    if (idx >= 0) items[idx] = { ...items[idx], ...rest };
     setCollection('profesores', items);
-    return items[idx] || { ok: true };
+    // Sync categorias: centralize relation in categorias.profesor_id
+    if (Array.isArray(categorias_asignadas)) {
+      const cats = getCollection<any>('categorias');
+      let changed = false;
+      // Unassign categorias previously assigned to this profesor but not in new list
+      cats.forEach((c: any) => {
+        if (c.profesor_id === id && !categorias_asignadas.includes(c.nombre)) {
+          c.profesor_id = null;
+          c.profesor_nombre = null;
+          changed = true;
+        }
+      });
+      // Assign each name in new list to this profesor
+      categorias_asignadas.forEach((catName: string) => {
+        const cat = cats.find((c: any) => c.nombre === catName);
+        if (cat && cat.profesor_id !== id) {
+          cat.profesor_id = id;
+          const profNombre = idx >= 0 ? items[idx].nombre : null;
+          cat.profesor_nombre = profNombre;
+          changed = true;
+        }
+      });
+      if (changed) setCollection('categorias', cats);
+    }
+    const result = idx >= 0 ? { ...items[idx], categorias_asignadas: categorias_asignadas || [] } : { ok: true };
+    return result;
   }
   if (seg0 === 'profesores' && method === 'DELETE') {
     const id = parseIdFromUrl(url, body);
@@ -675,9 +770,53 @@ export function demoHandle(method: string, url: string, body?: any): any {
     return { ok: true };
   }
 
-  if (seg0 === 'asistencias' && method === 'GET') return getCollection('asistencias');
+  if (seg0 === 'asistencias' && method === 'GET') {
+    const items = getCollection<any>('asistencias');
+    const params = new URLSearchParams(qs);
+    const fecha = params.get('fecha');
+    const jugadorId = params.get('jugador_id');
+    let filtered = items;
+    if (fecha) filtered = filtered.filter((a: any) => a.fecha === fecha);
+    if (jugadorId) filtered = filtered.filter((a: any) => String(a.jugador_id) === String(jugadorId));
+    // enrich with jugador info
+    const jugadores = getCollection<any>('jugadores');
+    const map: Record<number, any> = {};
+    jugadores.forEach((j: any) => { map[j.id] = j; });
+    return filtered.map((a: any) => ({ ...a, nombre: map[a.jugador_id]?.nombre || a.nombre || '', apellidos: map[a.jugador_id]?.apellidos || a.apellidos || '', categoria: map[a.jugador_id]?.categoria || a.categoria || '' }));
+  }
   if (seg0 === 'asistencias' && method === 'POST') {
     const items = getCollection<any>('asistencias');
+    const registros = body?.registros as any[] | undefined;
+    if (Array.isArray(registros)) {
+      // batch: registros = [{ jugador_id, fecha, estado, presente, motivo, medio, observacion, ... }]
+      registros.forEach((r: any) => {
+        const existing = items.findIndex((a: any) => a.jugador_id === r.jugador_id && a.fecha === r.fecha);
+        const record = {
+          id: existing >= 0 ? items[existing].id : nextId('asistencias'),
+          jugador_id: r.jugador_id,
+          fecha: r.fecha,
+          presente: r.presente ?? r.estado === 'presente',
+          estado: r.estado || (r.presente ? 'presente' : 'ausente'),
+          motivo: r.motivo || null,
+          medio: r.medio || null,
+          observacion: r.observacion || null,
+          fecha_excusa: r.fecha_excusa || null,
+          observacion_entrenador: r.observacion_entrenador || null,
+          entrenamiento_id: r.entrenamiento_id || null,
+          tipo_actividad: r.tipo_actividad || 'entrenamiento',
+          actividad_id: r.actividad_id || r.entrenamiento_id || null,
+          created_at: existing >= 0 ? items[existing].created_at : now(),
+        };
+        if (existing >= 0) items[existing] = record;
+        else items.push(record);
+      });
+      setCollection('asistencias', items);
+      // bitacora
+      const bit = getCollection<any>('bitacora');
+      bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'registrar_asistencia', modulo: 'asistencias', detalle: `Asistencia registrada: ${registros.length} jugadores, fecha ${registros[0]?.fecha || ''}` });
+      setCollection('bitacora', bit);
+      return { ok: true, count: registros.length };
+    }
     const newItem = { ...body, id: nextId('asistencias'), created_at: now() };
     items.push(newItem);
     setCollection('asistencias', items);

@@ -30,22 +30,35 @@ export function NumberInput({ label, value, onChange, min, max, step = 1, error,
   }, [value, focused]);
 
   const handleChange = (raw: string) => {
-    setDisplay(raw);
     if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
-      // keep as-is until blur, don't call onChange yet (or call with '' to signal empty)
-      // Spec allows empty as 0 or keep as-is until blur -> we keep as '' and notify parent with ''
+      setDisplay(raw);
       onChange('');
       return;
     }
-    // allow intermediate typing like "12." -> parse
     const parsed = Number(raw);
     if (Number.isNaN(parsed)) {
       return;
     }
-    let clamped = parsed;
-    // prevent negative when min=0 (clamp will handle)
-    clamped = clamp(clamped, min, max);
-    onChange(clamped);
+    // Strip leading zeros: "05" -> "5", "007" -> "7", but keep "0" and "0.xxx"
+    let normalized = raw;
+    const isNegative = normalized.startsWith('-');
+    const core = isNegative ? normalized.slice(1) : normalized;
+    if (core.length > 1 && core.startsWith('0') && !core.startsWith('0.')) {
+      normalized = (isNegative ? '-' : '') + core.replace(/^0+/, '');
+      if (normalized === '' || normalized === '-') normalized = '0';
+    }
+    // If raw had leading zeros, show normalized immediately
+    if (normalized !== raw) {
+      setDisplay(normalized);
+      const reparsed = Number(normalized);
+      if (!Number.isNaN(reparsed)) {
+        onChange(clamp(reparsed, min, max));
+        return;
+      }
+    } else {
+      setDisplay(raw);
+    }
+    onChange(clamp(parsed, min, max));
   };
 
   const handleBlur = () => {

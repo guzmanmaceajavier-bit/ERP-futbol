@@ -1,4 +1,5 @@
-export type EstadoAsistencia = 'presente' | 'ausente' | 'tarde' | 'justificada';
+export type EstadoAsistencia = 'presente' | 'ausente' | 'ausente_con_excusa' | 'no_registrado' | 'tarde' | 'justificada';
+export type TipoActividad = 'entrenamiento' | 'partido' | 'torneo' | 'general';
 
 export interface Asistencia {
   id: number;
@@ -7,6 +8,15 @@ export interface Asistencia {
   presente: boolean;
   estado: EstadoAsistencia;
   observacion: string | null;
+  // Excusa
+  motivo?: string | null;
+  medio?: string | null;
+  fecha_excusa?: string | null;
+  observacion_entrenador?: string | null;
+  // Vinculo actividad
+  entrenamiento_id?: number | null;
+  tipo_actividad?: TipoActividad;
+  actividad_id?: number | null;
   nombre?: string;
   apellidos?: string;
   categoria?: string;
@@ -19,6 +29,13 @@ export interface AsistenciaRegistro {
   presente: boolean;
   estado?: EstadoAsistencia;
   observacion?: string;
+  motivo?: string | null;
+  medio?: string | null;
+  fecha_excusa?: string | null;
+  observacion_entrenador?: string | null;
+  entrenamiento_id?: number | null;
+  tipo_actividad?: TipoActividad;
+  actividad_id?: number | null;
 }
 
 export interface AsistenciaPayload {
@@ -32,6 +49,8 @@ export interface AsistenciaResumen {
   total: number;
   presentes: number;
   ausencias: number;
+  ausentes_con_excusa: number;
+  no_registrados: number;
   tardes: number;
   justificadas: number;
   porcentaje: number;

@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { asistenciaService } from '../../services/asistenciaService';
 import { jugadorService } from '../../services/jugadorService';
 import { categoriaService } from '../../services/categoriaService';
+import { entrenamientoService } from '../../services/entrenamientoService';
 import type { Jugador, Categoria } from '../../types';
 import { todayISO } from '../../utils/formatters';
 import { CATEGORIAS } from '../../utils/constants';
@@ -58,7 +60,22 @@ function resolveEstado(a: any): EstadoRegistro {
   return 'no_registrado';
 }
 
+const TIPO_ACTIVIDAD_LABEL: Record<string, string> = {
+  entrenamiento: 'Entrenamiento',
+  partido: 'Partido',
+  torneo: 'Torneo',
+  general: 'General',
+};
+
+const TIPO_ACTIVIDAD_BADGE_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'default'> = {
+  entrenamiento: 'info',
+  partido: 'warning',
+  torneo: 'success',
+  general: 'default',
+};
+
 export function Asistencias() {
+  const location = useLocation() as { state?: { fecha?: string; categoria?: string; entrenamiento_id?: number; entrenamientoId?: number } };
   const [fecha, setFecha] = useState(todayISO());
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroCategoriaConsulta, setFiltroCategoriaConsulta] = useState('');
@@ -71,9 +88,46 @@ export function Asistencias() {
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'registrar' | 'consultar'>('registrar');
 
+  // multi-activity attendance & entrenamiento linkage
+  const [tipoActividad, setTipoActividad] = useState<'todos' | 'entrenamiento' | 'partido' | 'torneo'>('todos');
+  const [entrenamientoFiltro, setEntrenamientoFiltro] = useState<number | ''>('');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [jugadorFiltroAsistencia, setJugadorFiltroAsistencia] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | EstadoRegistro>('todos');
+  const [entrenamientos, setEntrenamientos] = useState<any[]>([]);
+
+  // Pre-fill from Entrenamientos navigation (location.state?.fecha / categoria / entrenamiento_id)
+  useEffect(() => {
+    const state = location.state;
+    if (state?.fecha) setFecha(state.fecha);
+    if (state?.categoria) {
+      setFiltroCategoria(state.categoria);
+      setFiltroCategoriaConsulta(state.categoria);
+    }
+    const entrenamientoIdFromState = state?.entrenamiento_id ?? state?.entrenamientoId;
+    if (entrenamientoIdFromState) {
+      setEntrenamientoFiltro(Number(entrenamientoIdFromState));
+      setTipoActividad('entrenamiento');
+    }
+  }, [location.state]);
+
   useEffect(() => {
     loadData();
   }, [fecha]);
+
+  // Fetch entrenamientos for filter (separate effect to keep list fresh)
+  useEffect(() => {
+    const fetchEntrenamientos = async () => {
+      try {
+        const data = await entrenamientoService.getAll();
+        setEntrenamientos(data as any[]);
+      } catch {
+        // keep empty if service unavailable
+      }
+    };
+    fetchEntrenamientos();
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -99,6 +153,11 @@ export function Asistencias() {
       });
       setRegistros(init);
     } catch {}
+    // fetch entrenamientos via entrenamientoService.getAll() if available
+    try {
+      const ent = await entrenamientoService.getAll();
+      setEntrenamientos(ent as any[]);
+    } catch {}
     setLoading(false);
   };
 
@@ -106,9 +165,30 @@ export function Asistencias() {
     j.activo && (!filtroCategoria || j.categoria === filtroCategoria)
   );
 
-  const asistenciasFiltradas = asistencias.filter((a: any) =>
-    !filtroCategoriaConsulta || a.categoria === filtroCategoriaConsulta
-  );
+  const asistenciasFiltradas = useMemo(() => {
+    return asistencias.filter((a: any) => {
+      if (filtroCategoriaConsulta && a.categoria !== filtroCategoriaConsulta) return false;
+      // tipo_actividad filter
+      if (tipoActividad !== 'todos') {
+        const tipo = (a.tipo_actividad ?? a.tipoActividad ?? 'general') as string;
+        if (tipo !== tipoActividad) return false;
+      }
+      // entrenamiento selector filter
+      if (entrenamientoFiltro !== '' && Number(a.entrenamiento_id ?? a.entrenamientoId) !== Number(entrenamientoFiltro)) return false;
+      // date range filtering in consultar — enables "¿Quién asistió al entrenamiento del 23 de septiembre?"
+      if (fechaDesde && a.fecha < fechaDesde) return false;
+      if (fechaHasta && a.fecha > fechaHasta) return false;
+      // jugador search
+      if (jugadorFiltroAsistencia) {
+        const q = jugadorFiltroAsistencia.toLowerCase();
+        const nombreCompleto = `${a.nombre ?? ''} ${a.apellidos ?? ''}`.toLowerCase();
+        if (!nombreCompleto.includes(q)) return false;
+      }
+      // estado filter
+      if (estadoFiltro !== 'todos' && resolveEstado(a) !== estadoFiltro) return false;
+      return true;
+    });
+  }, [asistencias, filtroCategoriaConsulta, tipoActividad, entrenamientoFiltro, fechaDesde, fechaHasta, jugadorFiltroAsistencia, estadoFiltro]);
 
   const getCategoriaInfo = (nombre: string) => categorias.find((c) => c.nombre === nombre);
 
@@ -134,6 +214,17 @@ export function Asistencias() {
   const handleGuardar = async () => {
     setSaving(true);
     try {
+      const locationState = location.state as any;
+      const selectedEntrenamientoId = entrenamientoFiltro !== '' ? Number(entrenamientoFiltro) : (locationState?.entrenamiento_id ?? locationState?.entrenamientoId ?? null);
+      // Determine tipo_actividad: if entrenamiento selected -> entrenamiento, else use tipoActividad if not todos, else general/entrenamiento fallback
+      let resolvedTipoActividad: string = 'general';
+      if (selectedEntrenamientoId != null) {
+        resolvedTipoActividad = 'entrenamiento';
+      } else if (tipoActividad !== 'todos') {
+        resolvedTipoActividad = tipoActividad;
+      } else {
+        resolvedTipoActividad = 'general';
+      }
       const payload = {
         registros: jugadoresFiltrados.map((j) => {
           const r: RegistroValue = registros[j.id] ?? { estado: 'no_registrado' };
@@ -147,6 +238,8 @@ export function Asistencias() {
             observacion: r.observacion,
             fecha_excusa: r.fecha_excusa,
             observacion_entrenador: r.observacion_entrenador,
+            ...(selectedEntrenamientoId != null ? { entrenamiento_id: selectedEntrenamientoId, actividad_id: selectedEntrenamientoId } : {}),
+            tipo_actividad: resolvedTipoActividad,
           };
         }),
       };
@@ -236,10 +329,49 @@ export function Asistencias() {
         </div>
       </div>
 
+      {/* Location-state hint for entrenamiento linkage */}
+      {location.state?.fecha && (
+        <div className="bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-lg px-3 py-2 text-xs text-[#22C55E] flex items-center justify-between gap-2">
+          <span>Vinculado desde entrenamiento — Fecha: {location.state.fecha} {location.state.categoria ? `· ${location.state.categoria}` : ''} {entrenamientoFiltro !== '' ? `· Entrenamiento #${entrenamientoFiltro}` : ''}</span>
+          {entrenamientoFiltro !== '' && <Badge variant="info">{TIPO_ACTIVIDAD_LABEL['entrenamiento']}</Badge>}
+        </div>
+      )}
+
       {loading ? (
         <LoadingOverlay />
       ) : tab === 'registrar' ? (
         <div className="space-y-4">
+          {/* entrenamiento selector for proper linkage in registrar */}
+          {entrenamientos.length > 0 && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+              <FilterSelect
+                label="Vincular a entrenamiento"
+                value={entrenamientoFiltro === '' ? '' : String(entrenamientoFiltro)}
+                onChange={(v) => setEntrenamientoFiltro(v === '' ? '' : Number(v))}
+                options={[
+                  { value: '', label: 'Sin entrenamiento (General)' },
+                  ...entrenamientos.map((e: any) => ({
+                    value: String(e.id),
+                    label: `${e.fecha} ${e.hora ?? ''} · ${e.categoria} · ${e.tema || 'Sin tema'}`.trim(),
+                  })),
+                ]}
+              />
+              <FilterSelect
+                label="Tipo actividad"
+                value={tipoActividad}
+                onChange={(v) => setTipoActividad(v as any)}
+                options={[
+                  { value: 'todos', label: 'General' },
+                  { value: 'entrenamiento', label: 'Entrenamiento' },
+                  { value: 'partido', label: 'Partido' },
+                  { value: 'torneo', label: 'Torneo' },
+                ]}
+              />
+              {entrenamientoFiltro !== '' && (
+                <p className="text-xs text-slate-400 pb-2">Se guardará con entrenamiento_id={entrenamientoFiltro} y tipo_actividad=entrenamiento</p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-center">
               <p className="text-xs text-slate-400">Total jugadores</p>
@@ -428,6 +560,95 @@ export function Asistencias() {
             <Badge variant="info">{asistenciasFiltradas.length} total</Badge>
           </div>
 
+          {/* Enhanced filtros consultar: tipo_actividad, entrenamiento, fecha desde/hasta, jugador, estado */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <FilterSelect
+                label="Tipo actividad"
+                value={tipoActividad}
+                onChange={(v) => setTipoActividad(v as any)}
+                options={[
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'entrenamiento', label: 'Entrenamientos' },
+                  { value: 'partido', label: 'Partidos' },
+                  { value: 'torneo', label: 'Torneos' },
+                ]}
+              />
+              <FilterSelect
+                label="Entrenamiento"
+                value={entrenamientoFiltro === '' ? '' : String(entrenamientoFiltro)}
+                onChange={(v) => setEntrenamientoFiltro(v === '' ? '' : Number(v))}
+                options={[
+                  { value: '', label: 'Todos los entrenamientos' },
+                  ...entrenamientos.map((e: any) => ({
+                    value: String(e.id),
+                    label: `${e.fecha} ${e.hora ?? ''} · ${e.categoria} · ${e.tema || 'Sin tema'}`.trim(),
+                  })),
+                ]}
+              />
+              <FilterSelect
+                label="Estado"
+                value={estadoFiltro}
+                onChange={(v) => setEstadoFiltro(v as any)}
+                options={[
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'presente', label: 'Presente' },
+                  { value: 'ausente', label: 'Ausente' },
+                  { value: 'ausente_con_excusa', label: 'Ausente con excusa' },
+                  { value: 'no_registrado', label: 'No registrado' },
+                ]}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Fecha desde</label>
+                <input
+                  type="date"
+                  value={fechaDesde}
+                  onChange={(e) => setFechaDesde(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Fecha hasta</label>
+                <input
+                  type="date"
+                  value={fechaHasta}
+                  onChange={(e) => setFechaHasta(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Buscar jugador</label>
+                <input
+                  type="text"
+                  placeholder="Nombre jugador..."
+                  value={jugadorFiltroAsistencia}
+                  onChange={(e) => setJugadorFiltroAsistencia(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+            {(tipoActividad !== 'todos' || entrenamientoFiltro !== '' || fechaDesde || fechaHasta || jugadorFiltroAsistencia || estadoFiltro !== 'todos') && (
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setTipoActividad('todos');
+                    setEntrenamientoFiltro('');
+                    setFechaDesde('');
+                    setFechaHasta('');
+                    setJugadorFiltroAsistencia('');
+                    setEstadoFiltro('todos');
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
+            )}
+            <p className="text-[11px] text-slate-500">Filtra por fecha + entrenamiento para responder: &quot;¿Quién asistió al entrenamiento del 23 de septiembre?&quot;</p>
+          </div>
+
           {resumenPorJugador.length > 0 && (
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
               <h3 className="text-white font-medium mb-3">Resumen por jugador</h3>
@@ -477,6 +698,7 @@ export function Asistencias() {
                   <div className="space-y-2">
                     {asistCat.map((a: any) => {
                       const est: EstadoRegistro = resolveEstado(a);
+                      const tipoAct = (a.tipo_actividad ?? a.tipoActividad ?? null) as string | null;
                       return (
                         <div key={a.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-3 rounded-lg bg-slate-700/30 gap-2">
                           <div className="flex items-center gap-3 min-w-0">
@@ -494,6 +716,15 @@ export function Asistencias() {
                               ) : a.observacion ? (
                                 <p className="text-xs text-slate-400 truncate">{a.observacion}</p>
                               ) : null}
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                <span className="text-xs text-slate-500">{a.fecha}</span>
+                                {tipoAct && (
+                                  <Badge variant={TIPO_ACTIVIDAD_BADGE_VARIANT[tipoAct] ?? 'default'}>{TIPO_ACTIVIDAD_LABEL[tipoAct] ?? tipoAct}</Badge>
+                                )}
+                                {a.entrenamiento_id && (
+                                  <span className="text-xs text-slate-500">· Entr. #{a.entrenamiento_id}</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <Badge variant={ESTADO_BADGE_VARIANT[est]}>
@@ -513,6 +744,7 @@ export function Asistencias() {
               <div className="space-y-2">
                 {asistenciasFiltradas.map((a: any) => {
                   const est: EstadoRegistro = resolveEstado(a);
+                  const tipoAct = (a.tipo_actividad ?? a.tipoActividad ?? null) as string | null;
                   return (
                     <div key={a.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 rounded-lg bg-slate-800/50 border border-slate-700 gap-2">
                       <div className="flex items-center gap-3 min-w-0">
@@ -529,6 +761,15 @@ export function Asistencias() {
                               {a.observacion_entrenador && <p>Obs. entrenador: {a.observacion_entrenador}</p>}
                             </div>
                           )}
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            <span className="text-xs text-slate-500">{a.fecha}</span>
+                            {tipoAct && (
+                              <Badge variant={TIPO_ACTIVIDAD_BADGE_VARIANT[tipoAct] ?? 'default'}>{TIPO_ACTIVIDAD_LABEL[tipoAct] ?? tipoAct}</Badge>
+                            )}
+                            {a.entrenamiento_id && (
+                              <span className="text-xs text-slate-500">· Entr. #{a.entrenamiento_id}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Badge variant={ESTADO_BADGE_VARIANT[est]}>
