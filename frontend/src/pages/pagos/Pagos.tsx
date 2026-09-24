@@ -99,10 +99,11 @@ export function Pagos() {
   const selectJugador = (j: Jugador) => {
     setJugadorSeleccionado(j);
     const base = getMensualidad(j.categoria) || MENSUALIDAD_MAP[j.categoria] || 50000;
-    const obj = j.mensualidad || base;
-    setMonto(obj);
-    setBusquedaJugador('');
-    setFiltroCatForm('');
+    const saldo = j.saldo_pendiente || 0;
+    const montoAuto = saldo > 0 ? saldo : (j.mensualidad || base);
+    setMonto(montoAuto);
+    setBusquedaJugador(`${j.nombre} ${j.apellidos}`);
+    setFiltroCatForm(j.categoria || '');
     const now = new Date();
     setMesesSeleccionados([{ anio: now.getFullYear(), mes: now.getMonth() + 1 }]);
   };
@@ -721,11 +722,12 @@ export function Pagos() {
               <tr>
                 <th className="px-4 py-2.5 text-left">Jugador</th>
                 <th className="px-4 py-2.5 text-right">Estado</th>
+                <th className="px-4 py-2.5 text-center">Accion</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
               {estadoCuentas.length === 0 ? (
-                <tr><td colSpan={2} className="text-center py-8 text-slate-500 text-sm">No hay jugadores en este filtro</td></tr>
+                <tr><td colSpan={3} className="text-center py-8 text-slate-500 text-sm">No hay jugadores en este filtro</td></tr>
               ) : estadoCuentas.map((j) => {
                 const saldo = j.saldo_pendiente || 0;
                 return (
@@ -738,6 +740,24 @@ export function Pagos() {
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${saldo > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/20'}`}>
                         {saldo > 0 ? `Debe ${formatCurrency(saldo)}` : 'Al dia'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {saldo > 0 ? (
+                        <button
+                          onClick={() => {
+                            const target = jugadores?.find((x) => x.id === j.id);
+                            if (target) {
+                              selectJugador(target);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                          }}
+                          className="px-3 py-1 rounded-full text-xs font-bold bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30 hover:bg-[#22C55E]/30 transition-colors"
+                        >
+                          Cobrar
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-500">—</span>
+                      )}
                     </td>
                   </tr>
                 );
