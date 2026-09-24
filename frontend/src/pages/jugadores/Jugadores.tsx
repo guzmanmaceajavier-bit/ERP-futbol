@@ -175,9 +175,9 @@ export function Jugadores() {
             extra={
               <>
                 <button
-                  onClick={() => navigate(`/jugadores/${j.id}/cuenta`)}
+                  onClick={() => setFichaJugador(j)}
                   className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                  title="Ver cuenta"
+                  title="Ver ficha"
                 >
                   <Icon name="ver" className="w-4 h-4" />
                 </button>

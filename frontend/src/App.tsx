@@ -6,7 +6,6 @@ import { Login } from './pages/auth/Login';
 import { ErrorBoundary } from './components/feedback/ErrorBoundary';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { Jugadores } from './pages/jugadores/Jugadores';
-import { JugadorCuenta } from './pages/jugadores/JugadorCuenta';
 import { Pagos } from './pages/pagos/Pagos';
 import { Categorias } from './pages/categorias/Categorias';
 import { Asistencias } from './pages/asistencias/Asistencias';
@@ -51,7 +50,6 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
 
         <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Jugadores /></RoleGuard>} />
-        <Route path="jugadores/:id/cuenta" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><JugadorCuenta /></RoleGuard>} />
         <Route path="categorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Categorias /></RoleGuard>} />
         <Route path="profesores" element={<RoleGuard roles={['super_admin', 'admin']}><Profesores /></RoleGuard>} />
         <Route path="asistencias" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Asistencias /></RoleGuard>} />

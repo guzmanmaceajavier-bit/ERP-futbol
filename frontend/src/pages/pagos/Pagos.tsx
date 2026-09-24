@@ -6,6 +6,7 @@ import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { pagoService } from '../../services/pagoService';
 import { jugadorService } from '../../services/jugadorService';
+import { periodoService } from '../../services/periodoService';
 import type { Pago, PagoForm, Jugador } from '../../types';
 import { CATEGORIAS, MESES } from '../../utils/constants';
 import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
@@ -28,6 +29,7 @@ export function Pagos() {
   const location = useLocation();
   const { data: pagos, loading, error, refetch } = useApi(() => pagoService.getAll());
   const { data: jugadores, refetch: refetchJugadores } = useApi(() => jugadorService.getAll());
+  const { data: periodos } = useApi(() => periodoService.getAll());
   const { toasts, showSuccess, showError, dismiss } = useToast();
 
   const [saving, setSaving] = useState(false);
@@ -362,56 +364,108 @@ export function Pagos() {
             )}
           </div>
 
-          {/* Jugador seleccionado + estado financiero */}
-          {jugadorSeleccionado && (
-            <div className="space-y-3">
-              {/* Encabezado compacto del jugador */}
-              <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#22C55E] text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {jugadorSeleccionado.nombre.charAt(0)}{jugadorSeleccionado.apellidos.charAt(0)}
+          {jugadorSeleccionado && (() => {
+            const MESES_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const periodosSel = (periodos as any[] || []).filter((p: any) => p.jugador_id === jugadorSeleccionado.id);
+            const mesesPagadosNum = periodosSel.filter((p: any) => p.estado === 'completo').length;
+            const totalPagadoSel = periodosSel.filter((p: any) => p.estado === 'completo' || p.estado === 'abono').reduce((s: number, p: any) => s + (Number(p.pagado) || 0), 0);
+            return (
+              <div className="space-y-3">
+                {/* Encabezado jugador estilo imagen */}
+                <div className="bg-[#0F2942] border border-[#1E3A5F] rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#22C55E] flex items-center justify-center text-white flex-shrink-0">
+                      <Icon name="usuario" className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-bold text-white truncate">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
+                        {estadoFinanciero && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${estadoBadgeCls(estadoFinanciero.color)}`}>{estadoFinanciero.label}</span>}
+                      </div>
+                      <p className="text-xs text-slate-400 truncate">
+                        {jugadorSeleccionado.numero_identificacion ? `CC: ${jugadorSeleccionado.numero_identificacion}` : `Tel: ${jugadorSeleccionado.telefono || '—'}`} &nbsp;|&nbsp; {jugadorSeleccionado.categoria}
+                        {jugadorSeleccionado.acudiente_nombre ? ` · Acud: ${jugadorSeleccionado.acudiente_nombre}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
+                    className="w-8 h-8 rounded-full bg-[#0B1F35] border border-[#1E3A5F] flex items-center justify-center hover:bg-slate-700 transition-colors flex-shrink-0 self-end sm:self-auto">
+                    <Icon name="cerrar" className="w-4 h-4 text-slate-400" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
-                  <p className="text-xs text-slate-400 truncate">{jugadorSeleccionado.categoria}</p>
-                </div>
-                {estadoFinanciero && (
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border flex-shrink-0 ${estadoBadgeCls(estadoFinanciero.color)}`}>
-                    {estadoFinanciero.label}
-                  </span>
-                )}
-                <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
-                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
-                  <Icon name="cerrar" className="w-3.5 h-3.5 text-white" />
-                </button>
-              </div>
 
-              {/* Datos financieros en 3 tarjetas */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Saldo</p>
-                  <p className={`text-sm font-mono font-bold mt-1 ${saldoPendiente > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldoPendiente)}</p>
-                </div>
-                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mensualidad</p>
-                  <p className="text-sm font-mono font-bold text-white mt-1">{formatCurrency(mensualidadEfectiva)}</p>
-                </div>
-                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proximo pago</p>
-                  <p className="text-xs font-bold text-white mt-1 truncate">{proximoVencimientoRaw ? vencimientoFormateado : '—'}</p>
+                {/* Estado financiero  + Mensualidades por mes */}
+                <div className="bg-[#0F2942] border border-[#1E3A5F] rounded-xl p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="usuarios" className="w-4 h-4 text-slate-400" /></div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-500">Categoria</p>
+                        <p className="text-xs font-bold text-white truncate">{jugadorSeleccionado.categoria}</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="verificar" className="w-4 h-4 text-slate-400" /></div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Estado financiero</p>
+                        <p className="text-xs font-bold text-white">{estadoFinanciero?.label || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="calendario" className="w-4 h-4 text-slate-400" /></div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Fecha de inicio</p>
+                        <p className="text-xs font-bold text-white">{formatDate(jugadorSeleccionado.fecha_ingreso)}</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="dinero" className="w-4 h-4 text-slate-400" /></div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Mensualidad</p>
+                        <p className="text-xs font-bold text-white">{formatCurrency(mensualidadEfectiva)}</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="grafica" className="w-4 h-4 text-slate-400" /></div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Meses pagados</p>
+                        <p className="text-xs font-bold text-white">{mesesPagadosNum} / 12</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#0B1F35] border border-[#1E3A5F] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0"><Icon name="reloj" className="w-4 h-4 text-slate-400" /></div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Proximo vencimiento</p>
+                        <p className="text-xs font-bold text-white">{proximoVencimientoRaw ? formatDate(proximoVencimientoRaw) : '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-[#1E3A5F]">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-bold text-slate-400">Mensualidades por mes</p>
+                      <div className="flex items-center gap-3 text-[10px]">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#22C55E]" /> Pagado</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-600" /> Pendiente</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {MESES_SHORT.map((m, idx) => {
+                        const per = periodosSel.find((p: any) => p.mes === idx + 1);
+                        const pagado = per?.estado === 'completo';
+                        const abono = per?.estado === 'abono';
+                        return (
+                          <div key={m} className="flex-1 flex flex-col items-center gap-1">
+                            <span className="text-[10px] text-slate-500">{m}</span>
+                            <div className={`w-full h-1.5 rounded-full ${pagado ? 'bg-[#22C55E]' : abono ? 'bg-amber-500' : 'bg-slate-700'}`} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Acudiente + telefono en linea secundaria */}
-              {(jugadorSeleccionado.acudiente_nombre || jugadorSeleccionado.telefono) && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-slate-500">
-                  {jugadorSeleccionado.telefono && <span>Tel: <span className="text-slate-300">{jugadorSeleccionado.telefono}</span></span>}
-                  {jugadorSeleccionado.acudiente_nombre && <span>Acudiente: <span className="text-slate-300">{jugadorSeleccionado.acudiente_nombre}</span>{jugadorSeleccionado.acudiente_telefono ? ` · ${jugadorSeleccionado.acudiente_telefono}` : ''}</span>}
-                  {estadoFinanciero?.diasAtraso != null && <span className="text-red-400">{estadoFinanciero.diasAtraso} dias de atraso</span>}
-                  {estadoFinanciero?.diasFaltantes != null && <span className="text-yellow-400">Faltan {estadoFinanciero.diasFaltantes} dias</span>}
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
 
           {/* Periodo objetivo when navigated from Jugadores Cobrar */}
           {jugadorSeleccionado && periodoIdTarget != null && (
