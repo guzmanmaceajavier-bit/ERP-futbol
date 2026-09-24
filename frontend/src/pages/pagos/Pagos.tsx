@@ -693,44 +693,59 @@ export function Pagos() {
       </section>
 
       {/* Estado de cuentas */}
-      <details className="bg-slate-800/50 border border-slate-700 rounded-2xl">
-        <summary className="px-5 py-3 font-bold text-sm cursor-pointer flex items-center gap-2 text-slate-300 hover:text-white">
-          <Icon name="usuarios" className="w-5 h-5" />
-          Ver estado de cuentas por jugador
-        </summary>
-        <div className="p-4 border-t border-slate-700">
-          <div className="flex gap-2 mb-3">
-            {([['todos', 'Todos'], ['deudores', 'Pendientes'], ['pagados', 'Al dia']] as const).map(([val, label]) => (
-              <button key={val} onClick={() => setFiltroEstado(val)}
+      <section className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-700">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <Icon name="usuarios" className="w-5 h-5 text-slate-400" />
+              Estado de cuentas
+            </h3>
+            <span className="text-xs font-bold text-slate-500">{estadoCuentas.length} jugadores</span>
+          </div>
+          <div className="flex gap-2 mt-3">
+            {([
+              ['todos', `Todos (${jugadores?.filter((j) => j.activo).length || 0})`],
+              ['deudores', `Pendientes (${jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) > 0).length || 0})`],
+              ['pagados', `Al dia (${jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) <= 0).length || 0})`],
+            ] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroEstado(val as typeof filtroEstado)}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${filtroEstado === val ? 'bg-[#22C55E] text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
                 {label}
               </button>
             ))}
           </div>
-          <div className="overflow-auto max-h-[300px]">
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-slate-700/50">
-                {estadoCuentas.map((j) => {
-                  const saldo = j.saldo_pendiente || 0;
-                  return (
-                    <tr key={j.id} className="hover:bg-slate-800/50">
-                      <td className="px-3 py-2.5">
-                        <p className="font-medium text-white">{j.nombre} {j.apellidos}</p>
-                        <p className="text-[11px] text-slate-500">{j.categoria}</p>
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${saldo > 0 ? 'bg-red-500/20 text-red-400' : 'bg-[#22C55E]/20 text-[#22C55E]'}`}>
-                          {saldo > 0 ? `Debe ${formatCurrency(saldo)}` : 'Al dia'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </div>
-      </details>
+        <div className="overflow-auto max-h-[360px]">
+          <table className="w-full text-sm">
+            <thead className="text-[11px] font-black uppercase text-slate-500 sticky top-0 bg-slate-800/95 backdrop-blur">
+              <tr>
+                <th className="px-4 py-2.5 text-left">Jugador</th>
+                <th className="px-4 py-2.5 text-right">Estado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700/50">
+              {estadoCuentas.length === 0 ? (
+                <tr><td colSpan={2} className="text-center py-8 text-slate-500 text-sm">No hay jugadores en este filtro</td></tr>
+              ) : estadoCuentas.map((j) => {
+                const saldo = j.saldo_pendiente || 0;
+                return (
+                  <tr key={j.id} className="hover:bg-slate-700/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-white">{j.nombre} {j.apellidos}</p>
+                      <p className="text-[11px] text-slate-500">{j.categoria}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${saldo > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/20'}`}>
+                        {saldo > 0 ? `Debe ${formatCurrency(saldo)}` : 'Al dia'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <ConfirmDialog isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete}
         title="Anular operacion" message={`¿Anular la operacion de ${confirmDelete?.jugador || ''} por ${formatCurrency(confirmDelete?.monto || 0)}?`} />
