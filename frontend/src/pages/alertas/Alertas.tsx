@@ -265,7 +265,23 @@ export function Alertas() {
                         <td className="px-4 py-3 text-right font-mono text-sm font-bold text-[#22C55E]">{formatCurrency(a.deuda || 0)}</td>
                         <td className="px-4 py-3 text-sm text-slate-400">{venc ? formatDate(venc) : '—'}</td>
                         <td className="px-4 py-3 text-center">
-                          <Button size="sm" onClick={() => setGestionar(a)}>Gestionar</Button>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button size="sm" onClick={() => setGestionar(a)}>Gestionar</Button>
+                            <button
+                              onClick={() => {
+                                const mensualidad = getMensualidadAlerta(a);
+                                abrirFactura({
+                                  pago: { id: a.id as number, jugador_id: a.jugador_id || 0, jugador: a.jugador_nombre || '', jugador_categoria: a.categoria, monto: a.deuda || 0, fecha: new Date().toISOString().slice(0, 10), tipo: 'completo' as const, observacion: `Cobro ${a.periodo || ''}`, mes_pago: a.periodo || null, cantidad_meses: 1, recibo_numero: `FAC-${String(a.id).padStart(4, '0')}`, vencimiento: getVencimiento(a) || '', estado_pago: 'vencido', saldo_pendiente: a.deuda || 0, created_at: new Date().toISOString() } as any,
+                                  jugador: a.jugador_id ? { id: a.jugador_id, nombre: (a.jugador_nombre || '').split(' ')[0] || '', apellidos: (a.jugador_nombre || '').split(' ').slice(1).join(' ') || '', categoria: a.categoria || '', telefono: a.telefono || '', mensualidad: mensualidad } as any : null,
+                                  periodoLabel: a.periodo || undefined,
+                                  mensualidad,
+                                  saldoPeriodo: a.deuda || 0,
+                                });
+                              }}
+                              className="p-1.5 rounded-md bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all" title="Factura de cobro">
+                              <Icon name="grafica" className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -725,11 +725,10 @@ export function Pagos() {
                         </button>
                         <button onClick={async () => {
                           const jug = jugadores?.find((j) => j.id === p.jugador_id) || null;
-                          let escuela: any = {};
-                          try { const cfg = await configService.getAll(); escuela = { nombre: cfg.escuela_nombre, nit: cfg.escuela_nit, telefono: cfg.escuela_telefono, direccion: cfg.escuela_direccion }; } catch {}
                           abrirFactura({ pago: p, jugador: jug as any, periodoLabel: p.mes_pago || undefined, mensualidad: mensualidadEfectiva });
-                        }} className="p-1.5 rounded-md bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all" title="Factura">
+                        }} className="p-1.5 rounded-md bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all flex items-center gap-1" title="Factura">
                           <Icon name="grafica" className="w-4 h-4" />
+                          <span className="text-[11px] font-bold hidden xl:inline">Factura</span>
                         </button>
                         {p.jugador_telefono && (
                           <button onClick={() => window.open(`https://wa.me/${p.jugador_telefono}`, '_blank')}
