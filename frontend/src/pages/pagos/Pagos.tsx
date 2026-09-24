@@ -18,9 +18,8 @@ import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { FormModal } from '../../components/forms/FormModal';
-import { PageHeader } from '../../components/layout/PageHeader';
-import { PeriodoGrid } from '../../components/ui/PeriodoGrid';
-import { Textarea } from '../../components/ui/Textarea';
+  import { PageHeader } from '../../components/layout/PageHeader';
+  import { Textarea } from '../../components/ui/Textarea';
 import { Icon } from '../../components/ui/Icon';
 
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
@@ -326,43 +325,51 @@ export function Pagos() {
           <span className="text-[10px] bg-slate-700 border border-slate-600 px-2 py-1 rounded-full font-bold text-slate-300">Recibo automatico</span>
         </div>
         <div className="p-5 space-y-4">
-          {/* Buscador inteligente */}
-          <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-3 space-y-3">
-            <div className="grid md:grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Categoria</label>
-                <select value={filtroCatForm} onChange={(e) => setFiltroCatForm(e.target.value)} className={selectCls}>
-                  <option value="">Todas Categorias</option>
-                  {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Buscar jugador *</label>
-                <input value={busquedaJugador} onChange={(e) => setBusquedaJugador(e.target.value)} placeholder="Escribe nombre..." autoComplete="off" className={inputCls} />
-              </div>
-            </div>
-            {(busquedaJugador || filtroCatForm) && jugadoresGrid.length > 0 && (
-              <div className="border border-slate-700 rounded-xl overflow-hidden">
-                <div className="max-h-[200px] overflow-auto divide-y divide-slate-700/50">
-                  {jugadoresGrid.map((j) => {
-                    const saldo = j.saldo_pendiente || 0;
-                    const isSelected = jugadorSeleccionado?.id === j.id;
-                    return (
-                      <button key={j.id} onClick={() => selectJugador(j)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-700/40 transition-colors ${isSelected ? 'bg-[#22C55E]/10' : ''}`}>
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500'}`} />
-                          <span className="text-sm text-white truncate">{j.nombre} {j.apellidos}</span>
-                          <span className="text-xs text-slate-500 hidden sm:inline">{j.categoria}</span>
-                        </div>
-                        <span className={`text-xs font-mono font-bold flex-shrink-0 ${saldo > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldo)}</span>
-                      </button>
-                    );
-                  })}
+          {!jugadorSeleccionado ? (
+            <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-3 space-y-3">
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Categoria</label>
+                  <select value={filtroCatForm} onChange={(e) => setFiltroCatForm(e.target.value)} className={selectCls}>
+                    <option value="">Todas Categorias</option>
+                    {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Buscar jugador *</label>
+                  <input value={busquedaJugador} onChange={(e) => setBusquedaJugador(e.target.value)} placeholder="Escribe nombre..." autoComplete="off" className={inputCls} />
                 </div>
               </div>
-            )}
-          </div>
+              {(busquedaJugador || filtroCatForm) && jugadoresGrid.length > 0 && (
+                <div className="border border-slate-700 rounded-xl overflow-hidden">
+                  <div className="max-h-[200px] overflow-auto divide-y divide-slate-700/50">
+                    {jugadoresGrid.map((j) => {
+                      const saldo = j.saldo_pendiente || 0;
+                      return (
+                        <button key={j.id} onClick={() => selectJugador(j)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-700/40 transition-colors">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500'}`} />
+                            <span className="text-sm text-white truncate">{j.nombre} {j.apellidos}</span>
+                            <span className="text-xs text-slate-500 hidden sm:inline">{j.categoria}</span>
+                          </div>
+                          <span className={`text-xs font-mono font-bold flex-shrink-0 ${saldo > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldo)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {(busquedaJugador || filtroCatForm) && jugadoresGrid.length === 0 && (
+                <p className="text-xs text-slate-500 text-center py-2">Sin resultados</p>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); setBusquedaJugador(''); setFiltroCatForm(''); }}
+              className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors">
+              <Icon name="izquierda" className="w-3 h-3" /> Cambiar jugador
+            </button>
+          )}
 
           {jugadorSeleccionado && (() => {
             const MESES_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -467,23 +474,9 @@ export function Pagos() {
             );
           })()}
 
-          {/* Periodo objetivo when navigated from Jugadores Cobrar */}
-          {jugadorSeleccionado && periodoIdTarget != null && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 flex items-center gap-2">
-              <span className="text-blue-400">📅</span>
-              <p className="text-xs font-bold text-blue-300">Periodo objetivo: #{periodoIdTarget}{mensualidadFromState ? ` · Mensualidad ${formatCurrency(mensualidadFromState)}` : ''}</p>
-              <span className="ml-auto text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">Desde Cobrar</span>
-            </div>
-          )}
-          {jugadorSeleccionado && periodoIdTarget == null && (location.state as any)?.jugador && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2">
-              <p className="text-[11px] text-slate-400">Jugador pre-seleccionado desde <span className="text-white font-bold">Jugadores → Cobrar</span>{mensualidadFromState ? ` · Mensualidad ${formatCurrency(mensualidadFromState)}` : ''}</p>
-            </div>
-          )}
-
-          {/* PeriodoGrid del jugador */}
-          {jugadorSeleccionado && (
-            <PeriodoGrid jugadorId={jugadorSeleccionado.id} />
+          {/* Pre-seleccion hint (solo cuando viene de Cobrar con mensaje) */}
+          {jugadorSeleccionado && (location.state as any)?.jugador && !periodoIdTarget && (
+            <p className="text-[11px] text-slate-500">Pre-seleccionado desde Jugadores → Cobrar</p>
           )}
 
           {/* Monto y fecha */}
