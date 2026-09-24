@@ -1,6 +1,6 @@
 const DEMO_KEY = 'erp_demo_mode';
 const DATA_KEY = 'erp_demo_data';
-const DATA_VERSION = 'v6-cobranzas-financiera';
+const DATA_VERSION = 'v7-sin-datos-demo';
 const VERSION_KEY = 'erp_demo_version';
 
 let _idCounters: Record<string, number> = {};
@@ -50,106 +50,32 @@ export function initDemoData() {
     _idCounters = {};
     localStorage.setItem(VERSION_KEY, DATA_VERSION);
   }
-  if (getCollection('jugadores').length > 0) return;
+  if (getCollection('jugadores').length > 0 || getCollection('categorias').length > 0 || getCollection('config').length > 0) return;
 
-  const cats = [
-    { id: 1, nombre: 'Sub 17-18', tipo_genero: 'Mixta', mensualidad_base: 50000, profesor_id: null, profesor_nombre: null, total_jugadores: 4, activo: true, edad_min: 17, edad_max: 18, horario: '16:00', dias_entrenamiento: 'Lun/Mie/Vie', cancha: 'Principal', cupo_maximo: 25, created_at: now() },
-    { id: 2, nombre: 'Sub 16-15', tipo_genero: 'Masculino', mensualidad_base: 50000, profesor_id: null, profesor_nombre: null, total_jugadores: 5, activo: true, edad_min: 15, edad_max: 16, horario: '15:00', dias_entrenamiento: 'Mar/Jue/Sab', cancha: 'Principal', cupo_maximo: 25, created_at: now() },
-    { id: 3, nombre: 'Sub 14-13', tipo_genero: 'Masculino', mensualidad_base: 40000, profesor_id: null, profesor_nombre: null, total_jugadores: 3, activo: true, edad_min: 13, edad_max: 14, horario: '16:00', dias_entrenamiento: 'Lun/Mie/Vie', cancha: 'Secundaria', cupo_maximo: 22, created_at: now() },
-    { id: 4, nombre: 'Sub 12-11', tipo_genero: 'Femenino', mensualidad_base: 40000, profesor_id: null, profesor_nombre: null, total_jugadores: 4, activo: true, edad_min: 11, edad_max: 12, horario: '15:30', dias_entrenamiento: 'Mar/Jue', cancha: 'Secundaria', cupo_maximo: 20, created_at: now() },
-    { id: 5, nombre: 'Sub 10-9', tipo_genero: 'Mixta', mensualidad_base: 30000, profesor_id: null, profesor_nombre: null, total_jugadores: 3, activo: true, edad_min: 9, edad_max: 10, horario: '14:00', dias_entrenamiento: 'Lun/Mie', cancha: 'Auxiliar', cupo_maximo: 20, created_at: now() },
-    { id: 6, nombre: 'Sub 8-7', tipo_genero: 'Mixta', mensualidad_base: 30000, profesor_id: null, profesor_nombre: null, total_jugadores: 2, activo: true, edad_min: 7, edad_max: 8, horario: '14:30', dias_entrenamiento: 'Sab/Dom', cancha: 'Auxiliar', cupo_maximo: 18, created_at: now() },
-  ];
-
-  const profesores = [
-    { id: 1, nombre: 'Carlos Rodriguez', telefono: '3101234567', especialidad: 'Futbol 11', salario: 2000000, fecha_ingreso: '2024-01-15', tipo_contrato: 'indefinido', categorias_asignadas: ['Sub 17-18'], activo: true },
-    { id: 2, nombre: 'Maria Lopez', telefono: '3119876543', especialidad: 'Futbol femenino', salario: 1800000, fecha_ingreso: '2024-03-01', tipo_contrato: 'fijo', categorias_asignadas: ['Sub 12-11'], activo: true },
-    { id: 3, nombre: 'Andres Martinez', telefono: '3125554444', especialidad: 'Formativas', salario: 1500000, fecha_ingreso: '2024-06-10', tipo_contrato: 'prestacion_servicios', categorias_asignadas: ['Sub 14-13', 'Sub 10-9'], activo: true },
-  ];
-
-  // Centralized linkage: source of truth is categorias.profesor_id — derive from profesores categorias_asignadas for initial seed
-  const profIdByCatName: Record<string, number> = {};
-  profesores.forEach((p: any) => {
-    (p.categorias_asignadas || []).forEach((catName: string) => {
-      profIdByCatName[catName] = p.id;
-    });
-  });
-  cats.forEach((c: any) => {
-    if (profIdByCatName[c.nombre] != null) {
-      c.profesor_id = profIdByCatName[c.nombre];
-      const prof = profesores.find((p: any) => p.id === profIdByCatName[c.nombre]);
-      c.profesor_nombre = prof ? prof.nombre : null;
-    }
-  });
-
-  const jugadores = [
-    { id: 1, nombre: 'Santiago', apellidos: 'Garcia Perez', fecha_nacimiento: '2008-03-15', tipo_identificacion: 'Cedula', numero_identificacion: '1234567890', categoria: 'Sub 17-18', telefono: '3105551111', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Masculino', acudiente_nombre: 'Pedro Garcia', acudiente_telefono: '3105551112', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-01', created_at: now(), saldo_pendiente: 50000 },
-    { id: 2, nombre: 'Valentina', apellidos: 'Rodriguez Diaz', fecha_nacimiento: '2009-07-22', tipo_identificacion: 'Cedula', numero_identificacion: '2345678901', categoria: 'Sub 16-15', telefono: '3115552222', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', acudiente_nombre: 'Ana Rodriguez', acudiente_telefono: '3115552223', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-02-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 3, nombre: 'Mateo', apellidos: 'Lopez Suarez', fecha_nacimiento: '2010-01-10', tipo_identificacion: 'Cedula', numero_identificacion: '3456789012', categoria: 'Sub 14-13', telefono: '3125553333', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', acudiente_nombre: 'Jorge Lopez', acudiente_telefono: '3125553334', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-01', created_at: now(), saldo_pendiente: 20000 },
-    { id: 4, nombre: 'Camila', apellidos: 'Hernandez Ruiz', fecha_nacimiento: '2011-05-18', tipo_identificacion: 'Tarjeta', numero_identificacion: '4567890123', categoria: 'Sub 12-11', telefono: '3135554444', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', acudiente_nombre: 'Laura Hernandez', acudiente_telefono: '3135554445', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-03-10', created_at: now(), saldo_pendiente: 0 },
-    { id: 5, nombre: 'Sebastian', apellidos: 'Torres Vargas', fecha_nacimiento: '2012-09-03', tipo_identificacion: 'Cedula', numero_identificacion: '5678901234', categoria: 'Sub 10-9', telefono: '3145555555', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', acudiente_nombre: 'Carlos Torres', acudiente_telefono: '3145555556', whatsapp_opt_out: true, activo: true, estado: 'activo', fecha_ingreso: '2024-04-01', created_at: now(), saldo_pendiente: 0 },
-    { id: 6, nombre: 'Isabella', apellidos: 'Martinez Cruz', fecha_nacimiento: '2008-11-25', tipo_identificacion: 'Cedula', numero_identificacion: '6789012345', categoria: 'Sub 17-18', telefono: '3155556666', mensualidad: 50000, mensualidad_objetivo: 50000, genero: 'Femenino', acudiente_nombre: 'Roberto Martinez', acudiente_telefono: '3155556667', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-04-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 7, nombre: 'Daniel', apellidos: 'Gutierrez Palacios', fecha_nacimiento: '2010-04-12', tipo_identificacion: 'Cedula', numero_identificacion: '7890123456', categoria: 'Sub 14-13', telefono: '3165557777', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Masculino', acudiente_nombre: 'Patricia Gutierrez', acudiente_telefono: '3165557778', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-01', created_at: now(), saldo_pendiente: 40000 },
-    { id: 8, nombre: 'Sofia', apellidos: 'Ramirez Ospina', fecha_nacimiento: '2011-08-30', tipo_identificacion: 'Cedula', numero_identificacion: '8901234567', categoria: 'Sub 12-11', telefono: '3175558888', mensualidad: 40000, mensualidad_objetivo: 40000, genero: 'Femenino', acudiente_nombre: 'Fernando Ramirez', acudiente_telefono: '3175558889', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-05-15', created_at: now(), saldo_pendiente: 0 },
-    { id: 9, nombre: 'Nicolas', apellidos: 'Morales Castano', fecha_nacimiento: '2013-02-14', tipo_identificacion: 'Cedula', numero_identificacion: '9012345678', categoria: 'Sub 8-7', telefono: '3185559999', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Masculino', acudiente_nombre: 'Diana Morales', acudiente_telefono: '3185559990', whatsapp_opt_out: false, activo: true, estado: 'activo', fecha_ingreso: '2024-06-01', created_at: now(), saldo_pendiente: 30000 },
-    { id: 10, nombre: 'Luciana', apellidos: 'Vargas Mejia', fecha_nacimiento: '2012-06-07', tipo_identificacion: 'Tarjeta', numero_identificacion: '0123456789', categoria: 'Sub 10-9', telefono: '3195550000', mensualidad: 30000, mensualidad_objetivo: 30000, genero: 'Femenino', acudiente_nombre: 'Gloria Vargas', acudiente_telefono: '3195550001', whatsapp_opt_out: false, activo: true, estado: 'retirado', fecha_ingreso: '2024-06-15', created_at: now(), saldo_pendiente: 0 },
-  ];
-
-  const pagos = [
-    { id: 1, jugador_id: 1, jugador: 'Santiago Garcia', jugador_telefono: '3105551111', jugador_categoria: 'Sub 17-18', monto: 50000, fecha: '2025-09-05', tipo: 'completo', observacion: 'Pago mensual septiembre', mes_pago: 'Septiembre 2025', cantidad_meses: 1, recibo_numero: 'REC-001', vencimiento: '2025-09-10', estado_pago: 'completo', saldo_pendiente: 0, metodo_pago: 'Efectivo', registrado_por: 1, registrado_por_nombre: 'Admin', anulado: false, anulado_motivo: null, anulado_por: null, anulado_at: null, created_at: now() },
-    { id: 2, jugador_id: 3, jugador: 'Mateo Lopez', jugador_telefono: '3125553333', jugador_categoria: 'Sub 14-13', monto: 20000, fecha: '2025-09-08', tipo: 'abono', observacion: 'Abono mitad', mes_pago: 'Septiembre 2025', cantidad_meses: 1, recibo_numero: 'REC-002', vencimiento: '2025-09-10', estado_pago: 'abono', saldo_pendiente: 20000, metodo_pago: 'Efectivo', registrado_por: 1, registrado_por_nombre: 'Admin', anulado: false, anulado_motivo: null, anulado_por: null, anulado_at: null, created_at: now() },
-    { id: 3, jugador_id: 6, jugador: 'Isabella Martinez', jugador_telefono: '3155556666', jugador_categoria: 'Sub 17-18', monto: 100000, fecha: '2025-09-01', tipo: 'adelantado', observacion: 'Pago adelantado 2 meses', mes_pago: 'Septiembre 2025', cantidad_meses: 2, recibo_numero: 'REC-003', vencimiento: '2025-11-10', estado_pago: 'completo', saldo_pendiente: 0, metodo_pago: 'Efectivo', registrado_por: 1, registrado_por_nombre: 'Admin', anulado: false, anulado_motivo: null, anulado_por: null, anulado_at: null, created_at: now() },
-  ];
-
-  const gastos = [
-    { id: 1, concepto: 'Arriendo cancha', descripcion: 'Pago mensual cancha sintetica', monto: 800000, categoria: 'Arriendo', fecha: '2025-09-01', creado_por: 1, creado_por_nombre: 'Admin', metodo_pago: 'Efectivo', comprobante: null, anulado: false, anulado_motivo: null, created_at: now() },
-    { id: 2, concepto: 'Nomina Carlos R.', descripcion: 'Pago quincenal septiembre', monto: 1000000, categoria: 'Nomina', fecha: '2025-09-15', creado_por: 1, creado_por_nombre: 'Admin', metodo_pago: 'Efectivo', comprobante: null, anulado: false, anulado_motivo: null, created_at: now() },
-    { id: 3, concepto: 'Balones', descripcion: 'Compra 10 balones size 5', monto: 250000, categoria: 'Equipamiento', fecha: '2025-09-03', creado_por: 1, creado_por_nombre: 'Admin', metodo_pago: 'Efectivo', comprobante: null, anulado: false, anulado_motivo: null, created_at: now() },
-  ];
-
-  const inventario = [
-    { id: 1, nombre: 'Balon size 5', categoria: 'Balones', stock: 15, stock_minimo: 8, costo_unitario: 25000, proveedor: 'Deportes SA', movimientos: [] },
-    { id: 2, nombre: 'Canesita deportiva', categoria: 'Uniformes', stock: 40, stock_minimo: 20, costo_unitario: 35000, proveedor: 'TextilFutbol', movimientos: [] },
-    { id: 3, nombre: 'Canilleras', categoria: 'Proteccion', stock: 30, stock_minimo: 15, costo_unitario: 15000, proveedor: 'Deportes SA', movimientos: [] },
-    { id: 4, nombre: 'Conos', categoria: 'Entrenamiento', stock: 25, stock_minimo: 10, costo_unitario: 5000, proveedor: 'SportsTech', movimientos: [] },
-  ];
-
-  const alertas = [
-    { id: 1, jugador_id: 3, jugador_nombre: 'Mateo Lopez', nombre: 'Deuda pendiente', categoria: 'Sub 14-13', telefono: '3125553333', pagado: 20000, deuda: 20000, mensualidad_objetivo: 40000, mes_abono: 'Septiembre 2025', tipo_alerta: 'ABONO', tipo: 'automatica', titulo: 'Abono pendiente', periodo: 'Septiembre 2025', vencimiento: '2025-09-10', estado_cobranza: 'deuda', ultimo_contacto: null, descartada: false, created_at: now() },
-    { id: 2, jugador_id: 7, jugador_nombre: 'Daniel Gutierrez', nombre: 'Deuda total', categoria: 'Sub 14-13', telefono: '3165557777', deuda: 40000, mensualidad_objetivo: 40000, tipo_alerta: 'DEUDA', tipo: 'automatica', titulo: 'Pago vencido', periodo: 'Septiembre 2025', vencimiento: '2025-09-10', estado_cobranza: 'deuda', ultimo_contacto: null, descartada: false, created_at: now() },
-    { id: 3, jugador_id: 9, jugador_nombre: 'Nicolas Morales', nombre: 'Sin pago', categoria: 'Sub 8-7', telefono: '3185559999', deuda: 30000, mensualidad_objetivo: 30000, tipo_alerta: 'DEUDA', tipo: 'automatica', titulo: 'Sin pago registrado', periodo: 'Septiembre 2025', vencimiento: '2025-09-10', estado_cobranza: 'deuda', ultimo_contacto: null, descartada: false, created_at: now() },
-  ];
-
-  const notas = [
-    { id: 1, jugador_id: 1, nota: 'Muy buen desempeno en el partido de hoy', creado_por: 1, creador_nombre: 'Admin', tipo: 'administrativa', visibilidad: 'publica', created_at: now() },
-    { id: 2, jugador_id: 4, nota: 'Falta asistencia esta semana', creado_por: 1, creador_nombre: 'Admin', tipo: 'administrativa', visibilidad: 'publica', created_at: now() },
-  ];
-
-  const bitacora = [
-    { id: 1, fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'login', modulo: 'auth', detalle: 'Sesion iniciada' },
-    { id: 2, fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'crear', modulo: 'jugadores', detalle: 'Jugador Santiago Garcia creado' },
-  ];
-
-  const periodos = [
-    { id: 1, jugador_id: 1, jugador_nombre: 'Santiago Garcia', categoria: 'Sub 17-18', anio: 2025, mes: 9, objetivo: 50000, pagado: 50000, saldo: 0, vencimiento: '2025-09-10', estado: 'pagado', notas: '', created_at: now() },
-    { id: 2, jugador_id: 3, jugador_nombre: 'Mateo Lopez', categoria: 'Sub 14-13', anio: 2025, mes: 9, objetivo: 40000, pagado: 20000, saldo: 20000, vencimiento: '2025-09-10', estado: 'abono', notas: '', created_at: now() },
-    { id: 3, jugador_id: 7, jugador_nombre: 'Daniel Gutierrez', categoria: 'Sub 14-13', anio: 2025, mes: 9, objetivo: 40000, pagado: 0, saldo: 40000, vencimiento: '2025-09-10', estado: 'pendiente', notas: '', created_at: now() },
-    { id: 4, jugador_id: 9, jugador_nombre: 'Nicolas Morales', categoria: 'Sub 8-7', anio: 2025, mes: 9, objetivo: 30000, pagado: 0, saldo: 30000, vencimiento: '2025-09-10', estado: 'pendiente', notas: '', created_at: now() },
-  ];
-
-  const whatsapp_plantillas = [
-    { codigo: 'pago_pendiente', nombre: 'Pago pendiente', mensaje: 'Hola {nombre}, tu mensualidad de {mes} esta pendiente. Debes {deuda}.', aprobada_meta: true },
-    { codigo: 'recordatorio', nombre: 'Recordatorio de pago', mensaje: 'Hola {nombre}, te recordamos que tu pago vence el dia {vencimiento}.', aprobada_meta: true },
-    { codigo: 'bienvenida', nombre: 'Bienvenida', mensaje: 'Bienvenido a {escuela} {nombre}! Tu categoria es {categoria}.', aprobada_meta: false },
-    { codigo: 'descuento', nombre: 'Promocion', mensaje: 'Hola {nombre}, tenemos una promocion especial para ti!', aprobada_meta: false },
-  ];
-
-  const whatsapp_historial = [
-    { id: 1, jugador_id: 1, jugador_nombre: 'Santiago Garcia', telefono: '3105551111', tipo: 'pago_pendiente', mensaje: 'Hola Santiago, tu mensualidad de Septiembre esta pendiente. Debes $50.000.', estado: 'enviado', fecha: '2025-09-05T10:00:00Z' },
-    { id: 2, jugador_id: 7, jugador_nombre: 'Daniel Gutierrez', telefono: '3165557777', tipo: 'pago_pendiente', mensaje: 'Hola Daniel, tu mensualidad de Septiembre esta pendiente. Debes $40.000.', estado: 'enviado', fecha: '2025-09-08T14:00:00Z' },
-    { id: 3, jugador_id: 9, jugador_nombre: 'Nicolas Morales', telefono: '3185559999', tipo: 'recordatorio', mensaje: 'Hola Nicolas, te recordamos que tu pago vence el dia 10.', estado: 'error', fecha: '2025-09-09T09:00:00Z' },
-  ];
-
+  // Sin datos ficticios: el usuario llena todo manualmente.
+  // Se inicializan colecciones vacias para que el sistema funcione desde cero.
+  const cats: any[] = [];
+  const profesores: any[] = [];
+  const jugadores: any[] = [];
+  const pagos: any[] = [];
+  const gastos: any[] = [];
+  const inventario: any[] = [];
+  const alertas: any[] = [];
+  const notas: any[] = [];
+  const bitacora: any[] = [];
+  const periodos: any[] = [];
+  // Guard temprana: colecciones vacias
+  setCollection('categorias', cats);
+  setCollection('profesores', profesores);
+  setCollection('jugadores', jugadores);
+  setCollection('pagos', pagos);
+  setCollection('gastos', gastos);
+  setCollection('inventario', inventario);
+  setCollection('alertas', alertas);
+  setCollection('notas', notas);
+  setCollection('bitacora', bitacora);
+  setCollection('periodos', periodos);
+  // Configuracion minima para que el sistema arranque
   const config: Record<string, string> = {
     'escuela_nombre': 'Mi Escuela de Futbol',
     'escuela_direccion': 'Calle 123 #45-67',
@@ -168,17 +94,8 @@ export function initDemoData() {
     'backup_ultima_fecha': '',
     'sistema_modo': 'demo',
   };
-
-  setCollection('categorias', cats);
-  setCollection('profesores', profesores);
-  setCollection('jugadores', jugadores);
-  setCollection('pagos', pagos);
-  setCollection('gastos', gastos);
-  setCollection('inventario', inventario);
-  setCollection('alertas', alertas);
-  setCollection('notas', notas);
-  setCollection('bitacora', bitacora);
-  setCollection('periodos', periodos);
+  setCollection('config', Object.entries(config).map(([k, v]) => ({ key: k, value: v })));
+  setCollection('caja', []);
   setCollection('entrenamientos', []);
   setCollection('partidos', []);
   setCollection('convocatorias', []);
@@ -186,10 +103,11 @@ export function initDemoData() {
   setCollection('torneos', []);
   setCollection('saldos_favor', []);
   setCollection('pago_periodos', []);
-  setCollection('config', Object.entries(config).map(([k, v]) => ({ key: k, value: v })));
-  setCollection('caja', [
-    { fecha: new Date().toISOString().slice(0, 10), saldo_inicial: 200000, total_ingresos: 170000, total_gastos: 2050000, saldo_final: 120000, estado: 'cerrada', abierta_por: 1, cerrada_por: 1 }
-  ]);
+  setCollection('whatsapp_plantillas', []);
+  setCollection('whatsapp_historial', []);
+  return;
+
+  // (sin datos legacy: cambiaron a inicio vacio en v7)
 }
 
 export function demoHandle(method: string, url: string, body?: any): any {
