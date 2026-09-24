@@ -406,7 +406,7 @@ export function Alertas() {
                 )}
 
                 <button
-                  onClick={() => { setGestionar(null); navigate('/jugadores'); }}
+                  onClick={() => { const gid = gestionar.jugador_id; setGestionar(null); if (gid) navigate(`/jugadores/${gid}/cuenta`); else navigate('/jugadores'); }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-700/30 transition-all text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-300">
