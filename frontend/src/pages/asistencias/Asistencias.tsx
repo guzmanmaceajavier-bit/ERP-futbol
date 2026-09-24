@@ -553,12 +553,47 @@ export function Asistencias() {
           {noRegistradosCount > 0 && (
             <p className="text-xs text-slate-400">⚪ Sin registrar: {noRegistradosCount}</p>
           )}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="success">{presentes} presentes</Badge>
             <Badge variant="danger">{ausentes} ausentes</Badge>
             <Badge variant="warning">{ausentesConExcusa} con excusa</Badge>
             {noRegistradosCount > 0 && <Badge variant="default">{noRegistradosCount} Sin registrar</Badge>}
             <Badge variant="info">{asistenciasFiltradas.length} total</Badge>
+            <div className="ml-auto flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => {
+                const headers = ['Jugador', 'Categoria', 'Fecha', 'Estado', 'Motivo', 'Medio', 'Observacion'];
+                const rows = asistenciasFiltradas.map((a: any) => [
+                  `${a.nombre || ''} ${a.apellidos || ''}`.trim() || a.jugador_nombre || `Jugador #${a.jugador_id}`,
+                  a.categoria || '',
+                  a.fecha || '',
+                  a.estado || (a.presente ? 'presente' : 'ausente'),
+                  a.motivo || '',
+                  a.medio || '',
+                  (a.observacion || '').replace(/"/g, '""'),
+                ]);
+                const csv = [headers, ...rows].map((r) => r.map((c: string) => `"${c}"`).join(',')).join('\n');
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `asistencias_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url);
+              }}>
+                Excel
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => {
+                const rows = asistenciasFiltradas.map((a: any) => `
+                  <tr>
+                    <td style="border:1px solid #334155;padding:6px;">${`${a.nombre || ''} ${a.apellidos || ''}`.trim() || a.jugador_nombre || `Jugador #${a.jugador_id}`}</td>
+                    <td style="border:1px solid #334155;padding:6px;">${a.categoria || ''}</td>
+                    <td style="border:1px solid #334155;padding:6px;">${a.fecha || ''}</td>
+                    <td style="border:1px solid #334155;padding:6px;">${a.estado || (a.presente ? 'presente' : 'ausente')}</td>
+                    <td style="border:1px solid #334155;padding:6px;">${a.motivo || ''}</td>
+                    <td style="border:1px solid #334155;padding:6px;">${a.observacion || ''}</td>
+                  </tr>`).join('');
+                const html = `<html><head><meta charset="utf-8"><title>Asistencias</title><style>body{font-family:Inter,system-ui;padding:24px;color:#0f172a}table{border-collapse:collapse;width:100%}th{border:1px solid #334155;padding:6px;background:#f1f5f9;text-align:left;font-size:11px;text-transform:uppercase}td{font-size:12px}</style></head><body><h2>Asistencias — ${new Date().toLocaleDateString('es-CO')}</h2><p style="color:#64748b;font-size:12px">${asistenciasFiltradas.length} registros</p><table><thead><tr><th>Jugador</th><th>Categoria</th><th>Fecha</th><th>Estado</th><th>Motivo</th><th>Observacion</th></tr></thead><tbody>${rows || '<tr><td colspan="6" style="text-align:center;padding:12px;color:#64748b">Sin registros</td></tr>'}</tbody></table><script>window.print()<` + `/script></body></html>`;
+                const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); }
+              }}>
+                PDF
+              </Button>
+            </div>
           </div>
 
           {/* Enhanced filtros consultar: tipo_actividad, entrenamiento, fecha desde/hasta, jugador, estado */}

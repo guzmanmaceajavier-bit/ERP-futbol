@@ -10,7 +10,8 @@ import type { Jugador, JugadorForm as JugadorFormType, EstadoJugador } from '../
 import { CATEGORIAS, GENEROS } from '../../utils/constants';
 import { validateJugador } from '../../utils/validators';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad } from '../../utils/finanzas';
+import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad, getProximoVencimientoDelPeriodo } from '../../utils/finanzas';
+import { periodoService } from '../../services/periodoService';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
 import { FilterSelect } from '../../components/data/FilterSelect';
@@ -55,6 +56,7 @@ const EMPTY_FORM: JugadorFormType = {
 export function Jugadores() {
   const navigate = useNavigate();
   const { data: jugadores, loading, error, refetch } = useApi(() => jugadorService.getAll());
+  const { data: periodos } = useApi(() => periodoService.getAll());
   const { isOpen, editing, openNew, openEdit, close } = useModal<Jugador>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
 
@@ -128,7 +130,8 @@ export function Jugadores() {
       label: 'Proximo pago',
       className: 'w-32',
       render: (j) => {
-        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        const periodosJugador = (periodos as any[] | null)?.filter((p: any) => p.jugador_id === j.id) || [];
+        const proximoPago = (j as any).proximo_vencimiento || (periodosJugador.length ? getProximoVencimientoDelPeriodo(periodosJugador as any) : null) || calcularProximoPago(j.ultimo_pago ?? null);
         return (
           <span className="text-sm text-slate-300 font-mono">
             {proximoPago ? formatDate(proximoPago) : '—'}
@@ -142,8 +145,10 @@ export function Jugadores() {
       className: 'w-36',
       render: (j) => {
         const saldo = j.saldo_pendiente ?? (j as any).deuda_actual ?? 0;
-        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
-        const estadoFin = calcularEstadoFinanciero(j.ultimo_pago ?? null, proximoPago, saldo);
+        const pj = (periodos as any[] | null)?.filter((p: any) => p.jugador_id === j.id) || [];
+        const pp = (j as any).proximo_vencimiento || (pj.length ? getProximoVencimientoDelPeriodo(pj as any) : null) || calcularProximoPago(j.ultimo_pago ?? null);
+        const pEst = pj.find((p: any) => p.estado === 'abono') ? 'abono' : pj.find((p: any) => p.estado === 'pendiente') ? 'pendiente' : undefined;
+        const estadoFin = calcularEstadoFinanciero(j.ultimo_pago ?? null, pp, saldo, pEst, pj.length ? pj as any : undefined);
         const variantMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'default'> = {
           green: 'success',
           yellow: 'warning',
@@ -161,7 +166,8 @@ export function Jugadores() {
       className: 'w-56',
       render: (j) => {
         const saldo = j.saldo_pendiente ?? (j as any).deuda_actual ?? 0;
-        const proximoPago = (j as any).proximo_vencimiento || calcularProximoPago(j.ultimo_pago ?? null);
+        const pj2 = (periodos as any[] | null)?.filter((p: any) => p.jugador_id === j.id) || [];
+        const proximoPago = (j as any).proximo_vencimiento || (pj2.length ? getProximoVencimientoDelPeriodo(pj2 as any) : null) || calcularProximoPago(j.ultimo_pago ?? null);
         return (
           <ActionsCell
             onEdit={() => openForm(j)}
