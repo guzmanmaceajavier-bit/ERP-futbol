@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
+import { Icon } from '../ui/Icon';
 
 interface FormModalProps {
   isOpen: boolean;
@@ -34,9 +35,7 @@ export function FormModal({ isOpen, onClose, title, children, wide }: FormModalP
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
           <h2 className="text-lg font-sport font-bold text-white">{title}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Icon name="cerrar" className="w-5 h-5" />
           </button>
         </div>
         <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Jugador } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { calcularEstadoFinanciero, calcularProximoPago, formatearVencimiento, getMensualidad } from '../../utils/finanzas';
+import { calcularEstadoFinanciero, calcularProximoPago, formatearVencimiento } from '../../utils/finanzas';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -71,8 +71,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
 
   const deuda = jugador.saldo_pendiente ?? jugador.deuda_actual ?? 0;
   const totalPagado = jugador.total_pagado ?? 0;
-  // Finanzas helpers (mirrors Jugadores table logic)
-  void getMensualidad(jugador.categoria);
+  // mensualidad from jugador.mensualidad or categoria fallback
   const proximoPagoFicha = (jugador as any).proximo_vencimiento || calcularProximoPago(jugador.ultimo_pago ?? null);
   const estadoFinFicha = calcularEstadoFinanciero(jugador.ultimo_pago ?? null, proximoPagoFicha, deuda);
   const estadoFinColorClass =
@@ -250,7 +249,6 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
                     </span>
                   ) : '-'
                 } />
-                <Field label="Saldo pendiente" value={formatCurrency(jugador.saldo_pendiente ?? 0)} />
               </div>
 
               <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApi } from '../../hooks/useApi';
 import { useModal } from '../../hooks/useModal';
+import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { categoriaService } from '../../services/categoriaService';
 import { profesorService } from '../../services/profesorService';
@@ -20,6 +21,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { validateCategoria } from '../../utils/validators';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Pagination } from '../../components/data/Pagination';
 
 interface FormState {
   nombre: string;
@@ -48,6 +50,8 @@ export function Categorias() {
   useEffect(() => {
     profesorService.getAll().then(setProfesores).catch(() => {});
   }, []);
+
+  const { pagina, setPagina, totalPaginas, paginados, total } = usePagination((categorias || []) as any);
 
   const columns: Column<Categoria & { profesor_nombre?: string }>[] = [
     { key: 'nombre', label: 'Nombre', render: (c) => <span className="text-white font-medium">{c.nombre}</span> },
@@ -135,7 +139,8 @@ export function Categorias() {
       <ToastList toasts={toasts} onDismiss={dismiss} />
       <PageHeader title="Categorias" actions={<Button onClick={() => openForm()}>+ Registrar categoria</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
-        <DataTable columns={columns} data={(categorias || []) as any} onRowClick={(c) => openForm(c)} />
+        <DataTable columns={columns} data={paginados as any} onRowClick={(c) => openForm(c)} />
+        <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total} onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
       <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Actualizar categoria' : 'Registrar categoria'}>
         <div className="space-y-4">

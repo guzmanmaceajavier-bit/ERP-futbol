@@ -3,7 +3,9 @@ import {
   DollarSign, Wallet, Banknote, BarChart3, TrendingUp, TrendingDown,
   User, Users, AlertTriangle, Bell, Phone, ChevronDown, ChevronLeft,
   ArrowRight, Menu, LogOut, Calendar, Clock, MapPin, Star, Zap,
-  Ban, Archive, Loader2, MessageCircle,
+  Ban, Archive, Loader2, MessageCircle, Search, Package, Home,
+  ClipboardCheck, Trophy, ClipboardList, Shield, Wallet as WalletIcon,
+  FileText, Settings,
 } from 'lucide-react';
 
 const map: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -41,6 +43,20 @@ const map: Record<string, React.ComponentType<{ className?: string }>> = {
   archivar: Archive,
   cargando: Loader2,
   whatsapp: MessageCircle,
+  buscar: Search,
+  paquete: Package,
+  inicio: Home,
+  asistencias: ClipboardCheck,
+  torneos: Trophy,
+  convocatorias: ClipboardList,
+  entrenamientos: Zap,
+  partidos: Shield,
+  caja: WalletIcon,
+  inventario: Package,
+  notas: FileText,
+  cobranzas: Bell,
+  bitacora: ClipboardList,
+  configuracion: Settings,
 };
 
 export function Icon({ name, className = 'w-5 h-5' }: { name: string; className?: string }) {

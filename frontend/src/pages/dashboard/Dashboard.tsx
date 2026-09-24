@@ -247,8 +247,7 @@ export function Dashboard() {
     return diff >= 0 ? `+${Math.round(diff)}%` : `${Math.round(diff)}%`;
   };
 
-  const maxBar = Math.max(totalIngresos, totalGastos, 1);
-  void maxBar;
+
 
   return (
     <div className="space-y-6">
@@ -617,19 +616,19 @@ export function Dashboard() {
         <h2 className="font-sport text-lg font-bold text-white mb-3">Acciones rapidas</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button onClick={() => navigate('/pagos')} className="flex items-center gap-3 p-4 bg-green-600/20 border border-green-600/30 rounded-xl hover:border-green-500 transition-all group">
-            <svg className="w-5 h-5 text-green-400 group-hover:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <Icon name="agregar" className="w-5 h-5 text-green-400 group-hover:text-green-300" />
             <span className="text-sm text-slate-300 group-hover:text-white font-medium">Registrar pago</span>
           </button>
           <button onClick={() => navigate('/jugadores')} className="flex items-center gap-3 p-4 bg-blue-600/20 border border-blue-600/30 rounded-xl hover:border-blue-500 transition-all group">
-            <svg className="w-5 h-5 text-blue-400 group-hover:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            <Icon name="usuarios" className="w-5 h-5 text-blue-400 group-hover:text-blue-300" />
             <span className="text-sm text-slate-300 group-hover:text-white font-medium">Registrar jugador</span>
           </button>
           <button onClick={() => navigate('/gastos')} className="flex items-center gap-3 p-4 bg-red-600/20 border border-red-600/30 rounded-xl hover:border-red-500 transition-all group">
-            <svg className="w-5 h-5 text-red-400 group-hover:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+            <Icon name="billetera" className="w-5 h-5 text-red-400 group-hover:text-red-300" />
             <span className="text-sm text-slate-300 group-hover:text-white font-medium">Registrar gasto</span>
           </button>
           <button onClick={() => navigate('/reportes')} className="flex items-center gap-3 p-4 bg-purple-600/20 border border-purple-600/30 rounded-xl hover:border-purple-500 transition-all group">
-            <svg className="w-5 h-5 text-purple-400 group-hover:text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            <Icon name="grafica" className="w-5 h-5 text-purple-400 group-hover:text-purple-300" />
             <span className="text-sm text-slate-300 group-hover:text-white font-medium">Ver reportes</span>
           </button>
         </div>

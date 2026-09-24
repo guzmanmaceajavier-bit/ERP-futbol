@@ -70,10 +70,36 @@ export function Configuracion() {
 
   const logBitacora = (accion: string, detalle: string) => {
     try {
-      const logs = JSON.parse(localStorage.getItem('erp_mock_bitacora') || '[]');
-      logs.push({ id: Date.now(), usuario: user?.username || 'admin', accion, modulo: 'configuracion', detalle, fecha: new Date().toISOString() });
-      localStorage.setItem('erp_mock_bitacora', JSON.stringify(logs));
+      const raw = localStorage.getItem('erp_demo_data') || '{}';
+      const data = JSON.parse(raw) as Record<string, unknown[]>;
+      const logs = (data.bitacora as unknown[]) || [];
+      logs.push({ id: Date.now(), usuario: user?.username || 'admin', accion, modulo: 'configuracion', detalle, fecha: new Date().toISOString() } as never);
+      data.bitacora = logs as never;
+      localStorage.setItem('erp_demo_data', JSON.stringify(data));
     } catch {}
+  };
+
+  const handleBackup = () => {
+    const data = JSON.parse(localStorage.getItem('erp_demo_data') || '{}');
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+    showSuccess('Respaldo descargado');
+  };
+
+  const handleRestoreFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        if (!parsed || typeof parsed !== 'object') { showError('Archivo invalido'); return; }
+        if (!confirm('Esto reemplazara los datos actuales. Continuar?')) return;
+        const toStore = (parsed as { datos?: Record<string, unknown> }).datos || parsed;
+        localStorage.setItem('erp_demo_data', JSON.stringify(toStore));
+        showSuccess('Datos restaurados. Recarga la pagina.');
+      } catch { showError('Error al leer el archivo'); }
+    };
+    reader.readAsText(file);
   };
 
   const handleResetConfig = () => {
@@ -92,10 +118,17 @@ export function Configuracion() {
 
   const handleClearDemo = () => {
     if (confirmText !== 'CONFIRMAR') { showError('Escribe CONFIRMAR para continuar'); return; }
-    const count = Object.keys(localStorage).filter(k => k.startsWith('erp_mock_')).length;
-    Object.keys(localStorage).filter(k => k.startsWith('erp_mock_')).forEach(k => localStorage.removeItem(k));
+    const raw = localStorage.getItem('erp_demo_data');
+    const data = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    const count = Object.keys(data).length;
+    localStorage.removeItem('erp_demo_data');
     setConfirmText('');
-    logBitacora('LIMPIAR_DEMO', `${count} datasets demo eliminados`);
+    try {
+      const fresh: Record<string, unknown[]> = {};
+      // log after clear -> create new container with bitacora entry
+      fresh.bitacora = [{ id: Date.now(), usuario: user?.username || 'admin', accion: 'LIMPIAR_DEMO', modulo: 'configuracion', detalle: `${count} datasets demo eliminados`, fecha: new Date().toISOString() } as never];
+      localStorage.setItem('erp_demo_data', JSON.stringify(fresh));
+    } catch {}
     showSuccess('Datos demo eliminados. Recarga la pagina.');
   };
 
@@ -284,17 +317,7 @@ export function Configuracion() {
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-slate-300">Respaldo</h3>
             <p className="text-xs text-slate-500">Crea un archivo JSON con todos los datos del sistema.</p>
-            <Button size="sm" onClick={() => {
-              const data = { fecha: new Date().toISOString(), version: '1.0', datos: {} as any };
-              ['jugadores','pagos','gastos','categorias','profesores','torneos','caja','inventario','notas','config','periodos','pago_periodos','saldos_favor','alertas','whatsapp_historial','bitacora','usuarios'].forEach(k => {
-                try { data.datos[k] = JSON.parse(localStorage.getItem(`erp_mock_${k}`) || '[]'); } catch { data.datos[k] = []; }
-              });
-              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a'); a.href = url; a.download = `erp-backup-${new Date().toISOString().split('T')[0]}.json`;
-              a.click(); URL.revokeObjectURL(url);
-              showSuccess('Respaldо descargado');
-            }}>Crear y descargar respaldo</Button>
+            <Button size="sm" onClick={handleBackup}>Crear y descargar respaldo</Button>
           </div>
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-slate-300">Restaurar</h3>
@@ -302,19 +325,8 @@ export function Configuracion() {
             <input type="file" accept=".json" className="text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-700 file:text-white hover:file:bg-slate-600 cursor-pointer" onChange={e => {
               const file = e.target.files?.[0];
               if (!file) return;
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                try {
-                  const data = JSON.parse(ev.target?.result as string);
-                  if (!data.datos) { showError('Archivo invalido'); return; }
-                  if (!confirm('Esto reemplazara los datos actuales. Continuar?')) return;
-                  Object.entries(data.datos).forEach(([k, v]) => {
-                    localStorage.setItem(`erp_mock_${k}`, JSON.stringify(v));
-                  });
-                  showSuccess('Datos restaurados. Recarga la pagina.');
-                } catch { showError('Error al leer el archivo'); }
-              };
-              reader.readAsText(file);
+              handleRestoreFile(file);
+              e.target.value = '';
             }} />
           </div>
         </div>
@@ -325,7 +337,8 @@ export function Configuracion() {
             {['jugadores','pagos','gastos'].map(dataset => (
               <Button key={dataset} variant="ghost" size="sm" onClick={() => {
                 try {
-                  const raw = localStorage.getItem(`erp_mock_${dataset}`) || '[]';
+                  const data = JSON.parse(localStorage.getItem('erp_demo_data') || '{}');
+                  const raw = JSON.stringify(data[dataset] || [], null, 2);
                   const blob = new Blob([raw], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a'); a.href = url; a.download = `${dataset}.json`;
@@ -355,11 +368,20 @@ export function Configuracion() {
             <h3 className="text-sm font-medium text-slate-300">Acciones de datos</h3>
             <div className="space-y-2">
               <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
-                const count = Object.keys(localStorage).filter(k => k.startsWith('erp_mock_')).length;
+                const data = JSON.parse(localStorage.getItem('erp_demo_data') || '{}');
+                const count = Object.keys(data).length;
                 showSuccess(`${count} datasets activos en este navegador`);
               }}>Ver datos mock</Button>
               <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
-                Object.keys(localStorage).filter(k => k.startsWith('erp_mock_')).forEach(k => localStorage.removeItem(k));
+                const data = JSON.parse(localStorage.getItem('erp_demo_data') || '{}');
+                const count = Object.keys(data).length;
+                localStorage.removeItem('erp_demo_data');
+                // keep audit that we cleared
+                try {
+                  const fresh: Record<string, unknown[]> = {};
+                  fresh.bitacora = [{ id: Date.now(), usuario: user?.username || 'admin', accion: 'LIMPIAR_DEMO', modulo: 'configuracion', detalle: `${count} datasets reiniciados desde mantenimiento`, fecha: new Date().toISOString() } as never];
+                  localStorage.setItem('erp_demo_data', JSON.stringify(fresh));
+                } catch {}
                 showSuccess('Datos mock reiniciados. Recarga la pagina.');
               }}>Limpiar datos demo</Button>
               <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {

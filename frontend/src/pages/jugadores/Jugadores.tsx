@@ -10,7 +10,7 @@ import type { Jugador, JugadorForm as JugadorFormType, EstadoJugador } from '../
 import { CATEGORIAS, GENEROS } from '../../utils/constants';
 import { validateJugador } from '../../utils/validators';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad, getProximoVencimientoDelPeriodo } from '../../utils/finanzas';
+import { calcularEstadoFinanciero, calcularProximoPago, getProximoVencimientoDelPeriodo } from '../../utils/finanzas';
 import { periodoService } from '../../services/periodoService';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
@@ -111,7 +111,7 @@ export function Jugadores() {
       label: 'Mensualidad',
       className: 'w-28',
       render: (j) => {
-        void getMensualidad(j.categoria);
+        // mensualidad from jugador.mensualidad or categoria fallback
         return <span className="font-mono text-[#22C55E]">{formatCurrency(j.mensualidad)}</span>;
       },
     },
@@ -186,7 +186,7 @@ export function Jugadores() {
                   className="p-1.5 rounded-lg hover:bg-green-900/50 text-slate-400 hover:text-green-400 transition-colors"
                   title="Cobrar"
                 >
-                  <span className="text-sm leading-none">💰</span>
+                  <Icon name="dinero" className="w-4 h-4" />
                 </button>
                 <WhatsAppButton onClick={() => window.open(`https://wa.me/${j.telefono}`, '_blank')} />
                 <ToggleButton active={j.activo} onClick={async () => {

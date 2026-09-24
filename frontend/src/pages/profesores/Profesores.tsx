@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '../../hooks/useApi';
 import { useModal } from '../../hooks/useModal';
+import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { profesorService } from '../../services/profesorService';
 import type { Profesor, ProfesorForm } from '../../types';
@@ -19,6 +20,7 @@ import { ErrorState } from '../../components/feedback/ErrorState';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ActionsCell, WhatsAppButton } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Pagination } from '../../components/data/Pagination';
 
 const ESPECIALIDADES = [
   ...CATEGORIAS,
@@ -48,6 +50,8 @@ export function Profesores() {
   const [form, setForm] = useState<ExtendedForm>({ ...EMPTY_FORM });
   const [confirmDelete, setConfirmDelete] = useState<Profesor | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const { pagina, setPagina, totalPaginas, paginados, total } = usePagination((profesores || []) as any);
 
   const columns: Column<Profesor>[] = [
     { key: 'nombre', label: 'Nombre', render: (p) => <span className="text-white font-medium">{p.nombre}</span> },
@@ -121,7 +125,8 @@ export function Profesores() {
       <ToastList toasts={toasts} onDismiss={dismiss} />
       <PageHeader title="Profesores" actions={<Button onClick={() => openForm()}>+ Registrar profesor</Button>} />
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
-        <DataTable columns={columns} data={profesores || []} onRowClick={(p) => openForm(p)} />
+        <DataTable columns={columns} data={paginados as any} onRowClick={(p) => openForm(p)} />
+        <Pagination pagina={pagina} totalPaginas={totalPaginas} total={total} onPrev={() => setPagina(pagina - 1)} onNext={() => setPagina(pagina + 1)} />
       </div>
       <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Actualizar profesor' : 'Registrar profesor'}>
         <div className="space-y-4">

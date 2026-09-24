@@ -3,6 +3,7 @@ import { convocatoriaService } from '../../services/convocatoriaService';
 import { partidoService } from '../../services/partidoService';
 import { jugadorService } from '../../services/jugadorService';
 import { useToast } from '../../hooks/useToast';
+import { usePagination } from '../../hooks/usePagination';
 import type { Convocado, Partido, Jugador, Convocatoria, EstadoConvocado } from '../../types';
 import { ESTADOS_CONVOCADO } from '../../utils/constants';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -12,6 +13,7 @@ import { ToastList } from '../../components/feedback/ToastList';
 import { Avatar } from '../../components/ui/Avatar';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { Select } from '../../components/ui/Select';
+import { Pagination } from '../../components/data/Pagination';
 
 export function Convocatorias() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
@@ -21,6 +23,9 @@ export function Convocatorias() {
   const [selectedPartido, setSelectedPartido] = useState<number | null>(null);
   const [convocados, setConvocados] = useState<Convocado[]>([]);
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
+
+  const { pagina: paginaPartidos, setPagina: setPaginaPartidos, totalPaginas: totalPaginasPartidos, paginados: partidosPaginados, total: totalPartidos } = usePagination(partidos);
+  const { pagina: paginaConvocados, setPagina: setPaginaConvocados, totalPaginas: totalPaginasConvocados, paginados: convocadosPaginados, total: totalConvocados } = usePagination(convocados);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -134,8 +139,9 @@ export function Convocatorias() {
         {partidos.length === 0 ? (
           <p className="text-slate-500 text-sm">No hay partidos programados. Registra uno primero.</p>
         ) : (
-          <div className="space-y-2">
-            {partidos.map((p) => {
+          <>
+            <div className="space-y-2">
+              {partidosPaginados.map((p) => {
               const existente = convocatorias.find((c) => c.partido_id === p.id);
               const cnt = (existente?.convocados as any[])?.filter((c: any) => c.seleccionado).length || 0;
               return (
@@ -151,8 +157,12 @@ export function Convocatorias() {
                   </div>
                 </div>
               );
-            })}
-          </div>
+              })}
+            </div>
+            {partidos.length > 0 && (
+              <Pagination pagina={paginaPartidos} totalPaginas={totalPaginasPartidos} total={totalPartidos} onPrev={() => setPaginaPartidos(paginaPartidos - 1)} onNext={() => setPaginaPartidos(paginaPartidos + 1)} />
+            )}
+          </>
         )}
       </div>
 
@@ -191,18 +201,19 @@ export function Convocatorias() {
           {convocados.length === 0 ? (
             <p className="text-slate-500 text-sm">No hay jugadores disponibles para esta categoria</p>
           ) : (
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-slate-400 border-b border-slate-700">
-                    <th className="py-2 px-3 font-medium">Jugador</th>
-                    <th className="py-2 px-3 font-medium">Categoria</th>
-                    <th className="py-2 px-3 font-medium">Estado</th>
-                    <th className="py-2 px-3 font-medium">Confirmacion</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {convocados.map((c, idx) => (
+            <>
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-400 border-b border-slate-700">
+                      <th className="py-2 px-3 font-medium">Jugador</th>
+                      <th className="py-2 px-3 font-medium">Categoria</th>
+                      <th className="py-2 px-3 font-medium">Estado</th>
+                      <th className="py-2 px-3 font-medium">Confirmacion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {convocadosPaginados.map((c, idx) => (
                     <tr
                       key={c.jugador_id}
                       className={`border-b border-slate-700/50 transition-colors ${c.seleccionado ? 'bg-[#22C55E]/10' : 'hover:bg-slate-700/30'}`}
@@ -218,7 +229,7 @@ export function Convocatorias() {
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={c.estado || 'convocado'}
-                            onChange={(e) => updateConvocadoEstado(idx, e.target.value as EstadoConvocado)}
+                            onChange={(e) => updateConvocadoEstado(convocados.findIndex(x => x.jugador_id === c.jugador_id), e.target.value as EstadoConvocado)}
                             options={ESTADOS_CONVOCADO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ') }))}
                           />
                         </div>
@@ -228,7 +239,7 @@ export function Convocatorias() {
                           <input
                             type="checkbox"
                             checked={c.seleccionado}
-                            onChange={() => toggleConvocado(idx)}
+                            onChange={() => toggleConvocado(convocados.findIndex(x => x.jugador_id === c.jugador_id))}
                             className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#22C55E] focus:ring-[#22C55E] focus:ring-2"
                           />
                         </div>
@@ -236,8 +247,12 @@ export function Convocatorias() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+                </table>
+              </div>
+              {convocados.length > 0 && (
+                <Pagination pagina={paginaConvocados} totalPaginas={totalPaginasConvocados} total={totalConvocados} onPrev={() => setPaginaConvocados(paginaConvocados - 1)} onNext={() => setPaginaConvocados(paginaConvocados + 1)} />
+              )}
+            </>
           )}
         </div>
       )}

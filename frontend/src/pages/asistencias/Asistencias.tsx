@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
+import { usePagination } from '../../hooks/usePagination';
 import { asistenciaService } from '../../services/asistenciaService';
 import { jugadorService } from '../../services/jugadorService';
 import { categoriaService } from '../../services/categoriaService';
@@ -8,7 +9,6 @@ import { entrenamientoService } from '../../services/entrenamientoService';
 import type { Jugador, Categoria } from '../../types';
 import { todayISO } from '../../utils/formatters';
 import { CATEGORIAS } from '../../utils/constants';
-import { Icon } from '../../components/ui/Icon';
 import { Button } from '../../components/ui/Button';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { FilterSelect } from '../../components/data/FilterSelect';
@@ -16,6 +16,7 @@ import { ToastList } from '../../components/feedback/ToastList';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
+import { Pagination } from '../../components/data/Pagination';
 
 type EstadoRegistro = 'presente' | 'ausente' | 'ausente_con_excusa' | 'no_registrado';
 
@@ -293,6 +294,11 @@ export function Asistencias() {
   const registrarTotal = jugadoresFiltrados.length;
   const registrarPorcentaje = registrarTotal ? Math.round((registrarPresentes / registrarTotal) * 100) : 0;
 
+  const { pagina: paginaRegistrar, setPagina: setPaginaRegistrar, totalPaginas: totalPaginasRegistrar, paginados: jugadoresPaginados, total: totalJugadoresPaginados } = usePagination(jugadoresFiltrados);
+  const { pagina: paginaResumen, setPagina: setPaginaResumen, totalPaginas: totalPaginasResumen, paginados: resumenPaginado, total: totalResumen } = usePagination(resumenPorJugador);
+  const { pagina: paginaConsulta, setPagina: setPaginaConsulta, totalPaginas: totalPaginasConsulta, paginados: asistenciasPaginadas, total: totalConsulta } = usePagination(asistenciasFiltradas);
+  const { pagina: paginaCategorias, setPagina: setPaginaCategorias, totalPaginas: totalPaginasCategorias, paginados: categoriasPaginadas, total: totalCategorias } = usePagination(categoriasConAsistencia as any[]);
+
   const estadoButtonClass = (active: boolean, estado: EstadoRegistro) => {
     if (!active) return 'bg-slate-700 text-slate-400 hover:bg-slate-600 border border-slate-600';
     switch (estado) {
@@ -413,7 +419,7 @@ export function Asistencias() {
               <p className="text-slate-500 text-center py-8">No hay jugadores activos</p>
             ) : (
               <div className="space-y-3">
-                {jugadoresFiltrados.map((j) => {
+                {jugadoresPaginados.map((j) => {
                   const reg: RegistroValue = registros[j.id] ?? { estado: 'no_registrado' };
                   const estado = reg.estado;
                   return (
@@ -523,6 +529,9 @@ export function Asistencias() {
                   );
                 })}
               </div>
+            )}
+            {jugadoresFiltrados.length > 0 && (
+              <Pagination pagina={paginaRegistrar} totalPaginas={totalPaginasRegistrar} total={totalJugadoresPaginados} onPrev={() => setPaginaRegistrar(paginaRegistrar - 1)} onNext={() => setPaginaRegistrar(paginaRegistrar + 1)} />
             )}
           </div>
         </div>
@@ -689,7 +698,7 @@ export function Asistencias() {
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
               <h3 className="text-white font-medium mb-3">Resumen por jugador</h3>
               <div className="space-y-2">
-                {resumenPorJugador.map((r) => (
+                {resumenPaginado.map((r) => (
                   <div key={r.jugador_id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-700/30 gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar nombre={`${r.nombre} ${r.apellidos}`} size="sm" />
@@ -707,11 +716,13 @@ export function Asistencias() {
                   </div>
                 ))}
               </div>
+              <Pagination pagina={paginaResumen} totalPaginas={totalPaginasResumen} total={totalResumen} onPrev={() => setPaginaResumen(paginaResumen - 1)} onNext={() => setPaginaResumen(paginaResumen + 1)} />
             </div>
           )}
 
           {categoriasConAsistencia.length > 0 ? (
-            categoriasConAsistencia.map((cat) => {
+            <>
+              {categoriasPaginadas.map((cat) => {
               const catInfo = getCategoriaInfo(cat);
               const asistCat = asistenciasFiltradas.filter((a: any) => a.categoria === cat);
               const presCat = asistCat.filter((a: any) => resolveEstado(a) === 'presente').length;
@@ -772,13 +783,18 @@ export function Asistencias() {
                   </div>
                 </div>
               );
-            })
+            })}
+              <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-3 mt-2">
+                <Pagination pagina={paginaCategorias} totalPaginas={totalPaginasCategorias} total={totalCategorias} onPrev={() => setPaginaCategorias(paginaCategorias - 1)} onNext={() => setPaginaCategorias(paginaCategorias + 1)} />
+              </div>
+            </>
           ) : (
             asistenciasFiltradas.length === 0 ? (
               <p className="text-slate-500 text-center py-8">No hay asistencia registrada para esta fecha</p>
             ) : (
-              <div className="space-y-2">
-                {asistenciasFiltradas.map((a: any) => {
+              <>
+                <div className="space-y-2">
+                  {asistenciasPaginadas.map((a: any) => {
                   const est: EstadoRegistro = resolveEstado(a);
                   const tipoAct = (a.tipo_actividad ?? a.tipoActividad ?? null) as string | null;
                   return (
@@ -814,7 +830,11 @@ export function Asistencias() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-3 mt-2">
+                  <Pagination pagina={paginaConsulta} totalPaginas={totalPaginasConsulta} total={totalConsulta} onPrev={() => setPaginaConsulta(paginaConsulta - 1)} onNext={() => setPaginaConsulta(paginaConsulta + 1)} />
+                </div>
+              </>
             )
           )}
         </div>

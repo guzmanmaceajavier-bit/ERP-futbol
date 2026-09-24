@@ -78,7 +78,7 @@ function estadoFinVariant(color: string): 'success' | 'danger' | 'warning' | 'in
 
 export function Alertas() {
   const { data: alertas, loading, error, refetch } = useApi(() => alertaService.getAll());
-  const { toasts, showSuccess, showError, dismiss } = useToast();
+  const { toasts, dismiss } = useToast();
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [gestionar, setGestionar] = useState<Alerta | null>(null);
@@ -141,22 +141,6 @@ export function Alertas() {
   }, [lista, filtro, categoriaFiltro, busquedaDebounced]);
 
   const { pagina, setPagina, totalPaginas, paginados, total } = usePagination(alertasFiltradas);
-
-  // Keep for backward compat — modal no longer calls these for CRM actions
-  const handleAction = async (alerta: Alerta, accion: string, successMsg: string) => {
-    try {
-      await alertaService.accion({ accion: accion as never, alerta_id: alerta.id });
-      showSuccess(successMsg);
-      refetch();
-      if (gestionar && gestionar.id === alerta.id) {
-        const updated = lista.find((a) => a.id === alerta.id);
-        if (updated) setGestionar({ ...updated, estado_cobranza: accion === 'descartar' ? 'descartada' as never : accion as never } as Alerta);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      showError(msg);
-    }
-  };
 
   const buildWhatsappLink = (alerta: Alerta): string | null => {
     const tel = (alerta.telefono || '').replace(/\D/g, '');
@@ -406,7 +390,12 @@ export function Alertas() {
                 )}
 
                 <button
-                  onClick={() => { setGestionar(null); navigate('/jugadores'); }}
+                  onClick={() => {
+                    const gid = gestionar.jugador_id;
+                    setGestionar(null);
+                    if (gid != null) navigate(`/jugadores/${gid}/cuenta`);
+                    else navigate('/jugadores');
+                  }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-700/30 transition-all text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-300">

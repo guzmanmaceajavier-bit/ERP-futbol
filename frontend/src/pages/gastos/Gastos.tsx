@@ -23,6 +23,7 @@ import { validateGasto, validateAnulacion } from '../../utils/validators';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Textarea } from '../../components/ui/Textarea';
+import { Icon } from '../../components/ui/Icon';
 
 export function Gastos() {
   const { data: gastos, loading, error, refetch } = useApi(() => gastoService.getAll());
@@ -68,7 +69,7 @@ export function Gastos() {
                 className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all"
                 title="Anular operacion"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                <Icon name="bloqueo" className="w-4 h-4" />
               </button>
             }
           />

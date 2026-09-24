@@ -9,6 +9,7 @@ import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
+import { Icon } from '../../components/ui/Icon';
 
 function prettyValue(v: string | null | undefined): string {
   if (!v) return '';
@@ -93,9 +94,7 @@ export function Bitacora() {
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Icon name="reloj" className="w-4 h-4 text-slate-400" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-white text-sm">

@@ -5,7 +5,8 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { partidoService } from '../../services/partidoService';
-import type { Partido, PartidoForm, LocaliaPartido } from '../../types';
+import { torneoService } from '../../services/torneoService';
+import type { Partido, PartidoForm, LocaliaPartido, Torneo } from '../../types';
 import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO, LOCALIAS_PARTIDO } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
 import { DataTable, type Column } from '../../components/data/DataTable';
@@ -19,6 +20,7 @@ import { Select } from '../../components/ui/Select';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
+import { Icon } from '../../components/ui/Icon';
 
 const EMPTY_FORM: PartidoForm = {
   rival: '',
@@ -39,6 +41,7 @@ const EMPTY_FORM: PartidoForm = {
 export function Partidos() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Partido[]>([]);
+  const [torneos, setTorneos] = useState<Torneo[]>([]);
   const [loading, setLoading] = useState(true);
   const { isOpen, editing, openNew, openEdit, close } = useModal<Partido>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
@@ -54,6 +57,7 @@ export function Partidos() {
   const reload = async () => {
     setLoading(true);
     try { const data = await partidoService.getAll(); setItems(data); } catch {}
+    try { const t = await torneoService.getAll(); setTorneos(t); } catch {}
     setLoading(false);
   };
 
@@ -170,28 +174,21 @@ export function Partidos() {
             className="p-1.5 rounded-md bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 hover:text-white transition-all"
             title="Ver"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
+            <Icon name="ver" className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); openForm(p); }}
             className="p-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all"
             title="Editar"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+            <Icon name="editar" className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setConfirmDelete(p); }}
             className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
             title="Eliminar"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
+            <Icon name="eliminar" className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -326,7 +323,7 @@ export function Partidos() {
           <Input label="Lugar" value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="Ej: Cancha principal" />
           <Select label="Localia" value={(form.localia as string) || ''} onChange={(e) => setForm({ ...form, localia: e.target.value as LocaliaPartido || '' })}
             options={LOCALIAS_PARTIDO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} placeholder="Seleccionar..." />
-          <Input label="Torneo ID" type="number" value={form.torneo_id ?? ''} onChange={(e) => setForm({ ...form, torneo_id: e.target.value ? Number(e.target.value) : null })} placeholder="ID del torneo" />
+          <Select label="Torneo" value={form.torneo_id != null ? String(form.torneo_id) : ''} onChange={(e) => setForm({ ...form, torneo_id: e.target.value ? Number(e.target.value) : null })} options={torneos.map((t) => ({ value: String(t.id), label: t.nombre }))} placeholder="Sin torneo" />
           <Input label="Arbitro" value={form.arbitro || ''} onChange={(e) => setForm({ ...form, arbitro: e.target.value })} placeholder="Nombre del arbitro" />
           <Select label="Estado" value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value as any })}
             options={ESTADOS_PARTIDO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} />

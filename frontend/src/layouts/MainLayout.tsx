@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar';
+import { Icon } from '../components/ui/Icon';
 import { isDemoMode } from '../services/demoStore';
 
 export function MainLayout() {
@@ -25,9 +26,7 @@ export function MainLayout() {
             onClick={() => setSidebarOpen(true)}
             className="text-white p-1"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Icon name="menu" className="w-6 h-6" />
           </button>
           <h1 className="font-sport text-lg font-bold text-white">ERP Futbol</h1>
         </header>
@@ -35,7 +34,7 @@ export function MainLayout() {
         <main className="p-4 lg:p-6">
           {demo && (
             <div className="mb-4 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-medium flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <Icon name="alerta" className="w-4 h-4 shrink-0" />
               Modo demo — Los datos se guardan localmente en tu navegador
             </div>
           )}

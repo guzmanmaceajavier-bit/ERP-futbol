@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import { usePagination } from '../../hooks/usePagination';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useModal } from '../../hooks/useModal';
-import { useAuth } from '../../context/AuthContext';
 import { notaService } from '../../services/notaService';
 import { jugadorService } from '../../services/jugadorService';
 import type { Nota, NotaForm, Jugador } from '../../types';
@@ -14,7 +12,6 @@ import { ErrorState } from '../../components/feedback/ErrorState';
 import { ToastList } from '../../components/feedback/ToastList';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
@@ -22,15 +19,15 @@ import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
 import { FormModal } from '../../components/forms/FormModal';
 import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
+import { Icon } from '../../components/ui/Icon';
 import { formatDateTime } from '../../utils/formatters';
 
 export function Notas() {
-  const { user } = useAuth();
   const [notas, setNotas] = useState<Nota[]>([]);
   const [jugadores, setJugadores] = useState<Jugador[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isOpen, openNew, close } = useModal();
+  const { isOpen, editing, openNew, openEdit, close } = useModal<Nota>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
   const [form, setForm] = useState<NotaForm & { jugador_id: number }>({ jugador_id: 0, nota: '', tipo: 'otra', visibilidad: 'privada' });
   const [saving, setSaving] = useState(false);
@@ -51,14 +48,8 @@ export function Notas() {
         const n = await notaService.getAll(Number(filtroJugador));
         setNotas(n);
       } else {
-        const allNotas: Nota[] = [];
-        for (const jug of j) {
-          try {
-            const n = await notaService.getAll(jug.id);
-            allNotas.push(...n);
-          } catch {}
-        }
-        setNotas(allNotas);
+        const allNotasNested = await Promise.all(j.map((jug: Jugador) => notaService.getAll(jug.id).catch(() => [] as Nota[])));
+        setNotas(allNotasNested.flat());
       }
     } catch (err: any) { setError(err.message); }
     setLoading(false);
@@ -75,11 +66,22 @@ export function Notas() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await notaService.create(form);
-      showSuccess('Nota registrada');
+      if (editing) {
+        await notaService.remove(editing.id);
+        await notaService.create(form);
+        showSuccess('Nota actualizada');
+      } else {
+        await notaService.create(form);
+        showSuccess('Nota registrada');
+      }
       close();
       loadAll();
     } catch (err: any) { showError(err.message); } finally { setSaving(false); }
+  };
+
+  const openEditNota = (n: Nota) => {
+    setForm({ jugador_id: n.jugador_id, nota: n.nota, tipo: n.tipo, visibilidad: n.visibilidad });
+    openEdit(n);
   };
 
   const handleDelete = async () => {
@@ -141,10 +143,16 @@ export function Notas() {
                       })()}
                     </div>
                   </div>
-                  <button onClick={() => setConfirmDelete(n)}
-                    className="p-1.5 rounded hover:bg-red-900/50 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => openEditNota(n)}
+                      className="p-1.5 rounded hover:bg-blue-900/50 text-slate-500 hover:text-blue-400 transition-colors">
+                      <Icon name="editar" className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setConfirmDelete(n)}
+                      className="p-1.5 rounded hover:bg-red-900/50 text-slate-500 hover:text-red-400 transition-colors">
+                      <Icon name="eliminar" className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -154,7 +162,7 @@ export function Notas() {
         )}
       </div>
 
-      <FormModal isOpen={isOpen} onClose={close} title="Registrar nota">
+      <FormModal isOpen={isOpen} onClose={close} title={editing ? 'Editar nota' : 'Registrar nota'}>
         <div className="space-y-4">
           <Select
             label="Jugador"
@@ -182,7 +190,7 @@ export function Notas() {
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
-          <Button onClick={handleSave} loading={saving}>Guardar</Button>
+          <Button onClick={handleSave} loading={saving}>{editing ? 'Actualizar' : 'Guardar'}</Button>
         </div>
       </FormModal>
 

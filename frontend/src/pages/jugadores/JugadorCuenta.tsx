@@ -5,13 +5,11 @@ import { useToast } from '../../hooks/useToast';
 import { jugadorService } from '../../services/jugadorService';
 import { pagoService } from '../../services/pagoService';
 import { periodoService } from '../../services/periodoService';
-import { CATEGORIAS, MESES } from '../../utils/constants';
+import { MESES } from '../../utils/constants';
 import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
-import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad, formatearVencimiento, expandirPagoMeses } from '../../utils/finanzas';
+import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad, expandirPagoMeses } from '../../utils/finanzas';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Avatar } from '../../components/ui/Avatar';
-import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Icon } from '../../components/ui/Icon';
@@ -46,7 +44,6 @@ export function JugadorCuenta() {
   const { toasts, showSuccess, showError, dismiss } = useToast();
 
   // Pago form state
-  const [categoriaFiltro, setCategoriaFiltro] = useState('');
   const [monto, setMonto] = useState<number | ''>(0);
   const [fecha, setFecha] = useState(todayISO());
   const [concepto, setConcepto] = useState('Mensualidad');
@@ -76,7 +73,6 @@ export function JugadorCuenta() {
   }, [periodos, jugador]);
 
   const mesesPagados = periodosJugador.filter((p) => p.estado === 'completo').length;
-  const totalPeriodosAnio = 12;
   const proximoVenc = useMemo(() => {
     if (!jugador) return null;
     const pendientes = periodosJugador.filter((p) => p.estado !== 'completo');
@@ -117,12 +113,6 @@ export function JugadorCuenta() {
     }
     return list;
   }, [pagosJugador, filtroConcepto, filtroEstado, busquedaHistorial]);
-
-  const estadoColor = (estado: string) => {
-    if (estado === 'Al dia' || estado === 'completo') return 'bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/30';
-    if (estado === 'Abono' || estado.includes('Abono')) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-    return 'bg-red-500/20 text-red-400 border-red-500/30';
-  };
 
   const handleGuardarPago = async () => {
     if (!jugador) return;
@@ -172,7 +162,6 @@ export function JugadorCuenta() {
     setMetodoPago('Nequi');
     setAplicaVariosMeses(false);
     setMesesCantidad(1);
-    setCategoriaFiltro('');
   };
 
   const handleAnular = async () => {
@@ -326,16 +315,12 @@ export function JugadorCuenta() {
           </div>
           <p className="text-xs text-slate-500 mb-4">Completa la informacion del pago para el jugador</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Select label="Categorias" value={categoriaFiltro} onChange={(e) => setCategoriaFiltro(e.target.value)}
-              options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Sub 16 - 15" />
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-400 mb-1">Jugador *</label>
-              <div className="w-full px-3 py-2 bg-[#0B1F35] border border-[#1E3A5F] rounded-lg text-white text-sm flex items-center gap-2">
-                <Icon name="usuario" className="w-4 h-4 text-slate-500" />
-                <span>{jugador.nombre} {jugador.apellidos}</span>
-                <span className="ml-auto text-xs text-slate-500">{jugador.categoria}</span>
-              </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Jugador *</label>
+            <div className="w-full px-3 py-2 bg-[#0B1F35] border border-[#1E3A5F] rounded-lg text-white text-sm flex items-center gap-2">
+              <Icon name="usuario" className="w-4 h-4 text-slate-500" />
+              <span>{jugador.nombre} {jugador.apellidos}</span>
+              <span className="ml-auto text-xs text-slate-500">{jugador.categoria}</span>
             </div>
           </div>
 

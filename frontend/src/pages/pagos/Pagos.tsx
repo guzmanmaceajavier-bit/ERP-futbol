@@ -97,6 +97,8 @@ export function Pagos() {
     });
   }, [jugadores, filtroEstado]);
 
+  const { pagina: paginaCuentas, setPagina: setPaginaCuentas, totalPaginas: totalPaginasCuentas, paginados: paginadosCuentas, total: totalCuentas } = usePagination(estadoCuentas);
+
   const selectJugador = (j: Jugador) => {
     setJugadorSeleccionado(j);
     const base = getMensualidad(j.categoria) || MENSUALIDAD_MAP[j.categoria] || 50000;
@@ -672,13 +674,15 @@ export function Pagos() {
                 <th className="px-4 py-2.5 text-left">Jugador</th>
                 <th className="px-4 py-2.5 text-left">Fecha</th>
                 <th className="px-4 py-2.5 text-left">Concepto</th>
+                <th className="px-4 py-2.5 text-left">Metodo</th>
+                <th className="px-4 py-2.5 text-left">Observacion</th>
                 <th className="px-4 py-2.5 text-right">Monto</th>
                 <th className="px-4 py-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
               {paginados.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-8 text-slate-500">No hay pagos registrados</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-slate-500">No hay pagos registrados</td></tr>
               ) : paginados.map((p) => (
                 <tr key={p.id} className={`hover:bg-slate-800/50 transition-colors ${p.anulado ? 'opacity-60' : ''}`}>
                   <td className="px-4 py-3">
@@ -693,6 +697,8 @@ export function Pagos() {
                       p.estado_pago === 'abono' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
                     }`}>{p.tipo}</span>
                   </td>
+                  <td className="px-4 py-3 text-slate-400 text-xs">{(p as any).metodo_pago || '-'}</td>
+                  <td className="px-4 py-3 text-slate-400 text-xs max-w-[160px] truncate" title={p.observacion || ''}>{p.observacion || '-'}</td>
                   <td className={`px-4 py-3 text-right font-mono font-bold ${p.anulado ? 'text-slate-500 line-through' : 'text-[#22C55E]'}`}>{formatCurrency(p.monto)}</td>
                   <td className="px-4 py-3">
                     {p.anulado ? (
@@ -762,9 +768,9 @@ export function Pagos() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
-              {estadoCuentas.length === 0 ? (
+              {paginadosCuentas.length === 0 ? (
                 <tr><td colSpan={3} className="text-center py-8 text-slate-500 text-sm">No hay jugadores en este filtro</td></tr>
-              ) : estadoCuentas.map((j) => {
+              ) : paginadosCuentas.map((j) => {
                 const saldo = j.saldo_pendiente || 0;
                 return (
                   <tr key={j.id} className="hover:bg-slate-700/30 transition-colors">
@@ -792,7 +798,9 @@ export function Pagos() {
                           Cobrar
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-500">—</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                          <Icon name="verificar" className="w-3 h-3 text-[#22C55E]" /> Al dia
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -800,6 +808,11 @@ export function Pagos() {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="px-4 py-3 border-t border-slate-700 flex justify-between items-center">
+          <span className="text-xs font-bold text-slate-500">{totalCuentas} jugadores</span>
+          <Pagination pagina={paginaCuentas} totalPaginas={totalPaginasCuentas} total={totalCuentas}
+            onPrev={() => setPaginaCuentas(paginaCuentas - 1)} onNext={() => setPaginaCuentas(paginaCuentas + 1)} />
         </div>
       </section>
 

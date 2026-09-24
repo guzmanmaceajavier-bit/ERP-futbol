@@ -20,6 +20,7 @@ import { ConfirmDialog } from '../../components/forms/ConfirmDialog';
 import { ToastList } from '../../components/feedback/ToastList';
 import { ActionsCell } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Icon } from '../../components/ui/Icon';
 
 const EMPTY_FORM: EntrenamientoForm = {
   fecha: new Date().toISOString().split('T')[0],
@@ -156,10 +157,10 @@ export function Entrenamientos() {
                   )}
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button onClick={(ev) => { ev.stopPropagation(); openForm(e); }} className="p-1.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      <Icon name="editar" className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={(ev) => { ev.stopPropagation(); setConfirmDelete(e); }} className="p-1.5 rounded bg-slate-700 hover:bg-red-900/50 text-slate-300 hover:text-red-400">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      <Icon name="eliminar" className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
@@ -178,17 +179,17 @@ export function Entrenamientos() {
                       <button
                         onClick={(ev) => {
                           ev.stopPropagation();
-                          navigate('/asistencias', { state: { fecha: e.fecha, categoria: e.categoria } });
+                          navigate('/asistencias', { state: { fecha: e.fecha, categoria: e.categoria, entrenamiento_id: e.id } });
                         }}
                         className="w-full py-2.5 px-3 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <span>Registrar asistencia</span>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        <Icon name="derecha" className="w-4 h-4" />
                       </button>
                     ) : (
                       <Link
                         to="/asistencias"
-                        state={{ fecha: e.fecha, categoria: e.categoria }}
+                        state={{ fecha: e.fecha, categoria: e.categoria, entrenamiento_id: e.id }}
                         onClick={(ev) => ev.stopPropagation()}
                         className="block w-full text-center py-2 px-3 border border-slate-600 hover:border-[#22C55E]/40 hover:bg-[#22C55E]/10 text-[#22C55E] text-xs font-medium rounded-lg transition-colors"
                       >

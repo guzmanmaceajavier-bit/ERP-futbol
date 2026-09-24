@@ -8,9 +8,9 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { NumberInput } from '../../components/ui/NumberInput';
+import { Input } from '../../components/ui/Input';
 import { FormModal } from '../../components/forms/FormModal';
 import { ToastList } from '../../components/feedback/ToastList';
-import { Icon } from '../../components/ui/Icon';
 import { LoadingOverlay } from '../../components/feedback/LoadingOverlay';
 import { ErrorState } from '../../components/feedback/ErrorState';
 
@@ -21,6 +21,7 @@ export function Caja() {
   const [saldoInicial, setSaldoInicial] = useState(0);
   const [saldoContado, setSaldoContado] = useState(0);
   const [showCerrar, setShowCerrar] = useState(false);
+  const [showReabrir, setShowReabrir] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +41,7 @@ export function Caja() {
       showSuccess(`Caja ${accion} correctamente`);
       close();
       setShowCerrar(false);
+      setShowReabrir(false);
       refetch();
     } catch (err: any) {
       showError(err.message);
@@ -115,7 +117,7 @@ export function Caja() {
           ) : (
             <>
               <Button variant="danger" onClick={() => { setSaldoContado(saldoSistema); setShowCerrar(true); }} loading={saving}>Cierre de caja</Button>
-              <Button variant="ghost" onClick={() => { setMotivo(''); handleAccion('desbloquear'); }}>Reabrir caja</Button>
+              <Button variant="ghost" onClick={() => { setMotivo(''); setShowReabrir(true); }}>Reabrir caja</Button>
             </>
           )}
         </div>
@@ -129,6 +131,18 @@ export function Caja() {
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={close}>Cancelar</Button>
           <Button onClick={() => handleAccion('abrir')} loading={saving}>Confirmar apertura</Button>
+        </div>
+      </FormModal>
+
+      {/* Reabrir caja modal */}
+      <FormModal isOpen={showReabrir} onClose={() => setShowReabrir(false)} title="Reabrir caja">
+        <div className="space-y-4">
+          <Input label="Motivo *" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Indique el motivo para reabrir la caja" required />
+          <p className="text-[11px] text-slate-500">Debe indicar un motivo para registrar la reapertura de caja.</p>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+          <Button variant="ghost" onClick={() => setShowReabrir(false)}>Cancelar</Button>
+          <Button onClick={() => handleAccion('desbloquear')} loading={saving} disabled={!motivo.trim()}>Reabrir</Button>
         </div>
       </FormModal>
 
