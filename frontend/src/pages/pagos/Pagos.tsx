@@ -340,18 +340,20 @@ export function Pagos() {
               </div>
             </div>
             {(busquedaJugador || filtroCatForm) && jugadoresGrid.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase mb-2">{jugadoresGrid.length} jugadores</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[240px] overflow-auto">
+              <div className="border border-slate-700 rounded-xl overflow-hidden">
+                <div className="max-h-[200px] overflow-auto divide-y divide-slate-700/50">
                   {jugadoresGrid.map((j) => {
                     const saldo = j.saldo_pendiente || 0;
-                    const barColor = saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500';
+                    const isSelected = jugadorSeleccionado?.id === j.id;
                     return (
                       <button key={j.id} onClick={() => selectJugador(j)}
-                        className="text-left p-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:border-[#22C55E]/50 hover:bg-slate-700/50 transition-all">
-                        <div className={`h-1 rounded-full ${barColor} mb-2`} />
-                        <p className="text-sm font-bold text-white truncate">{j.nombre} {j.apellidos}</p>
-                        <p className="text-[11px] text-slate-400">{j.categoria}</p>
+                        className={`w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-700/40 transition-colors ${isSelected ? 'bg-[#22C55E]/10' : ''}`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${saldo <= 0 ? 'bg-[#22C55E]' : 'bg-red-500'}`} />
+                          <span className="text-sm text-white truncate">{j.nombre} {j.apellidos}</span>
+                          <span className="text-xs text-slate-500 hidden sm:inline">{j.categoria}</span>
+                        </div>
+                        <span className={`text-xs font-mono font-bold flex-shrink-0 ${saldo > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldo)}</span>
                       </button>
                     );
                   })}
@@ -360,70 +362,54 @@ export function Pagos() {
             )}
           </div>
 
-          {/* Ficha del jugador + Estado financiero */}
+          {/* Jugador seleccionado + estado financiero */}
           {jugadorSeleccionado && (
             <div className="space-y-3">
-              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#22C55E] text-white flex items-center justify-center font-black text-lg flex-shrink-0">
+              {/* Encabezado compacto del jugador */}
+              <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#22C55E] text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {jugadorSeleccionado.nombre.charAt(0)}{jugadorSeleccionado.apellidos.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-white">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
-                  <p className="text-xs text-slate-400">{jugadorSeleccionado.categoria} | {jugadorSeleccionado.telefono || 'S/T'}{jugadorSeleccionado.acudiente_nombre ? ' | Acud: ' + jugadorSeleccionado.acudiente_nombre : ''}</p>
-                  <p className="text-xs mt-1">
-                    {(jugadorSeleccionado.saldo_pendiente || 0) > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400">Debe {formatCurrency(jugadorSeleccionado.saldo_pendiente || 0)}</span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#22C55E]/20 text-[#22C55E]">Al dia</span>
-                    )}
-                  </p>
+                  <p className="text-sm font-bold text-white truncate">{jugadorSeleccionado.nombre} {jugadorSeleccionado.apellidos}</p>
+                  <p className="text-xs text-slate-400 truncate">{jugadorSeleccionado.categoria}</p>
                 </div>
+                {estadoFinanciero && (
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border flex-shrink-0 ${estadoBadgeCls(estadoFinanciero.color)}`}>
+                    {estadoFinanciero.label}
+                  </span>
+                )}
                 <button onClick={() => { setJugadorSeleccionado(null); setMonto(0); }}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
-                  <Icon name="cerrar" className="w-4 h-4 text-white" />
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
+                  <Icon name="cerrar" className="w-3.5 h-3.5 text-white" />
                 </button>
               </div>
 
-              {/* Estado financiero mini-section */}
-              <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-4">
-                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
-                  <Icon name="grafica" className="w-4 h-4" />
-                  Estado financiero
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
-                    <p className="text-[10px] font-black uppercase text-slate-500">Estado</p>
-                    {estadoFinanciero ? (
-                      <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-black border ${estadoBadgeCls(estadoFinanciero.color)}`}>
-                        {estadoFinanciero.label}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-400">—</span>
-                    )}
-                    {estadoFinanciero?.diasAtraso != null && <p className="text-[11px] text-red-400 mt-1">{estadoFinanciero.diasAtraso} dias de atraso</p>}
-                    {estadoFinanciero?.diasFaltantes != null && <p className="text-[11px] text-yellow-400 mt-1">Faltan {estadoFinanciero.diasFaltantes} dias</p>}
-                  </div>
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
-                    <p className="text-[10px] font-black uppercase text-slate-500">Saldo pendiente</p>
-                    <p className={`text-sm font-mono font-black mt-1 ${saldoPendiente > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldoPendiente)}</p>
-                    <p className="text-[11px] text-slate-500">{saldoPendiente > 0 ? 'Por pagar' : 'Al dia'}</p>
-                  </div>
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
-                    <p className="text-[10px] font-black uppercase text-slate-500">Proximo pago</p>
-                    <p className="text-sm font-bold text-white mt-1">{proximoVencimientoRaw ? vencimientoFormateado : '—'}</p>
-                    {proximoVencimientoRaw && <p className="text-[11px] text-slate-500 truncate">{proximoVencimientoRaw}</p>}
-                    {!proximoVencimientoRaw && <p className="text-[11px] text-slate-500">Sin vencimiento</p>}
-                  </div>
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
-                    <p className="text-[10px] font-black uppercase text-slate-500">Mensualidad</p>
-                    <p className="text-sm font-mono font-black text-[#22C55E] mt-1">{mensualidadEfectiva > 0 ? formatCurrency(mensualidadEfectiva) : 'Becado'}</p>
-                    <p className="text-[11px] text-slate-500">{jugadorSeleccionado.categoria} {getMensualidad(jugadorSeleccionado.categoria) ? `· base ${formatCurrency(getMensualidad(jugadorSeleccionado.categoria))}` : ''}</p>
-                  </div>
+              {/* Datos financieros en 3 tarjetas */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Saldo</p>
+                  <p className={`text-sm font-mono font-bold mt-1 ${saldoPendiente > 0 ? 'text-red-400' : 'text-[#22C55E]'}`}>{formatCurrency(saldoPendiente)}</p>
                 </div>
-                {jugadorSeleccionado.ultimo_pago && (
-                  <p className="text-[11px] text-slate-500 mt-3">Ultimo pago: {formatDate(jugadorSeleccionado.ultimo_pago)} {proximoVencimientoRaw && `· Proximo: ${proximoVencimientoRaw}`}</p>
-                )}
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mensualidad</p>
+                  <p className="text-sm font-mono font-bold text-white mt-1">{formatCurrency(mensualidadEfectiva)}</p>
+                </div>
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proximo pago</p>
+                  <p className="text-xs font-bold text-white mt-1 truncate">{proximoVencimientoRaw ? vencimientoFormateado : '—'}</p>
+                </div>
               </div>
+
+              {/* Acudiente + telefono en linea secundaria */}
+              {(jugadorSeleccionado.acudiente_nombre || jugadorSeleccionado.telefono) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-slate-500">
+                  {jugadorSeleccionado.telefono && <span>Tel: <span className="text-slate-300">{jugadorSeleccionado.telefono}</span></span>}
+                  {jugadorSeleccionado.acudiente_nombre && <span>Acudiente: <span className="text-slate-300">{jugadorSeleccionado.acudiente_nombre}</span>{jugadorSeleccionado.acudiente_telefono ? ` · ${jugadorSeleccionado.acudiente_telefono}` : ''}</span>}
+                  {estadoFinanciero?.diasAtraso != null && <span className="text-red-400">{estadoFinanciero.diasAtraso} dias de atraso</span>}
+                  {estadoFinanciero?.diasFaltantes != null && <span className="text-yellow-400">Faltan {estadoFinanciero.diasFaltantes} dias</span>}
+                </div>
+              )}
             </div>
           )}
 
@@ -696,24 +682,27 @@ export function Pagos() {
       {/* Estado de cuentas */}
       <section className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-700">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
               <Icon name="usuarios" className="w-5 h-5 text-slate-400" />
               Estado de cuentas
+              <span className="ml-1 text-xs font-normal text-slate-500">{estadoCuentas.length} jugadores</span>
             </h3>
-            <span className="text-xs font-bold text-slate-500">{estadoCuentas.length} jugadores</span>
-          </div>
-          <div className="flex gap-2 mt-3">
-            {([
-              ['todos', `Todos (${jugadores?.filter((j) => j.activo).length || 0})`],
-              ['deudores', `Pendientes (${jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) > 0).length || 0})`],
-              ['pagados', `Al dia (${jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) <= 0).length || 0})`],
-            ] as const).map(([val, label]) => (
-              <button key={val} onClick={() => setFiltroEstado(val as typeof filtroEstado)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${filtroEstado === val ? 'bg-[#22C55E] text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
-                {label}
-              </button>
-            ))}
+            <div className="flex gap-1.5">
+              {([
+                ['todos', 'Todos'],
+                ['deudores', 'Pendientes'],
+                ['pagados', 'Al dia'],
+              ] as const).map(([val, label]) => {
+                const count = val === 'todos' ? (jugadores?.filter((j) => j.activo).length || 0) : val === 'deudores' ? (jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) > 0).length || 0) : (jugadores?.filter((j) => j.activo && (j.saldo_pendiente || 0) <= 0).length || 0);
+                return (
+                  <button key={val} onClick={() => setFiltroEstado(val as typeof filtroEstado)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${filtroEstado === val ? 'bg-[#22C55E] text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
+                    {label} <span className="opacity-60">· {count}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         <div className="overflow-auto max-h-[360px]">
