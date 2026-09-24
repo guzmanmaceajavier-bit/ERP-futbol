@@ -885,7 +885,32 @@ export function demoHandle(method: string, url: string, body?: any): any {
     const newItem = { ...body, id: nextId('torneos'), created_at: now() };
     items.push(newItem);
     setCollection('torneos', items);
+    // bitacora
+    const bit = getCollection<any>('bitacora');
+    bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'crear_torneo', modulo: 'torneos', detalle: `Torneo "${body.nombre}" creado` });
+    setCollection('bitacora', bit);
     return newItem;
+  }
+  if (seg0 === 'torneos' && method === 'PUT') {
+    const items = getCollection<any>('torneos');
+    const id = parseIdFromUrl(url, body);
+    const idx = items.findIndex((i: any) => i.id === id);
+    if (idx >= 0) items[idx] = { ...items[idx], ...body };
+    setCollection('torneos', items);
+    const bit = getCollection<any>('bitacora');
+    bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'editar_torneo', modulo: 'torneos', detalle: `Torneo #${id} actualizado` });
+    setCollection('bitacora', bit);
+    return items[idx] || { ok: true };
+  }
+  if (seg0 === 'torneos' && method === 'DELETE') {
+    let items = getCollection<any>('torneos');
+    const id = parseIdFromUrl(url, body);
+    items = items.filter((i: any) => i.id !== id);
+    setCollection('torneos', items);
+    const bit = getCollection<any>('bitacora');
+    bit.push({ id: nextId('bitacora'), fecha: now(), usuario_id: 1, usuario_nombre: 'Admin', accion: 'editar_torneo', modulo: 'torneos', detalle: `Torneo #${id} eliminado` });
+    setCollection('bitacora', bit);
+    return { ok: true };
   }
 
   if (seg0 === 'periodos' && method === 'GET') {
