@@ -1,5 +1,7 @@
 const DEMO_KEY = 'erp_demo_mode';
 const DATA_KEY = 'erp_demo_data';
+const DATA_VERSION = 'v6-cobranzas-financiera';
+const VERSION_KEY = 'erp_demo_version';
 
 let _idCounters: Record<string, number> = {};
 
@@ -42,6 +44,12 @@ export function setDemoMode(v: boolean) {
 }
 
 export function initDemoData() {
+  const currentVersion = localStorage.getItem(VERSION_KEY);
+  if (currentVersion !== DATA_VERSION) {
+    localStorage.removeItem(DATA_KEY);
+    _idCounters = {};
+    localStorage.setItem(VERSION_KEY, DATA_VERSION);
+  }
   if (getCollection('jugadores').length > 0) return;
 
   const cats = [
