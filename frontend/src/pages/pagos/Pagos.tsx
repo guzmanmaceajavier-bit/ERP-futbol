@@ -21,6 +21,8 @@ import { FormModal } from '../../components/forms/FormModal';
   import { PageHeader } from '../../components/layout/PageHeader';
   import { Textarea } from '../../components/ui/Textarea';
 import { Icon } from '../../components/ui/Icon';
+import { abrirFactura } from '../../utils/factura';
+import { configService } from '../../services/configService';
 
 const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
 
@@ -90,11 +92,21 @@ export function Pagos() {
 
   const estadoCuentas = useMemo(() => {
     if (!jugadores) return [];
-    return jugadores.filter((j) => j.activo).filter((j) => {
+    const filtered = jugadores.filter((j) => j.activo).filter((j) => {
       if (filtroEstado === 'deudores') return (j.saldo_pendiente || 0) > 0;
       if (filtroEstado === 'pagados') return (j.saldo_pendiente || 0) <= 0;
       return true;
     });
+    if (filtroEstado === 'todos') {
+      // Pendientes primero con sutil fondo, luego Al dia
+      return [...filtered].sort((a, b) => {
+        const sa = (a.saldo_pendiente || 0) > 0 ? 0 : 1;
+        const sb = (b.saldo_pendiente || 0) > 0 ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        return (b.saldo_pendiente || 0) - (a.saldo_pendiente || 0);
+      });
+    }
+    return filtered;
   }, [jugadores, filtroEstado]);
 
   const { pagina: paginaCuentas, setPagina: setPaginaCuentas, totalPaginas: totalPaginasCuentas, paginados: paginadosCuentas, total: totalCuentas } = usePagination(estadoCuentas);
@@ -711,6 +723,14 @@ export function Pagos() {
                         <button onClick={() => { setAnularPago(p); setMotivoAnular(''); }} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all" title="Anular operacion">
                           <Icon name="bloqueo" className="w-4 h-4" />
                         </button>
+                        <button onClick={async () => {
+                          const jug = jugadores?.find((j) => j.id === p.jugador_id) || null;
+                          let escuela: any = {};
+                          try { const cfg = await configService.getAll(); escuela = { nombre: cfg.escuela_nombre, nit: cfg.escuela_nit, telefono: cfg.escuela_telefono, direccion: cfg.escuela_direccion }; } catch {}
+                          abrirFactura({ pago: p, jugador: jug as any, periodoLabel: p.mes_pago || undefined, mensualidad: mensualidadEfectiva });
+                        }} className="p-1.5 rounded-md bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all" title="Factura">
+                          <Icon name="grafica" className="w-4 h-4" />
+                        </button>
                         {p.jugador_telefono && (
                           <button onClick={() => window.open(`https://wa.me/${p.jugador_telefono}`, '_blank')}
                             className="p-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all" title="WhatsApp">
@@ -772,19 +792,20 @@ export function Pagos() {
                 <tr><td colSpan={3} className="text-center py-8 text-slate-500 text-sm">No hay jugadores en este filtro</td></tr>
               ) : paginadosCuentas.map((j) => {
                 const saldo = j.saldo_pendiente || 0;
+                const isPendiente = saldo > 0;
                 return (
-                  <tr key={j.id} className="hover:bg-slate-700/30 transition-colors">
+                  <tr key={j.id} className={`transition-colors ${isPendiente ? 'bg-red-500/[0.04] hover:bg-red-500/10' : 'hover:bg-slate-700/30'}`}>
                     <td className="px-4 py-3">
                       <p className="font-medium text-white">{j.nombre} {j.apellidos}</p>
                       <p className="text-[11px] text-slate-500">{j.categoria}</p>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${saldo > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/20'}`}>
-                        {saldo > 0 ? `Debe ${formatCurrency(saldo)}` : 'Al dia'}
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${isPendiente ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/20'}`}>
+                        {isPendiente ? `Debe ${formatCurrency(saldo)}` : 'Al dia'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {saldo > 0 ? (
+                      {isPendiente ? (
                         <button
                           onClick={() => {
                             const target = jugadores?.find((x) => x.id === j.id);

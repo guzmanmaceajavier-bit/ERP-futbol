@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { calcularEstadoFinanciero, getMensualidad } from '../../utils/finanzas';
 import type { EstadoFinanciero } from '../../utils/finanzas';
 import { Icon } from '../../components/ui/Icon';
+import { abrirFactura } from '../../utils/factura';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { KPICard } from '../../components/dashboard/KPICard';
@@ -388,6 +389,28 @@ export function Alertas() {
                     </div>
                   </div>
                 )}
+
+                <button
+                  onClick={() => {
+                    const mensualidad = getMensualidad(gestionar.categoria || '');
+                    abrirFactura({
+                      pago: { id: gestionar.id as number, jugador_id: gestionar.jugador_id || 0, jugador: gestionar.jugador_nombre || '', jugador_categoria: gestionar.categoria, monto: gestionar.deuda || 0, fecha: new Date().toISOString().slice(0, 10), tipo: 'completo' as const, observacion: `Cobro ${gestionar.periodo || ''}`, mes_pago: gestionar.periodo || null, cantidad_meses: 1, recibo_numero: `FAC-${String(gestionar.id).padStart(4, '0')}`, vencimiento: gestionar.vencimiento || '', estado_pago: 'vencido', saldo_pendiente: gestionar.deuda || 0, created_at: new Date().toISOString() } as any,
+                      jugador: gestionar.jugador_id ? { id: gestionar.jugador_id, nombre: (gestionar.jugador_nombre || '').split(' ')[0] || '', apellidos: (gestionar.jugador_nombre || '').split(' ').slice(1).join(' ') || '', categoria: gestionar.categoria || '', telefono: gestionar.telefono || '', mensualidad: mensualidad } as any : null,
+                      periodoLabel: gestionar.periodo || undefined,
+                      mensualidad,
+                      saldoPeriodo: gestionar.deuda || 0,
+                    });
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-700/30 transition-all text-left"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-300">
+                    <Icon name="grafica" className="w-4 h-4" />
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-white text-sm font-medium">Generar factura</p>
+                    <p className="text-xs text-slate-500">Factura de cobro por {formatCurrency(gestionar.deuda || 0)}</p>
+                  </div>
+                </button>
 
                 <button
                   onClick={() => {
