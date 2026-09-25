@@ -47,6 +47,8 @@ export interface JugadorForm {
   numero_identificacion: string;
   categoria: string;
   telefono: string;
+  /** Mensualidad derivada de la categoria seleccionada en el menu Categorias (editable). */
+  mensualidad: number;
   genero: Genero;
   acudiente_nombre: string;
   acudiente_telefono: string;

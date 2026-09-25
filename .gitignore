@@ -1,4 +1,31 @@
+# Dependencias
 node_modules/
+
+# Builds
 dist/
 frontend/dist/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+
+# Entorno
 .env
+.env.local
+.env.*.local
+
+# Cobertura de tests
+coverage/
+
+# Editores y SO
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel/

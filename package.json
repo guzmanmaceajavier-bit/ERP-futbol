@@ -1,0 +1,22 @@
+{
+  "name": "erp-futbol",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ERP de gestion integral para escuelas de futbol (frontend SPA)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "lint": "npm --prefix frontend run lint",
+    "lint:fix": "npm --prefix frontend run lint:fix",
+    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\"",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "test": "npm --prefix frontend run test",
+    "setup": "npm --prefix frontend install"
+  }
+}

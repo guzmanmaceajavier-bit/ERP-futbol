@@ -5,7 +5,8 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { profesorService } from '../../services/profesorService';
 import type { Profesor, ProfesorForm } from '../../types';
-import { CATEGORIAS, TIPOS_CONTRATO } from '../../utils/constants';
+import { TIPOS_CONTRATO } from '../../utils/constants';
+import { useCategorias } from '../../hooks/useCategorias';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -22,8 +23,7 @@ import { ActionsCell, WhatsAppButton } from '../../components/ui/ActionsCell';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Pagination } from '../../components/data/Pagination';
 
-const ESPECIALIDADES = [
-  ...CATEGORIAS,
+const ESPECIALIDADES_FIJAS = [
   'Arquero',
   'Preparacion fisica',
   'Acondicionamiento',
@@ -45,6 +45,9 @@ const EMPTY_FORM: ExtendedForm = {
 
 export function Profesores() {
   const { data: profesores, loading, error, refetch } = useApi(() => profesorService.getAll());
+  const { nombres: nombresCategoria } = useCategorias();
+  /** Categorias creadas en el menu + especialidades fijas. */
+  const ESPECIALIDADES = [...nombresCategoria, ...ESPECIALIDADES_FIJAS];
   const { isOpen, editing, openNew, openEdit, close } = useModal<Profesor>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
   const [form, setForm] = useState<ExtendedForm>({ ...EMPTY_FORM });
@@ -153,7 +156,10 @@ export function Profesores() {
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Categorias asignadas</label>
             <div className="grid grid-cols-2 gap-2">
-              {CATEGORIAS.map((cat) => (
+              {nombresCategoria.length === 0 && (
+                <p className="col-span-2 text-xs text-slate-500">No hay categorias creadas en el menu Categorias.</p>
+              )}
+              {nombresCategoria.map((cat) => (
                 <label key={cat} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"

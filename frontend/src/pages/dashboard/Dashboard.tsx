@@ -350,8 +350,8 @@ export function Dashboard() {
               <tbody>
                 {proximosVencimientos.map((row) => {
                   const dias = row.diasRestantes;
-                  let diasLabel = '';
-                  let diasColor = 'text-slate-400';
+                  let diasLabel: string;
+                  let diasColor: string;
                   if (dias < 0) {
                     diasLabel = `Vencido hace ${Math.abs(dias)} dia${Math.abs(dias) !== 1 ? 's' : ''}`;
                     diasColor = 'text-red-400';

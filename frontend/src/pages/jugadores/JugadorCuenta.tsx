@@ -6,7 +6,7 @@ import { jugadorService } from '../../services/jugadorService';
 import { pagoService } from '../../services/pagoService';
 import { periodoService } from '../../services/periodoService';
 import { MESES } from '../../utils/constants';
-import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
+import { formatCurrency, formatDate, todayISO, formatEdad } from '../../utils/formatters';
 import { calcularEstadoFinanciero, calcularProximoPago, getMensualidad, expandirPagoMeses } from '../../utils/finanzas';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -21,17 +21,6 @@ import type { Pago } from '../../types';
 import type { PeriodoMensual } from '../../types/periodo';
 
 const MESES_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-function calcularEdad(fechaNacimiento: string | null): string {
-  if (!fechaNacimiento) return '-';
-  const nac = new Date(fechaNacimiento.includes('T') ? fechaNacimiento : `${fechaNacimiento}T00:00:00`);
-  if (isNaN(nac.getTime())) return '-';
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nac.getFullYear();
-  const m = hoy.getMonth() - nac.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
-  return `${edad} años`;
-}
 
 export function JugadorCuenta() {
   const { id } = useParams<{ id: string }>();
@@ -178,7 +167,7 @@ export function JugadorCuenta() {
   if (loadingJugadores || loadingPagos || loadingPeriodos) return <LoadingOverlay />;
   if (!jugador) return <ErrorState error="Jugador no encontrado" onRetry={() => navigate('/jugadores')} />;
 
-  const edad = calcularEdad(jugador.fecha_nacimiento);
+  const edad = formatEdad(jugador ? jugador.fecha_nacimiento : null);
   const periodoExpand = monto ? expandirPagoMeses(Number(monto) || 0, mensualidad) : null;
 
   return (

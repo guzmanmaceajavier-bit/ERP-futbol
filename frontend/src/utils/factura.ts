@@ -102,7 +102,7 @@ export function buildFacturaHtml(data: FacturaData): string {
     <button class="print no-print" onclick="window.print()">Imprimir / Guardar PDF</button>
   </div>
 </div>
-<script>window.onload=()=>{/* no auto-print, usuario decide */}<\/script>
+<script>window.onload=()=>{/* no auto-print, usuario decide */}</script>
 </body></html>`;
 }
 

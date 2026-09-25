@@ -6,8 +6,9 @@ import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { jugadorService } from '../../services/jugadorService';
+import { useCategorias } from '../../hooks/useCategorias';
 import type { Jugador, JugadorForm as JugadorFormType, EstadoJugador } from '../../types';
-import { CATEGORIAS, GENEROS } from '../../utils/constants';
+import { GENEROS } from '../../utils/constants';
 import { validateJugador } from '../../utils/validators';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { calcularEstadoFinanciero, calcularProximoPago, getProximoVencimientoDelPeriodo } from '../../utils/finanzas';
@@ -37,6 +38,7 @@ const EMPTY_FORM: JugadorFormType = {
   numero_identificacion: '',
   categoria: '',
   telefono: '',
+  mensualidad: 0,
   genero: 'Masculino',
   acudiente_nombre: '',
   acudiente_telefono: '',
@@ -57,6 +59,7 @@ export function Jugadores() {
   const navigate = useNavigate();
   const { data: jugadores, loading, error, refetch } = useApi(() => jugadorService.getAll());
   const { data: periodos } = useApi(() => periodoService.getAll());
+  const { opciones: opcionesCategoria, mensualidadDe } = useCategorias();
   const { isOpen, editing, openNew, openEdit, close } = useModal<Jugador>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
 
@@ -111,8 +114,9 @@ export function Jugadores() {
       label: 'Mensualidad',
       className: 'w-28',
       render: (j) => {
-        // mensualidad from jugador.mensualidad or categoria fallback
-        return <span className="font-mono text-[#22C55E]">{formatCurrency(j.mensualidad)}</span>;
+        // mensualidad del jugador; si no tiene, la de su categoria
+        const valor = j.mensualidad || mensualidadDe(j.categoria);
+        return <span className="font-mono text-[#22C55E]">{formatCurrency(valor)}</span>;
       },
     },
     {
@@ -211,6 +215,7 @@ export function Jugadores() {
         numero_identificacion: jugador.numero_identificacion || '',
         categoria: jugador.categoria,
         telefono: jugador.telefono,
+        mensualidad: jugador.mensualidad || mensualidadDe(jugador.categoria) || 0,
         genero: jugador.genero,
         acudiente_nombre: jugador.acudiente_nombre || '',
         acudiente_telefono: jugador.acudiente_telefono || '',
@@ -244,11 +249,16 @@ export function Jugadores() {
     setFormErrors({});
     setSaving(true);
     try {
+      // La mensualidad se deriva de la categoria si quedo vacia.
+      const payload: JugadorFormType = {
+        ...form,
+        mensualidad: form.mensualidad || mensualidadDe(form.categoria),
+      };
       if (editing) {
-        await jugadorService.update(editing.id, form);
+        await jugadorService.update(editing.id, payload);
         showSuccess('Jugador actualizado correctamente');
       } else {
-        await jugadorService.create(form);
+        await jugadorService.create(payload);
         showSuccess('Jugador creado correctamente');
       }
       close();
@@ -291,7 +301,7 @@ export function Jugadores() {
         <FilterSelect
           value={filtroCategoria}
           onChange={setFiltroCategoria}
-          options={[{ value: '', label: 'Todas' }, ...CATEGORIAS.map((c) => ({ value: c, label: c }))]}
+          options={[{ value: '', label: 'Todas' }, ...opcionesCategoria]}
         />
         <FilterSelect
           value={filtroGenero}
@@ -311,6 +321,8 @@ export function Jugadores() {
         editing={!!editing}
         form={form}
         setForm={setForm}
+        categorias={opcionesCategoria}
+        mensualidadDe={mensualidadDe}
         errors={formErrors}
         onClose={close}
         onSave={handleSave}

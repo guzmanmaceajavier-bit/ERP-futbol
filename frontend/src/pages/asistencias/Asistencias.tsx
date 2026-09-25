@@ -8,7 +8,6 @@ import { categoriaService } from '../../services/categoriaService';
 import { entrenamientoService } from '../../services/entrenamientoService';
 import type { Jugador, Categoria } from '../../types';
 import { todayISO } from '../../utils/formatters';
-import { CATEGORIAS } from '../../utils/constants';
 import { Button } from '../../components/ui/Button';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { FilterSelect } from '../../components/data/FilterSelect';
@@ -322,7 +321,7 @@ export function Asistencias() {
         <FilterSelect
           value={tab === 'registrar' ? filtroCategoria : filtroCategoriaConsulta}
           onChange={tab === 'registrar' ? setFiltroCategoria : setFiltroCategoriaConsulta}
-          options={[{ value: '', label: 'Todas' }, ...CATEGORIAS.map((c) => ({ value: c, label: c }))]}
+          options={[{ value: '', label: 'Todas' }, ...categorias.map((c) => ({ value: c.nombre, label: c.nombre }))]}
         />
         <div className="flex bg-slate-800 border border-slate-600 rounded-lg overflow-hidden text-sm ml-auto">
           <button onClick={() => setTab('registrar')}

@@ -4,8 +4,9 @@ import { useToast } from '../../hooks/useToast';
 import { entrenamientoService } from '../../services/entrenamientoService';
 import { profesorService } from '../../services/profesorService';
 import type { Entrenamiento, EntrenamientoForm, Profesor } from '../../types';
-import { CATEGORIAS, ESTADOS_ENTRENAMIENTO } from '../../utils/constants';
+import { ESTADOS_ENTRENAMIENTO } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
+import { useCategorias } from '../../hooks/useCategorias';
 import { useModal } from '../../hooks/useModal';
 import { usePagination } from '../../hooks/usePagination';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -43,6 +44,7 @@ export function Entrenamientos() {
   const [form, setForm] = useState<EntrenamientoForm>(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<Entrenamiento | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  const { opciones: opcionesCategoria } = useCategorias();
 
   // helpers for EstadoEntrenamiento / Asistencias connection
   // ESTADOS_ENTRENAMIENTO is ['programado','completado','cancelado'] – we keep it as-is
@@ -217,7 +219,7 @@ export function Entrenamientos() {
           <Input label="Fecha" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
           <Input label="Hora" type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} required />
           <Select label="Categoria" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-            options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Seleccionar..." required />
+            options={opcionesCategoria} placeholder={opcionesCategoria.length ? 'Seleccionar...' : 'Primero crea una categoria'} required />
           <Select
             label="Profesor / Entrenador"
             value={form.entrenador}

@@ -90,7 +90,7 @@ export function calcularProgresoPeriodo(periodo: PeriodoMensual | null | undefin
   const objetivo = periodo.objetivo || 0;
   const saldo = Math.max(0, objetivo - pagado);
   const porcentaje = objetivo > 0 ? Math.min(100, Math.round((pagado / objetivo) * 100)) : 0;
-  let estado = periodo.estado;
+  let estado: string;
   if (pagado === 0) estado = 'pendiente';
   else if (pagado < objetivo) estado = 'abono';
   else estado = 'completo';

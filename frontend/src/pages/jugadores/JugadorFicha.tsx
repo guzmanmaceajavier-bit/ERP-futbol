@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Jugador } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency, formatDate, formatEdad } from '../../utils/formatters';
 import { calcularEstadoFinanciero, calcularProximoPago, formatearVencimiento } from '../../utils/finanzas';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
@@ -23,17 +23,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'asistencia', label: 'Asistencia' },
   { id: 'historial', label: 'Historial' },
 ];
-
-function calcularEdad(fechaNacimiento: string | null): string {
-  if (!fechaNacimiento) return '-';
-  const nac = new Date(fechaNacimiento.includes('T') ? fechaNacimiento : `${fechaNacimiento}T00:00:00`);
-  if (Number.isNaN(nac.getTime())) return '-';
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nac.getFullYear();
-  const m = hoy.getMonth() - nac.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
-  return `${edad} años`;
-}
 
 function estadoVariant(estado: string) {
   if (estado === 'activo') return 'success' as const;
@@ -58,7 +47,7 @@ export function JugadorFicha({ jugador, onClose, onEdit }: JugadorFichaProps) {
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
 
   const nombreCompleto = `${jugador.nombre} ${jugador.apellidos}`.trim();
-  const edad = calcularEdad(jugador.fecha_nacimiento);
+  const edad = formatEdad(jugador.fecha_nacimiento);
   const estadoRaw = jugador.estado || (jugador.activo ? 'activo' : 'inactivo');
   const estadoLabel = estadoRaw.charAt(0).toUpperCase() + estadoRaw.slice(1);
   const documento =

@@ -7,8 +7,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { partidoService } from '../../services/partidoService';
 import { torneoService } from '../../services/torneoService';
 import type { Partido, PartidoForm, LocaliaPartido, Torneo } from '../../types';
-import { CATEGORIAS, ESTADOS_PARTIDO, RESULTADOS_PARTIDO, LOCALIAS_PARTIDO } from '../../utils/constants';
+import { ESTADOS_PARTIDO, RESULTADOS_PARTIDO, LOCALIAS_PARTIDO } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
+import { useCategorias } from '../../hooks/useCategorias';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
 import { Pagination } from '../../components/data/Pagination';
@@ -48,6 +49,7 @@ export function Partidos() {
   const [form, setForm] = useState<PartidoForm>(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<Partido | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  const { opciones: opcionesCategoria } = useCategorias();
   const [viewPartido, setViewPartido] = useState<Partido | null>(null);
 
   const busquedaDebounced = useDebounce(busqueda);
@@ -319,7 +321,7 @@ export function Partidos() {
           <Input label="Fecha" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
           <Input label="Hora" type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} required />
           <Select label="Categoria" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-            options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Seleccionar..." required />
+            options={opcionesCategoria} placeholder={opcionesCategoria.length ? 'Seleccionar...' : 'Primero crea una categoria'} required />
           <Input label="Lugar" value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="Ej: Cancha principal" />
           <Select label="Localia" value={(form.localia as string) || ''} onChange={(e) => setForm({ ...form, localia: e.target.value as LocaliaPartido || '' })}
             options={LOCALIAS_PARTIDO.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} placeholder="Seleccionar..." />

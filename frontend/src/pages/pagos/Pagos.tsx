@@ -8,7 +8,8 @@ import { pagoService } from '../../services/pagoService';
 import { jugadorService } from '../../services/jugadorService';
 import { periodoService } from '../../services/periodoService';
 import type { Pago, PagoForm, Jugador } from '../../types';
-import { CATEGORIAS, MESES } from '../../utils/constants';
+import { MESES } from '../../utils/constants';
+import { useCategorias } from '../../hooks/useCategorias';
 import { formatCurrency, formatDate, todayISO } from '../../utils/formatters';
 import { validateAnulacion } from '../../utils/validators';
 import { calcularProximoPago, calcularEstadoFinanciero, getMensualidad, formatearVencimiento, expandirPagoMeses } from '../../utils/finanzas';
@@ -24,14 +25,14 @@ import { Icon } from '../../components/ui/Icon';
 import { abrirFactura } from '../../utils/factura';
 import { configService } from '../../services/configService';
 
-const MENSUALIDAD_MAP: Record<string, number> = { 'Sub 17-18': 50000, 'Sub 16-15': 50000, 'Sub 14-13': 40000, 'Sub 12-11': 40000, 'Sub 10-9': 30000, 'Sub 8-7': 30000 };
-
 export function Pagos() {
   const location = useLocation();
   const { data: pagos, loading, error, refetch } = useApi(() => pagoService.getAll());
   const { data: jugadores, refetch: refetchJugadores } = useApi(() => jugadorService.getAll());
   const { data: periodos } = useApi(() => periodoService.getAll());
   const { toasts, showSuccess, showError, dismiss } = useToast();
+  /** Mensualidad base tomada del menu Categorias. */
+  const { mensualidadDe, opciones: opcionesCategoria } = useCategorias();
 
   const [saving, setSaving] = useState(false);
   const [editingPago, setEditingPago] = useState<Pago | null>(null);
@@ -113,7 +114,7 @@ export function Pagos() {
 
   const selectJugador = (j: Jugador) => {
     setJugadorSeleccionado(j);
-    const base = getMensualidad(j.categoria) || MENSUALIDAD_MAP[j.categoria] || 50000;
+    const base = j.mensualidad || mensualidadDe(j.categoria) || getMensualidad(j.categoria) || 50000;
     const saldo = j.saldo_pendiente || 0;
     const montoAuto = saldo > 0 ? saldo : (j.mensualidad || base);
     setMonto(montoAuto);
@@ -167,12 +168,12 @@ export function Pagos() {
   // Enhanced financial context computed when jugadorSeleccionado is set
   const mensualidadBase = useMemo(() => {
     if (!jugadorSeleccionado) return 0;
-    return getMensualidad(jugadorSeleccionado.categoria) || MENSUALIDAD_MAP[jugadorSeleccionado.categoria] || 0;
-  }, [jugadorSeleccionado]);
+    return mensualidadDe(jugadorSeleccionado.categoria) || getMensualidad(jugadorSeleccionado.categoria) || 0;
+  }, [jugadorSeleccionado, mensualidadDe]);
 
   const mensualidadEfectiva = useMemo(() => {
     if (!jugadorSeleccionado) return 0;
-    return jugadorSeleccionado.mensualidad || mensualidadBase || MENSUALIDAD_MAP[jugadorSeleccionado.categoria] || 0;
+    return jugadorSeleccionado.mensualidad || mensualidadBase || 0;
   }, [jugadorSeleccionado, mensualidadBase]);
 
   const saldoPendiente = useMemo(() => jugadorSeleccionado?.saldo_pendiente || 0, [jugadorSeleccionado]);
@@ -346,7 +347,7 @@ export function Pagos() {
                   <label className={labelCls}>Categoria</label>
                   <select value={filtroCatForm} onChange={(e) => setFiltroCatForm(e.target.value)} className={selectCls}>
                     <option value="">Todas Categorias</option>
-                    {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {opcionesCategoria.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
                 <div>

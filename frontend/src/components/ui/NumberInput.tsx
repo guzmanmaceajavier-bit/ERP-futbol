@@ -9,6 +9,8 @@ interface NumberInputProps {
   step?: number;
   error?: string;
   placeholder?: string;
+  /** Texto de ayuda bajo el campo. */
+  hint?: string;
 }
 type NumberInputPropsLoose = Omit<NumberInputProps, 'value' | 'onChange'> & { value: number | ''; onChange: (v: number | '') => void };
 
@@ -19,7 +21,7 @@ function clamp(n: number, min?: number, max?: number): number {
   return v;
 }
 
-export function NumberInput({ label, value, onChange, min, max, step = 1, error, placeholder }: NumberInputPropsLoose) {
+export function NumberInput({ label, value, onChange, min, max, step = 1, error, placeholder, hint }: NumberInputPropsLoose) {
   const [display, setDisplay] = useState<string>(value === '' ? '' : String(value));
   const [focused, setFocused] = useState(false);
 
@@ -161,6 +163,7 @@ export function NumberInput({ label, value, onChange, min, max, step = 1, error,
         </button>
       </div>
       {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+      {!error && hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   );
 }

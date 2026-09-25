@@ -28,22 +28,33 @@ Credenciales demo: `admin` / `admin123`
 ## Scripts
 
 ```bash
-npm run dev      # desarrollo
-npm run build    # produccion
-npm run preview  # preview del build
+npm run dev         # desarrollo
+npm run build       # produccion
+npm run preview     # preview del build
+npm run lint        # revisar codigo (ESLint)
+npm run lint:fix    # corregir automaticamente
+npm run typecheck   # revisar tipos (TypeScript)
+npm run test        # correr tests (Vitest)
+npm run format      # formatear con Prettier
 ```
+
+Los mismos comandos funcionan desde la raiz del proyecto.
 
 ## Estructura
 
 ```
 frontend/src/
 ├── pages/        # 20 paginas (auth, dashboard, jugadores, pagos, etc.)
-├── components/   # ui, data, forms, layout
+├── components/   # ui, data, forms, layout, feedback, dashboard
 ├── services/     # apiClient, demoStore y servicios por modulo
 ├── types/        # tipos por dominio
-├── hooks/        # useApi, useModal, usePagination, etc.
+├── hooks/        # useApi, useCategorias, useModal, usePagination, etc.
+├── routes/       # rutas y RoleGuard por modulo
+├── providers/    # providers globales
+├── config/       # configuracion central de la app
 ├── context/      # AuthContext
-└── utils/        # constants, formatters, validators, finanzas
+├── utils/        # constants, formatters, validators, finanzas, errors
+└── assets/       # imagenes y estaticos
 ```
 
 Los datos se guardan en localStorage en modo demo.

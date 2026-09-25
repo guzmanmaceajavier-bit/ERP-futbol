@@ -6,7 +6,8 @@ import { useToast } from '../../hooks/useToast';
 import { useDebounce } from '../../hooks/useDebounce';
 import { torneoService } from '../../services/torneoService';
 import type { Torneo, TorneoForm, EstadoTorneo } from '../../types';
-import { CATEGORIAS, ESTADOS_TORNEO } from '../../utils/constants';
+import { ESTADOS_TORNEO } from '../../utils/constants';
+import { useCategorias } from '../../hooks/useCategorias';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { DataTable, type Column } from '../../components/data/DataTable';
 import { SearchBar } from '../../components/data/SearchBar';
@@ -51,6 +52,7 @@ function stringifyEquipo(e: EquipoRow): string {
 
 export function Torneos() {
   const { data: torneos, loading, error, refetch } = useApi(() => torneoService.getAll());
+  const { opciones: opcionesCategoria } = useCategorias();
   const { isOpen, editing, openNew, openEdit, close } = useModal<Torneo>();
   const { toasts, showSuccess, showError, dismiss } = useToast();
   const [form, setForm] = useState<TorneoForm>(EMPTY_FORM);
@@ -226,7 +228,7 @@ export function Torneos() {
           <Input label="Nombre del torneo" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required placeholder="Ej: Copa Efusa 2026" />
           <Input label="Lugar" value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="Ej: Cancha municipal" />
           <Select label="Categoria requerida" value={form.categoria_requerida} onChange={(e) => setForm({ ...form, categoria_requerida: e.target.value })}
-            options={CATEGORIAS.map((c) => ({ value: c, label: c }))} placeholder="Todas" />
+            options={opcionesCategoria} placeholder="Todas" />
           <Input label="Costo de inscripcion" type="number" value={form.costo} onChange={(e) => setForm({ ...form, costo: Number(e.target.value) })} />
           <Input label="Fecha de inicio" type="date" value={form.fecha_inicio} onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })} />
           <Input label="Fecha de fin" type="date" value={form.fecha_fin} onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })} />

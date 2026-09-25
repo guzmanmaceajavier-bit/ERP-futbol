@@ -10,7 +10,8 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { CATEGORIAS } from '../../utils/constants';
+import { useCategorias } from '../../hooks/useCategorias';
+import { formatCurrency } from '../../utils/formatters';
 
 const PLANTILLAS = [
   { key: 'whatsapp_confirmacion', label: 'Confirmacion de pago', desc: 'Al registrar un pago exitoso' },
@@ -28,6 +29,7 @@ const PLANTILLAS_TEXTO: Record<string, string> = {
 
 export function Configuracion() {
   const { data: config, loading, error, refetch } = useApi(() => configService.getAll());
+  const { categorias } = useCategorias();
   const { toasts, showSuccess, showError, dismiss } = useToast();
   const { hasRole, user } = useAuth();
   const [form, setForm] = useState<Record<string, string>>({});
@@ -216,12 +218,19 @@ export function Configuracion() {
 
         <div className="pt-2">
           <h3 className="text-sm font-medium text-slate-300 mb-3">Mensualidades base por categoria</h3>
-          <p className="text-xs text-slate-500 mb-3">Valores predeterminados. Se pueden editar al crear una categoria.</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {CATEGORIAS.map(cat => (
-              <Input key={cat} label={cat} type="number" value={form[`mensualidad_${cat.replace(/\s/g, '_')}`] || ''} onChange={e => updateField(`mensualidad_${cat.replace(/\s/g, '_')}`, e.target.value)} placeholder="Auto" />
-            ))}
-          </div>
+          <p className="text-xs text-slate-500 mb-3">Valores tomados del menu Categorias. Se editan ahi.</p>
+          {categorias.length === 0 ? (
+            <p className="text-xs text-slate-500">No hay categorias creadas aun. Crea la primera en el menu Categorias.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {categorias.map(cat => (
+                <div key={cat.nombre} className="bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2">
+                  <p className="text-xs text-slate-400">{cat.nombre}</p>
+                  <p className="font-mono text-sm font-bold text-[#22C55E]">{formatCurrency(cat.mensualidad_base || 0)}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

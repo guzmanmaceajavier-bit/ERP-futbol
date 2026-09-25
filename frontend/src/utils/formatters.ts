@@ -29,3 +29,21 @@ export function formatPhone(phone: string | null): string {
 export function todayISO(): string {
   return new Date().toISOString().split('T')[0];
 }
+
+/** Edad en anos completos a partir de una fecha ISO (YYYY-MM-DD). Devuelve null si no hay fecha valida. */
+export function calcularEdad(fechaNacimiento: string | null | undefined): number | null {
+  if (!fechaNacimiento) return null;
+  const nac = new Date(fechaNacimiento.includes('T') ? fechaNacimiento : `${fechaNacimiento}T00:00:00`);
+  if (isNaN(nac.getTime())) return null;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return edad < 0 ? null : edad;
+}
+
+/** Edad formateada para mostrar en la UI: "15 anos". */
+export function formatEdad(fechaNacimiento: string | null | undefined): string {
+  const edad = calcularEdad(fechaNacimiento);
+  return edad == null ? '-' : `${edad} anos`;
+}
