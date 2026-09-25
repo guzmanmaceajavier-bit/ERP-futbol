@@ -47,7 +47,7 @@ function AppRoutes() {
       <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
 
       <Route path="/" element={<ProtectedRoute><ErrorBoundary><MainLayout /></ErrorBoundary></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Dashboard /></RoleGuard>} />
 
         <Route path="jugadores" element={<RoleGuard roles={['super_admin', 'admin', 'tesorero', 'entrenador', 'profe', 'auxiliar', 'asistente']}><Jugadores /></RoleGuard>} />
         <Route path="categorias" element={<RoleGuard roles={['super_admin', 'admin', 'entrenador', 'profe']}><Categorias /></RoleGuard>} />

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface UsePaginationResult<T> {
   pagina: number;
@@ -18,10 +18,10 @@ export function usePagination<T>(items: T[], perPage: number = 10): UsePaginatio
     return items.slice(start, start + perPage);
   }, [items, pagina, perPage]);
 
-  // Reset to page 1 if items shrink
-  if (pagina > totalPaginas && totalPaginas > 0) {
-    setPagina(totalPaginas);
-  }
+  // Reset page if items shrink (effect, not render, to avoid setState during render)
+  useEffect(() => {
+    if (pagina > totalPaginas) setPagina(totalPaginas);
+  }, [pagina, totalPaginas]);
 
   return { pagina, setPagina, totalPaginas, paginados, total };
 }

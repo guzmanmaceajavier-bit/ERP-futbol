@@ -235,10 +235,12 @@ export function Alertas() {
                   <tr className="border-b border-slate-700">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Jugador</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Categoría</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Periodo</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase">Mensualidad</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase">Abonado</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Estado</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase">Saldo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Próximo pago</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Vencimiento</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase">Acción</th>
                   </tr>
                 </thead>
@@ -258,7 +260,9 @@ export function Alertas() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-300">{a.categoria || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-slate-300">{a.periodo || a.mes_abono || '-'}</td>
                         <td className="px-4 py-3 text-right font-mono text-sm text-slate-200">{mensualidad > 0 ? formatCurrency(mensualidad) : '-'}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-slate-400">{formatCurrency(a.pagado || 0)}</td>
                         <td className="px-4 py-3">
                           <Badge variant={estadoFinVariant(estadoFin.color)}>{estadoFin.label}</Badge>
                         </td>
@@ -266,7 +270,7 @@ export function Alertas() {
                         <td className="px-4 py-3 text-sm text-slate-400">{venc ? formatDate(venc) : '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button size="sm" onClick={() => setGestionar(a)}>Gestionar</Button>
+                            <Button size="sm" onClick={() => setGestionar(a)}>Cobrar</Button>
                             <button
                               onClick={() => {
                                 const mensualidad = getMensualidadAlerta(a);
